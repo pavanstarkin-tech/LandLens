@@ -72,40 +72,33 @@ Real estate and land transactions are plaguing buyers, financial institutions, a
 
 ## 3. Application Screenshots & UI Showcase
 
-Below is a visual walkthrough of the live **LandLens** platform across key user flows:
+Below is an interactive visual walkthrough of the live **LandLens** platform structured in a 3-column showcase:
 
-### 🔐 Authentication & Responsive Mobile UI
-| Login Portal (Desktop Glassmorphism) | Mobile Responsive Interface |
-| :---: | :---: |
-| ![Login Desktop](./dashscreenshots/login-desktop.png) | ![Login Mobile](./dashscreenshots/login-mobile.png) |
-
----
-
-### 🏡 Buyer Dashboard & Property Exploration Marketplace
-| Buyer Dashboard & Activity Overview | Property Exploration & Filter Engine |
-| :---: | :---: |
-| ![Buyer Dashboard](./dashscreenshots/userdash.png) | ![Property Marketplace](./dashscreenshots/userexplore.png) |
-
----
-
-### 🗺️ Mapbox GIS Mapping & Land Location Details
-| Interactive Mapbox Boundaries & Survey Clusters | Land Location & Spatial Coordinates |
-| :---: | :---: |
-| ![Mapbox Boundaries](./dashscreenshots/usermap.png) | ![Location Details](./dashscreenshots/loacationdetaislofland.png) |
-
----
-
-### 🤖 AI Trust Score & Property Details Page
-| AI Document Verification & Forgery Analysis | Property Detail Overview & 360° VR Viewer |
-| :---: | :---: |
-| ![AI Analysis](./dashscreenshots/aianalysis.png) | ![Property Details](./dashscreenshots/propertydetails.png) |
-
----
-
-### 💼 Seller Portal, Tour Schedules & Account Profile
-| Land Provider / Seller Dashboard | Scheduled Inspection Visits | User Profile & Settings |
+### 🔐 1. Authentication, Portals & Buyer Dashboard
+| Login Portal (Desktop) | Mobile Responsive Interface | Buyer Dashboard & Overview |
 | :---: | :---: | :---: |
-| ![Seller Dashboard](./dashscreenshots/sellerdash.png) | ![Scheduled Visits](./dashscreenshots/userschedules.png) | ![User Account](./dashscreenshots/useracct.png) |
+| ![Login Desktop](./dashscreenshots/login-desktop.png) | ![Login Mobile](./dashscreenshots/login-mobile.png) | ![Buyer Dashboard](./dashscreenshots/userdash.png) |
+
+---
+
+### 🗺️ 2. Property Marketplace, GIS Mapping & Location Details
+| Property Exploration Marketplace | Mapbox GIS Boundaries | Spatial Coordinates & Land Details |
+| :---: | :---: | :---: |
+| ![Property Marketplace](./dashscreenshots/userexplore.png) | ![Mapbox Boundaries](./dashscreenshots/usermap.png) | ![Location Details](./dashscreenshots/loacationdetaislofland.png) |
+
+---
+
+### 🤖 3. AI Trust Analysis, Property Details & Seller Portal
+| AI Document Verification Analysis | Property Overview & 360° VR | Land Provider / Seller Dashboard |
+| :---: | :---: | :---: |
+| ![AI Analysis](./dashscreenshots/aianalysis.png) | ![Property Details](./dashscreenshots/propertydetails.png) | ![Seller Dashboard](./dashscreenshots/sellerdash.png) |
+
+---
+
+### 💼 4. Scheduled Inspection Visits & User Account
+| Scheduled Visit Bookings | User Profile & Settings | System Dashboard Overview |
+| :---: | :---: | :---: |
+| ![Scheduled Visits](./dashscreenshots/userschedules.png) | ![User Account](./dashscreenshots/useracct.png) | ![User Dashboard](./dashscreenshots/userdash.png) |
 
 ---
 
