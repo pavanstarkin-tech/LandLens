@@ -30,16 +30,18 @@
 5. [Live Deployment & Infrastructure Endpoints](#5-live-deployment--infrastructure-endpoints)
 6. [Folder & Package Structure](#6-folder--package-structure)
 7. [System Architecture & Sequence Diagrams](#7-system-architecture--sequence-diagrams)
-8. [Database Setup & Entity Relationship Diagram (ERD)](#8-database-setup--entity-relationship-diagram-erd)
-9. [Complete REST API Directory](#9-complete-rest-api-directory)
-10. [Local Development & Setup Guide](#10-local-development--setup-guide)
-11. [Environment Variables Reference](#11-environment-variables-reference)
-12. [Build & Testing Instructions](#12-build--testing-instructions)
-13. [Security, Auth & Rate Limiting](#13-security-auth--rate-limiting)
-14. [Multi-Cloud Deployment Options](#14-multi-cloud-deployment-options)
-15. [AWS Infrastructure Cost Projections](#15-aws-infrastructure-cost-projections)
-16. [Future Roadmap & Improvements](#16-future-roadmap--improvements)
-17. [Contributing & License](#17-contributing--license)
+8. [Database Module Overview & Table Directory](#8-database-module-overview--table-directory)
+9. [Detailed Table Schemas & Column Specifications](#9-detailed-table-schemas--column-specifications)
+10. [Full Entity Relationship Diagram (ERD)](#10-full-entity-relationship-diagram-erd)
+11. [Complete REST API Directory](#11-complete-rest-api-directory)
+12. [Local Development & Setup Guide](#12-local-development--setup-guide)
+13. [Environment Variables Reference](#13-environment-variables-reference)
+14. [Build & Testing Instructions](#14-build--testing-instructions)
+15. [Security, Auth & Rate Limiting](#15-security-auth--rate-limiting)
+16. [Multi-Cloud Deployment Options](#16-multi-cloud-deployment-options)
+17. [AWS Infrastructure Cost Projections](#17-aws-infrastructure-cost-projections)
+18. [Future Roadmap & Improvements](#18-future-roadmap--improvements)
+19. [Contributing & License](#19-contributing--license)
 
 ---
 
@@ -278,25 +280,431 @@ sequenceDiagram
 
 ---
 
-## 8. Database Setup & Entity Relationship Diagram (ERD)
+## 8. Database Module Overview & Table Directory
 
-The MySQL database schema is strictly normalized into **3NF (Third Normal Form)** tables. Every table includes audit attributes (`id` UUID string, `created_at`, `updated_at`, `is_active` soft-delete flag).
+The database is normalized into **3NF (Third Normal Form)** tables. Every table includes audit attributes:
+*   `id` (`VARCHAR(36)` UUID, Primary Key)
+*   `created_at` (`TIMESTAMP`, Default `CURRENT_TIMESTAMP`)
+*   `updated_at` (`TIMESTAMP`, Default `CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP`)
+*   `created_by` (`VARCHAR(36)` UUID, Nullable)
+*   `updated_by` (`VARCHAR(36)` UUID, Nullable)
+*   `is_active` (`BOOLEAN`, Default `true` for soft-deletion)
+
+| Module | Table Name | Description |
+| :--- | :--- | :--- |
+| **Auth & User** | `roles` | Roles mapping to RBAC privileges (`ADMIN`, `GOVERNMENT_OFFICER`, `PROVIDER`, `BUYER`). |
+| | `users` | User profile, role reference, credentials hash. |
+| | `refresh_tokens` | Active JWT refresh tokens for persistent sessions. |
+| | `login_histories` | Security log of user login attempts. |
+| **Property** | `properties` | Core property listings and ownership details. |
+| **Media** | `property_images` | Image URLs, thumbnails, and custom displays. |
+| | `property_videos` | Video paths, duration, and thumbnail images. |
+| **Documents** | `property_documents` | Property verification documents and OCR status. |
+| **Verification** | `ai_verifications` | AI-driven Trust, Forgery, and Duplicate reports. |
+| | `government_verifications` | Official government verification remarks and status. |
+| | `verification_timelines` | Historic log of all verification events. |
+| **Fraud & Duplicate**| `duplicate_claims` | AI-flagged duplicate submissions for overlapping properties. |
+| | `fraud_reports` | Public or officer reported fraud details. |
+| **Interactions** | `property_visits` | Scheduled viewings by buyers. |
+| | `saved_properties` | Bookmarked listings for prospective buyers. |
+| **Notifications & Chat**| `notifications` | Read/unread alerts for users. |
+| | `ai_conversations` | Conversation threads with AI chat. |
+| | `ai_messages` | Individual messages within an AI conversation. |
+| **Developer API** | `api_keys` | Hashed authentication keys for developers. |
+| | `api_usages` | Daily rolled up API access quotas. |
+| | `api_logs` | Trace log of developer API requests. |
+| | `api_rate_limits` | Current rate limiting windows for active keys. |
+| **Analytics** | `daily_analytics` | Pre-aggregated system metrics per day. |
+
+---
+
+## 9. Detailed Table Schemas & Column Specifications
+
+### Authentication & User Module
+
+#### `roles`
+*   `id` (`VARCHAR(36)`, PK)
+*   `name` (`VARCHAR(50)`, Not Null, Unique) - Values: `ADMIN`, `GOVERNMENT_OFFICER`, `PROVIDER`, `BUYER`
+*   `description` (`VARCHAR(255)`)
+*   *Standard Audit Columns* (`created_at`, `updated_at`, `created_by`, `updated_by`, `is_active`)
+
+#### `users`
+*   `id` (`VARCHAR(36)`, PK)
+*   `email` (`VARCHAR(150)`, Not Null, Unique)
+*   `password_hash` (`VARCHAR(255)`, Not Null)
+*   `first_name` (`VARCHAR(100)`, Not Null)
+*   `last_name` (`VARCHAR(100)`, Not Null)
+*   `phone_number` (`VARCHAR(20)`)
+*   `role_id` (`VARCHAR(36)`, Not Null, FK referencing `roles(id)`)
+*   *Standard Audit Columns*
+
+#### `refresh_tokens`
+*   `id` (`VARCHAR(36)`, PK)
+*   `user_id` (`VARCHAR(36)`, Not Null, FK referencing `users(id)`)
+*   `token` (`VARCHAR(512)`, Not Null, Unique)
+*   `expiry_date` (`TIMESTAMP`, Not Null)
+*   `revoked` (`BOOLEAN`, Not Null, Default `false`)
+*   *Standard Audit Columns*
+
+#### `login_histories`
+*   `id` (`VARCHAR(36)`, PK)
+*   `user_id` (`VARCHAR(36)`, Not Null, FK referencing `users(id)`)
+*   `login_timestamp` (`TIMESTAMP`, Not Null, Default `CURRENT_TIMESTAMP`)
+*   `ip_address` (`VARCHAR(45)`, Not Null)
+*   `user_agent` (`VARCHAR(512)`)
+*   `status` (`VARCHAR(20)`, Not Null) - Values: `SUCCESS`, `FAILED`
+*   *Standard Audit Columns*
+
+---
+
+### Property Module
+
+#### `properties`
+*   `id` (`VARCHAR(36)`, PK)
+*   `property_code` (`VARCHAR(50)`, Not Null, Unique)
+*   `title` (`VARCHAR(150)`, Not Null)
+*   `category` (`VARCHAR(50)`, Not Null) - Values: `RESIDENTIAL`, `COMMERCIAL`, `AGRICULTURAL`, `INDUSTRIAL`
+*   `area` (`DECIMAL(12,2)`, Not Null)
+*   `price` (`DECIMAL(15,2)`, Not Null)
+*   `description` (`TEXT`)
+*   `survey_number` (`VARCHAR(50)`, Not Null)
+*   `address` (`VARCHAR(255)`, Not Null)
+*   `latitude` (`DECIMAL(9,6)`, Not Null)
+*   `longitude` (`DECIMAL(9,6)`, Not Null)
+*   `district` (`VARCHAR(100)`, Not Null)
+*   `village` (`VARCHAR(100)`, Not Null)
+*   `state` (`VARCHAR(100)`, Not Null)
+*   `pincode` (`VARCHAR(10)`, Not Null)
+*   `three_sixty_image_url` (`VARCHAR(512)`)
+*   `status` (`VARCHAR(30)`, Not Null) - Values: `PENDING_AI`, `PENDING_GOVT`, `APPROVED`, `REJECTED`, `DISPUTED`
+*   `provider_id` (`VARCHAR(36)`, Not Null, FK referencing `users(id)`)
+*   *Standard Audit Columns*
+
+#### `property_images`
+*   `id` (`VARCHAR(36)`, PK)
+*   `property_id` (`VARCHAR(36)`, Not Null, FK referencing `properties(id)`)
+*   `image_url` (`VARCHAR(512)`, Not Null)
+*   `thumbnail_url` (`VARCHAR(512)`, Not Null)
+*   `display_order` (`INT`, Not Null, Default `0`)
+*   *Standard Audit Columns*
+
+#### `property_videos`
+*   `id` (`VARCHAR(36)`, PK)
+*   `property_id` (`VARCHAR(36)`, Not Null, FK referencing `properties(id)`)
+*   `video_url` (`VARCHAR(512)`, Not Null)
+*   `duration` (`INT`) - Duration in seconds
+*   `thumbnail_url` (`VARCHAR(512)`)
+*   *Standard Audit Columns*
+
+#### `property_documents`
+*   `id` (`VARCHAR(36)`, PK)
+*   `property_id` (`VARCHAR(36)`, Not Null, FK referencing `properties(id)`)
+*   `document_type` (`VARCHAR(50)`, Not Null) - Values: `SALE_DEED`, `PATTA`, `SURVEY_MAP`, `TAX_RECEIPT`, `IDENTITY_PROOF`, `OWNERSHIP_PROOF`
+*   `file_url` (`VARCHAR(512)`, Not Null)
+*   `ocr_status` (`VARCHAR(30)`, Not Null) - Values: `PENDING`, `PROCESSING`, `COMPLETED`, `FAILED`
+*   `verification_status` (`VARCHAR(30)`, Not Null) - Values: `UNVERIFIED`, `VERIFIED`, `REJECTED`
+*   *Standard Audit Columns*
+
+---
+
+### Verification Module
+
+#### `ai_verifications`
+*   `id` (`VARCHAR(36)`, PK)
+*   `property_id` (`VARCHAR(36)`, Not Null, Unique, FK referencing `properties(id)`)
+*   `ai_trust_score` (`DECIMAL(5,2)`, Not Null) - Scale `0.00` to `100.00`
+*   `forgery_score` (`DECIMAL(5,2)`, Not Null)
+*   `duplicate_score` (`DECIMAL(5,2)`, Not Null)
+*   `ownership_match` (`BOOLEAN`, Not Null)
+*   `risk_score` (`DECIMAL(5,2)`, Not Null)
+*   `summary` (`TEXT`)
+*   `confidence` (`DECIMAL(5,2)`, Not Null)
+*   `generated_date` (`TIMESTAMP`, Not Null, Default `CURRENT_TIMESTAMP`)
+*   *Standard Audit Columns*
+
+#### `government_verifications`
+*   `id` (`VARCHAR(36)`, PK)
+*   `property_id` (`VARCHAR(36)`, Not Null, Unique, FK referencing `properties(id)`)
+*   `officer_id` (`VARCHAR(36)`, Not Null, FK referencing `users(id)`)
+*   `remarks` (`TEXT`)
+*   `status` (`VARCHAR(30)`, Not Null) - Values: `APPROVED`, `REJECTED`, `DISPUTED`
+*   `verified_date` (`TIMESTAMP`, Not Null, Default `CURRENT_TIMESTAMP`)
+*   *Standard Audit Columns*
+
+#### `verification_timelines`
+*   `id` (`VARCHAR(36)`, PK)
+*   `property_id` (`VARCHAR(36)`, Not Null, FK referencing `properties(id)`)
+*   `timestamp` (`TIMESTAMP`, Not Null, Default `CURRENT_TIMESTAMP`)
+*   `action` (`VARCHAR(50)`, Not Null) - Values: `UPLOADED`, `AI_STARTED`, `AI_COMPLETED`, `GOVT_REVIEW_STARTED`, `APPROVED`, `REJECTED`, `DISPUTED`
+*   `remarks` (`TEXT`)
+*   `user_id` (`VARCHAR(36)`, Not Null, FK referencing `users(id)`)
+*   *Standard Audit Columns*
+
+---
+
+### Fraud & Buyer Interactions Modules
+
+#### `duplicate_claims`
+*   `id` (`VARCHAR(36)`, PK)
+*   `property_a_id` (`VARCHAR(36)`, Not Null, FK referencing `properties(id)`)
+*   `property_b_id` (`VARCHAR(36)`, Not Null, FK referencing `properties(id)`)
+*   `similarity` (`DECIMAL(5,2)`, Not Null)
+*   `reason` (`TEXT`, Not Null)
+*   `status` (`VARCHAR(30)`, Not Null) - Values: `FLAGGED`, `INVESTIGATING`, `RESOLVED`, `FALSE_POSITIVE`
+*   `decision` (`VARCHAR(50)`) - Values: `MERGED`, `CANCELLED_A`, `CANCELLED_B`, `NO_ACTION`
+*   *Standard Audit Columns*
+
+#### `fraud_reports`
+*   `id` (`VARCHAR(36)`, PK)
+*   `reporter_id` (`VARCHAR(36)`, Not Null, FK referencing `users(id)`)
+*   `property_id` (`VARCHAR(36)`, Not Null, FK referencing `properties(id)`)
+*   `reason` (`VARCHAR(150)`, Not Null)
+*   `description` (`TEXT`, Not Null)
+*   `status` (`VARCHAR(30)`, Not Null) - Values: `SUBMITTED`, `UNDER_INVESTIGATION`, `RESOLVED_FRAUD`, `RESOLVED_DISMISSED`
+*   `officer_id` (`VARCHAR(36)`, FK referencing `users(id)`)
+*   *Standard Audit Columns*
+
+#### `property_visits`
+*   `id` (`VARCHAR(36)`, PK)
+*   `buyer_id` (`VARCHAR(36)`, Not Null, FK referencing `users(id)`)
+*   `property_id` (`VARCHAR(36)`, Not Null, FK referencing `properties(id)`)
+*   `visit_date` (`DATE`, Not Null)
+*   `visit_time` (`TIME`, Not Null)
+*   `status` (`VARCHAR(30)`, Not Null) - Values: `SCHEDULED`, `COMPLETED`, `CANCELLED`, `RESCHEDULED`
+*   *Standard Audit Columns*
+
+#### `saved_properties`
+*   `id` (`VARCHAR(36)`, PK)
+*   `buyer_id` (`VARCHAR(36)`, Not Null, FK referencing `users(id)`)
+*   `property_id` (`VARCHAR(36)`, Not Null, FK referencing `properties(id)`)
+*   *Standard Audit Columns*
+
+---
+
+### Notifications, Chat & Developer API Modules
+
+#### `notifications`
+*   `id` (`VARCHAR(36)`, PK)
+*   `title` (`VARCHAR(150)`, Not Null)
+*   `message` (`TEXT`, Not Null)
+*   `type` (`VARCHAR(50)`, Not Null)
+*   `is_read` (`BOOLEAN`, Not Null, Default `false`)
+*   `receiver_id` (`VARCHAR(36)`, Not Null, FK referencing `users(id)`)
+*   `created_time` (`TIMESTAMP`, Not Null, Default `CURRENT_TIMESTAMP`)
+*   *Standard Audit Columns*
+
+#### `api_keys`
+*   `id` (`VARCHAR(36)`, PK)
+*   `user_id` (`VARCHAR(36)`, Not Null, FK referencing `users(id)`)
+*   `key_hash` (`VARCHAR(255)`, Not Null, Unique)
+*   `name` (`VARCHAR(100)`, Not Null)
+*   `prefix` (`VARCHAR(8)`, Not Null)
+*   `status` (`VARCHAR(20)`, Not Null) - Values: `ACTIVE`, `REVOKED`, `EXPIRED`
+*   `expiry_date` (`TIMESTAMP`)
+*   *Standard Audit Columns*
+
+#### `daily_analytics`
+*   `id` (`VARCHAR(36)`, PK)
+*   `analytics_date` (`DATE`, Not Null, Unique)
+*   `property_views` (`INT`, Not Null, Default `0`)
+*   `search_count` (`INT`, Not Null, Default `0`)
+*   `verification_count` (`INT`, Not Null, Default `0`)
+*   `fraud_count` (`INT`, Not Null, Default `0`)
+*   `api_calls` (`INT`, Not Null, Default `0`)
+*   *Standard Audit Columns*
+
+---
+
+## 10. Full Entity Relationship Diagram (ERD)
 
 ```mermaid
 erDiagram
+    roles {
+        VARCHAR_36 id PK
+        VARCHAR_50 name UK
+        VARCHAR_255 description
+        TIMESTAMP created_at
+        TIMESTAMP updated_at
+        BOOLEAN is_active
+    }
+
+    users {
+        VARCHAR_36 id PK
+        VARCHAR_150 email UK
+        VARCHAR_255 password_hash
+        VARCHAR_100 first_name
+        VARCHAR_100 last_name
+        VARCHAR_20 phone_number
+        VARCHAR_36 role_id FK
+        TIMESTAMP created_at
+        TIMESTAMP updated_at
+        BOOLEAN is_active
+    }
+
+    refresh_tokens {
+        VARCHAR_36 id PK
+        VARCHAR_36 user_id FK
+        VARCHAR_512 token UK
+        TIMESTAMP expiry_date
+        BOOLEAN revoked
+        TIMESTAMP created_at
+        TIMESTAMP updated_at
+        BOOLEAN is_active
+    }
+
+    properties {
+        VARCHAR_36 id PK
+        VARCHAR_50 property_code UK
+        VARCHAR_150 title
+        VARCHAR_50 category
+        DECIMAL_12_2 area
+        DECIMAL_15_2 price
+        TEXT description
+        VARCHAR_50 survey_number
+        VARCHAR_255 address
+        DECIMAL_9_6 latitude
+        DECIMAL_9_6 longitude
+        VARCHAR_100 district
+        VARCHAR_100 village
+        VARCHAR_100 state
+        VARCHAR_10 pincode
+        VARCHAR_512 three_sixty_image_url
+        VARCHAR_30 status
+        VARCHAR_36 provider_id FK
+        TIMESTAMP created_at
+        TIMESTAMP updated_at
+        BOOLEAN is_active
+    }
+
+    property_images {
+        VARCHAR_36 id PK
+        VARCHAR_36 property_id FK
+        VARCHAR_512 image_url
+        VARCHAR_512 thumbnail_url
+        INT display_order
+        TIMESTAMP created_at
+        TIMESTAMP updated_at
+        BOOLEAN is_active
+    }
+
+    property_videos {
+        VARCHAR_36 id PK
+        VARCHAR_36 property_id FK
+        VARCHAR_512 video_url
+        INT duration
+        VARCHAR_512 thumbnail_url
+        TIMESTAMP created_at
+        TIMESTAMP updated_at
+        BOOLEAN is_active
+    }
+
+    property_documents {
+        VARCHAR_36 id PK
+        VARCHAR_36 property_id FK
+        VARCHAR_50 document_type
+        VARCHAR_512 file_url
+        VARCHAR_30 ocr_status
+        VARCHAR_30 verification_status
+        TIMESTAMP created_at
+        TIMESTAMP updated_at
+        BOOLEAN is_active
+    }
+
+    ai_verifications {
+        VARCHAR_36 id PK
+        VARCHAR_36 property_id FK_UK
+        DECIMAL_5_2 ai_trust_score
+        DECIMAL_5_2 forgery_score
+        DECIMAL_5_2 duplicate_score
+        BOOLEAN ownership_match
+        DECIMAL_5_2 risk_score
+        TEXT summary
+        DECIMAL_5_2 confidence
+        TIMESTAMP generated_date
+        TIMESTAMP created_at
+        TIMESTAMP updated_at
+        BOOLEAN is_active
+    }
+
+    government_verifications {
+        VARCHAR_36 id PK
+        VARCHAR_36 property_id FK_UK
+        VARCHAR_36 officer_id FK
+        TEXT remarks
+        VARCHAR_30 status
+        TIMESTAMP verified_date
+        TIMESTAMP created_at
+        TIMESTAMP updated_at
+        BOOLEAN is_active
+    }
+
+    verification_timelines {
+        VARCHAR_36 id PK
+        VARCHAR_36 property_id FK
+        TIMESTAMP timestamp
+        VARCHAR_50 action
+        TEXT remarks
+        VARCHAR_36 user_id FK
+        TIMESTAMP created_at
+        TIMESTAMP updated_at
+        BOOLEAN is_active
+    }
+
+    duplicate_claims {
+        VARCHAR_36 id PK
+        VARCHAR_36 property_a_id FK
+        VARCHAR_36 property_b_id FK
+        DECIMAL_5_2 similarity
+        TEXT reason
+        VARCHAR_30 status
+        VARCHAR_50 decision
+        TIMESTAMP created_at
+        TIMESTAMP updated_at
+        BOOLEAN is_active
+    }
+
+    fraud_reports {
+        VARCHAR_36 id PK
+        VARCHAR_36 reporter_id FK
+        VARCHAR_36 property_id FK
+        VARCHAR_150 reason
+        TEXT description
+        VARCHAR_30 status
+        VARCHAR_36 officer_id FK
+        TIMESTAMP created_at
+        TIMESTAMP updated_at
+        BOOLEAN is_active
+    }
+
+    property_visits {
+        VARCHAR_36 id PK
+        VARCHAR_36 buyer_id FK
+        VARCHAR_36 property_id FK
+        DATE visit_date
+        TIME visit_time
+        VARCHAR_30 status
+        TIMESTAMP created_at
+        TIMESTAMP updated_at
+        BOOLEAN is_active
+    }
+
+    saved_properties {
+        VARCHAR_36 id PK
+        VARCHAR_36 buyer_id FK
+        VARCHAR_36 property_id FK
+        TIMESTAMP created_at
+        TIMESTAMP updated_at
+        BOOLEAN is_active
+    }
+
     roles ||--o{ users : "assigns"
     users ||--o{ refresh_tokens : "generates"
-    users ||--o{ login_histories : "attempts"
     users ||--o{ properties : "owns"
     users ||--o{ government_verifications : "performs"
     users ||--o{ verification_timelines : "triggers"
     users ||--o{ fraud_reports : "reports"
-    users ||--o{ fraud_reports : "investigates"
     users ||--o{ property_visits : "schedules"
     users ||--o{ saved_properties : "saves"
-    users ||--o{ notifications : "receives"
-    users ||--o{ ai_conversations : "starts"
-    users ||--o{ api_keys : "creates"
 
     properties ||--o{ property_images : "has"
     properties ||--o{ property_videos : "has"
@@ -309,16 +717,11 @@ erDiagram
     properties ||--o{ fraud_reports : "accused-in"
     properties ||--o{ property_visits : "hosts"
     properties ||--o{ saved_properties : "saved-in"
-
-    ai_conversations ||--o{ ai_messages : "contains"
-    api_keys ||--o{ api_usages : "tracks"
-    api_keys ||--o{ api_logs : "records"
-    api_keys ||--|| api_rate_limits : "restricts"
 ```
 
 ---
 
-## 9. Complete REST API Directory
+## 11. Complete REST API Directory
 
 ### 🔐 1. Authentication (`/api/auth`)
 *   `POST /api/auth/register` — Register new user account (`BUYER`, `PROVIDER`, `GOVERNMENT_OFFICER`, `ADMIN`)
@@ -362,7 +765,7 @@ erDiagram
 
 ---
 
-## 10. Local Development & Setup Guide
+## 12. Local Development & Setup Guide
 
 ### A. Frontend Setup (`/frontend-react`)
 ```bash
@@ -387,7 +790,7 @@ Boots MySQL 8.0 and the Spring Boot service cleanly in an isolated Docker contai
 
 ---
 
-## 11. Environment Variables Reference
+## 13. Environment Variables Reference
 
 | Variable Name | Description | Default Fallback (Development) |
 |---|---|---|
@@ -402,7 +805,7 @@ Boots MySQL 8.0 and the Spring Boot service cleanly in an isolated Docker contai
 
 ---
 
-## 12. Build & Testing Instructions
+## 14. Build & Testing Instructions
 
 ### Compile Backend `.jar`
 ```powershell
@@ -419,16 +822,16 @@ Boots MySQL 8.0 and the Spring Boot service cleanly in an isolated Docker contai
 
 ---
 
-## 13. Security, Auth & Rate Limiting
+## 15. Security, Auth & Rate Limiting
 
-*   **Credential Encryption**: Hashing using BCrypt for password fields.
+*   **Credential Encryption**: Hashing using BCrypt for password fields inside `users`.
 *   **Token Authorization**: Custom `JwtAuthenticationFilter` intercepts HTTP headers to validate bearer signatures.
 *   **External API Guarding**: Interceptor (`ApiKeyInterceptor`) locks all `/api/v1/external/**` routes requiring `x-api-key`.
 *   **Rate Limits**: Automated tracker logs developer usage and blocks keys exceeding defined thresholds (`429 Rate Limit Exceeded`).
 
 ---
 
-## 14. Multi-Cloud Deployment Options
+## 16. Multi-Cloud Deployment Options
 
 LandLens supports cloud-agnostic container deployments:
 
@@ -440,7 +843,7 @@ LandLens supports cloud-agnostic container deployments:
 
 ---
 
-## 15. AWS Infrastructure Cost Projections
+## 17. AWS Infrastructure Cost Projections
 
 | User Scale | Frontend (S3 + CloudFront) | Backend API (ECS Fargate + ALB) | Database (MySQL / RDS) | Networking & Egress (NAT Gateway) | Total Estimated Monthly Cost |
 | :--- | :--- | :--- | :--- | :--- | :--- |
@@ -451,7 +854,7 @@ LandLens supports cloud-agnostic container deployments:
 
 ---
 
-## 16. Future Roadmap & Improvements
+## 18. Future Roadmap & Improvements
 
 *   **Test Isolation with H2**: Mock H2 in-memory profile (`application-test.properties`) so build steps execute offline cleanly.
 *   **Redis Caching Layer**: Cache wrapper for public property search endpoints to reduce DB hits.
@@ -460,7 +863,7 @@ LandLens supports cloud-agnostic container deployments:
 
 ---
 
-## 17. Contributing & License
+## 19. Contributing & License
 
 1.  Create a feature branch from `main` (`git checkout -b feature/amazing-feature`).
 2.  Commit your changes using meaningful, structured commit messages.
