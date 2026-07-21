@@ -520,181 +520,181 @@ The database is normalized into **3NF (Third Normal Form)** tables. Every table 
 ```mermaid
 erDiagram
     roles {
-        VARCHAR_36 id PK
-        VARCHAR_50 name UK
-        VARCHAR_255 description
-        TIMESTAMP created_at
-        TIMESTAMP updated_at
-        BOOLEAN is_active
+        string id PK
+        string name UK
+        string description
+        timestamp created_at
+        timestamp updated_at
+        boolean is_active
     }
 
     users {
-        VARCHAR_36 id PK
-        VARCHAR_150 email UK
-        VARCHAR_255 password_hash
-        VARCHAR_100 first_name
-        VARCHAR_100 last_name
-        VARCHAR_20 phone_number
-        VARCHAR_36 role_id FK
-        TIMESTAMP created_at
-        TIMESTAMP updated_at
-        BOOLEAN is_active
+        string id PK
+        string email UK
+        string password_hash
+        string first_name
+        string last_name
+        string phone_number
+        string role_id FK
+        timestamp created_at
+        timestamp updated_at
+        boolean is_active
     }
 
     refresh_tokens {
-        VARCHAR_36 id PK
-        VARCHAR_36 user_id FK
-        VARCHAR_512 token UK
-        TIMESTAMP expiry_date
-        BOOLEAN revoked
-        TIMESTAMP created_at
-        TIMESTAMP updated_at
-        BOOLEAN is_active
+        string id PK
+        string user_id FK
+        string token UK
+        timestamp expiry_date
+        boolean revoked
+        timestamp created_at
+        timestamp updated_at
+        boolean is_active
     }
 
     properties {
-        VARCHAR_36 id PK
-        VARCHAR_50 property_code UK
-        VARCHAR_150 title
-        VARCHAR_50 category
-        DECIMAL_12_2 area
-        DECIMAL_15_2 price
-        TEXT description
-        VARCHAR_50 survey_number
-        VARCHAR_255 address
-        DECIMAL_9_6 latitude
-        DECIMAL_9_6 longitude
-        VARCHAR_100 district
-        VARCHAR_100 village
-        VARCHAR_100 state
-        VARCHAR_10 pincode
-        VARCHAR_512 three_sixty_image_url
-        VARCHAR_30 status
-        VARCHAR_36 provider_id FK
-        TIMESTAMP created_at
-        TIMESTAMP updated_at
-        BOOLEAN is_active
+        string id PK
+        string property_code UK
+        string title
+        string category
+        decimal area
+        decimal price
+        text description
+        string survey_number
+        string address
+        decimal latitude
+        decimal longitude
+        string district
+        string village
+        string state
+        string pincode
+        string three_sixty_image_url
+        string status
+        string provider_id FK
+        timestamp created_at
+        timestamp updated_at
+        boolean is_active
     }
 
     property_images {
-        VARCHAR_36 id PK
-        VARCHAR_36 property_id FK
-        VARCHAR_512 image_url
-        VARCHAR_512 thumbnail_url
-        INT display_order
-        TIMESTAMP created_at
-        TIMESTAMP updated_at
-        BOOLEAN is_active
+        string id PK
+        string property_id FK
+        string image_url
+        string thumbnail_url
+        int display_order
+        timestamp created_at
+        timestamp updated_at
+        boolean is_active
     }
 
     property_videos {
-        VARCHAR_36 id PK
-        VARCHAR_36 property_id FK
-        VARCHAR_512 video_url
-        INT duration
-        VARCHAR_512 thumbnail_url
-        TIMESTAMP created_at
-        TIMESTAMP updated_at
-        BOOLEAN is_active
+        string id PK
+        string property_id FK
+        string video_url
+        int duration
+        string thumbnail_url
+        timestamp created_at
+        timestamp updated_at
+        boolean is_active
     }
 
     property_documents {
-        VARCHAR_36 id PK
-        VARCHAR_36 property_id FK
-        VARCHAR_50 document_type
-        VARCHAR_512 file_url
-        VARCHAR_30 ocr_status
-        VARCHAR_30 verification_status
-        TIMESTAMP created_at
-        TIMESTAMP updated_at
-        BOOLEAN is_active
+        string id PK
+        string property_id FK
+        string document_type
+        string file_url
+        string ocr_status
+        string verification_status
+        timestamp created_at
+        timestamp updated_at
+        boolean is_active
     }
 
     ai_verifications {
-        VARCHAR_36 id PK
-        VARCHAR_36 property_id FK_UK
-        DECIMAL_5_2 ai_trust_score
-        DECIMAL_5_2 forgery_score
-        DECIMAL_5_2 duplicate_score
-        BOOLEAN ownership_match
-        DECIMAL_5_2 risk_score
-        TEXT summary
-        DECIMAL_5_2 confidence
-        TIMESTAMP generated_date
-        TIMESTAMP created_at
-        TIMESTAMP updated_at
-        BOOLEAN is_active
+        string id PK
+        string property_id FK
+        decimal ai_trust_score
+        decimal forgery_score
+        decimal duplicate_score
+        boolean ownership_match
+        decimal risk_score
+        text summary
+        decimal confidence
+        timestamp generated_date
+        timestamp created_at
+        timestamp updated_at
+        boolean is_active
     }
 
     government_verifications {
-        VARCHAR_36 id PK
-        VARCHAR_36 property_id FK_UK
-        VARCHAR_36 officer_id FK
-        TEXT remarks
-        VARCHAR_30 status
-        TIMESTAMP verified_date
-        TIMESTAMP created_at
-        TIMESTAMP updated_at
-        BOOLEAN is_active
+        string id PK
+        string property_id FK
+        string officer_id FK
+        text remarks
+        string status
+        timestamp verified_date
+        timestamp created_at
+        timestamp updated_at
+        boolean is_active
     }
 
     verification_timelines {
-        VARCHAR_36 id PK
-        VARCHAR_36 property_id FK
-        TIMESTAMP timestamp
-        VARCHAR_50 action
-        TEXT remarks
-        VARCHAR_36 user_id FK
-        TIMESTAMP created_at
-        TIMESTAMP updated_at
-        BOOLEAN is_active
+        string id PK
+        string property_id FK
+        timestamp timestamp
+        string action
+        text remarks
+        string user_id FK
+        timestamp created_at
+        timestamp updated_at
+        boolean is_active
     }
 
     duplicate_claims {
-        VARCHAR_36 id PK
-        VARCHAR_36 property_a_id FK
-        VARCHAR_36 property_b_id FK
-        DECIMAL_5_2 similarity
-        TEXT reason
-        VARCHAR_30 status
-        VARCHAR_50 decision
-        TIMESTAMP created_at
-        TIMESTAMP updated_at
-        BOOLEAN is_active
+        string id PK
+        string property_a_id FK
+        string property_b_id FK
+        decimal similarity
+        text reason
+        string status
+        string decision
+        timestamp created_at
+        timestamp updated_at
+        boolean is_active
     }
 
     fraud_reports {
-        VARCHAR_36 id PK
-        VARCHAR_36 reporter_id FK
-        VARCHAR_36 property_id FK
-        VARCHAR_150 reason
-        TEXT description
-        VARCHAR_30 status
-        VARCHAR_36 officer_id FK
-        TIMESTAMP created_at
-        TIMESTAMP updated_at
-        BOOLEAN is_active
+        string id PK
+        string reporter_id FK
+        string property_id FK
+        string reason
+        text description
+        string status
+        string officer_id FK
+        timestamp created_at
+        timestamp updated_at
+        boolean is_active
     }
 
     property_visits {
-        VARCHAR_36 id PK
-        VARCHAR_36 buyer_id FK
-        VARCHAR_36 property_id FK
-        DATE visit_date
-        TIME visit_time
-        VARCHAR_30 status
-        TIMESTAMP created_at
-        TIMESTAMP updated_at
-        BOOLEAN is_active
+        string id PK
+        string buyer_id FK
+        string property_id FK
+        date visit_date
+        time visit_time
+        string status
+        timestamp created_at
+        timestamp updated_at
+        boolean is_active
     }
 
     saved_properties {
-        VARCHAR_36 id PK
-        VARCHAR_36 buyer_id FK
-        VARCHAR_36 property_id FK
-        TIMESTAMP created_at
-        TIMESTAMP updated_at
-        BOOLEAN is_active
+        string id PK
+        string buyer_id FK
+        string property_id FK
+        timestamp created_at
+        timestamp updated_at
+        boolean is_active
     }
 
     roles ||--o{ users : "assigns"

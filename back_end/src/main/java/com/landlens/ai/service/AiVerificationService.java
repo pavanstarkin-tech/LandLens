@@ -125,7 +125,7 @@ public class AiVerificationService {
 
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create("https://integrate.api.nvidia.com/v1/chat/completions"))
-                    .header("Authorization", "Bearer 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")
+                    .header("Authorization", "Bearer " + openAiApiKey)
                     .header("Content-Type", "application/json")
                     .POST(HttpRequest.BodyPublishers.ofString(requestBody))
                     .build();
