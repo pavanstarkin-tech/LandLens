@@ -33,17 +33,15 @@
 8. [Live Deployment & Production Endpoints](#8-live-deployment--production-endpoints)
 9. [Folder & Package Architecture](#9-folder--package-architecture)
 10. [System Architecture & Sequence Diagrams](#10-system-architecture--sequence-diagrams)
-11. [Database Module Overview & Table Directory](#11-database-module-overview--table-directory)
-12. [Detailed Table Schemas & Column Specifications](#12-detailed-table-schemas--column-specifications)
-13. [Full Entity Relationship Diagram (ERD)](#13-full-entity-relationship-diagram-erd)
-14. [Complete REST API Directory](#14-complete-rest-api-directory)
-15. [Local Development & Setup Guide](#15-local-development--setup-guide)
-16. [Environment Variables Reference](#16-environment-variables-reference)
-17. [Security, Auth & Rate Limiting](#17-security-auth--rate-limiting)
-18. [Application Scalability & Performance](#18-application-scalability--performance)
-19. [AWS Infrastructure Cost Projections](#19-aws-infrastructure-cost-projections)
-20. [Future Roadmap & Improvements](#20-future-roadmap--improvements)
-21. [Contributing & License](#21-contributing--license)
+11. [Database Module Overview & ERD](#11-database-module-overview--erd)
+12. [Complete REST API Directory](#12-complete-rest-api-directory)
+13. [Local Development & Setup Guide](#13-local-development--setup-guide)
+14. [Environment Variables Reference](#14-environment-variables-reference)
+15. [Security, Auth & Rate Limiting](#15-security-auth--rate-limiting)
+16. [Application Scalability & Performance](#16-application-scalability--performance)
+17. [AWS Infrastructure Cost Projections](#17-aws-infrastructure-cost-projections)
+18. [Future Roadmap & Improvements](#18-future-roadmap--improvements)
+19. [Contributing & License](#19-contributing--license)
 
 ---
 
@@ -404,206 +402,11 @@ The database is normalized into **3NF (Third Normal Form)** tables. Every table 
 | | `api_rate_limits` | Current rate limiting windows for active keys. |
 | **Analytics** | `daily_analytics` | Pre-aggregated system metrics per day. |
 
----
-
-## 11. Detailed Table Schemas & Column Specifications
-
-### Authentication & User Module
-
-#### `roles`
-*   `id` (`VARCHAR(36)`, PK)
-*   `name` (`VARCHAR(50)`, Not Null, Unique) - Values: `ADMIN`, `GOVERNMENT_OFFICER`, `PROVIDER`, `BUYER`
-*   `description` (`VARCHAR(255)`)
-*   *Standard Audit Columns* (`created_at`, `updated_at`, `created_by`, `updated_by`, `is_active`)
-
-#### `users`
-*   `id` (`VARCHAR(36)`, PK)
-*   `email` (`VARCHAR(150)`, Not Null, Unique)
-*   `password_hash` (`VARCHAR(255)`, Not Null)
-*   `first_name` (`VARCHAR(100)`, Not Null)
-*   `last_name` (`VARCHAR(100)`, Not Null)
-*   `phone_number` (`VARCHAR(20)`)
-*   `role_id` (`VARCHAR(36)`, Not Null, FK referencing `roles(id)`)
-*   *Standard Audit Columns*
-
-#### `refresh_tokens`
-*   `id` (`VARCHAR(36)`, PK)
-*   `user_id` (`VARCHAR(36)`, Not Null, FK referencing `users(id)`)
-*   `token` (`VARCHAR(512)`, Not Null, Unique)
-*   `expiry_date` (`TIMESTAMP`, Not Null)
-*   `revoked` (`BOOLEAN`, Not Null, Default `false`)
-*   *Standard Audit Columns*
-
-#### `login_histories`
-*   `id` (`VARCHAR(36)`, PK)
-*   `user_id` (`VARCHAR(36)`, Not Null, FK referencing `users(id)`)
-*   `login_timestamp` (`TIMESTAMP`, Not Null, Default `CURRENT_TIMESTAMP`)
-*   `ip_address` (`VARCHAR(45)`, Not Null)
-*   `user_agent` (`VARCHAR(512)`)
-*   `status` (`VARCHAR(20)`, Not Null) - Values: `SUCCESS`, `FAILED`
-*   *Standard Audit Columns*
+> 📅 **Schema Version**: 3NF Relational Database Schema — `July 2026`
 
 ---
 
-### Property Module
-
-#### `properties`
-*   `id` (`VARCHAR(36)`, PK)
-*   `property_code` (`VARCHAR(50)`, Not Null, Unique)
-*   `title` (`VARCHAR(150)`, Not Null)
-*   `category` (`VARCHAR(50)`, Not Null) - Values: `RESIDENTIAL`, `COMMERCIAL`, `AGRICULTURAL`, `INDUSTRIAL`
-*   `area` (`DECIMAL(12,2)`, Not Null)
-*   `price` (`DECIMAL(15,2)`, Not Null)
-*   `description` (`TEXT`)
-*   `survey_number` (`VARCHAR(50)`, Not Null)
-*   `address` (`VARCHAR(255)`, Not Null)
-*   `latitude` (`DECIMAL(9,6)`, Not Null)
-*   `longitude` (`DECIMAL(9,6)`, Not Null)
-*   `district` (`VARCHAR(100)`, Not Null)
-*   `village` (`VARCHAR(100)`, Not Null)
-*   `state` (`VARCHAR(100)`, Not Null)
-*   `pincode` (`VARCHAR(10)`, Not Null)
-*   `three_sixty_image_url` (`VARCHAR(512)`)
-*   `status` (`VARCHAR(30)`, Not Null) - Values: `PENDING_AI`, `PENDING_GOVT`, `APPROVED`, `REJECTED`, `DISPUTED`
-*   `provider_id` (`VARCHAR(36)`, Not Null, FK referencing `users(id)`)
-*   *Standard Audit Columns*
-
-#### `property_images`
-*   `id` (`VARCHAR(36)`, PK)
-*   `property_id` (`VARCHAR(36)`, Not Null, FK referencing `properties(id)`)
-*   `image_url` (`VARCHAR(512)`, Not Null)
-*   `thumbnail_url` (`VARCHAR(512)`, Not Null)
-*   `display_order` (`INT`, Not Null, Default `0`)
-*   *Standard Audit Columns*
-
-#### `property_videos`
-*   `id` (`VARCHAR(36)`, PK)
-*   `property_id` (`VARCHAR(36)`, Not Null, FK referencing `properties(id)`)
-*   `video_url` (`VARCHAR(512)`, Not Null)
-*   `duration` (`INT`) - Duration in seconds
-*   `thumbnail_url` (`VARCHAR(512)`)
-*   *Standard Audit Columns*
-
-#### `property_documents`
-*   `id` (`VARCHAR(36)`, PK)
-*   `property_id` (`VARCHAR(36)`, Not Null, FK referencing `properties(id)`)
-*   `document_type` (`VARCHAR(50)`, Not Null) - Values: `SALE_DEED`, `PATTA`, `SURVEY_MAP`, `TAX_RECEIPT`, `IDENTITY_PROOF`, `OWNERSHIP_PROOF`
-*   `file_url` (`VARCHAR(512)`, Not Null)
-*   `ocr_status` (`VARCHAR(30)`, Not Null) - Values: `PENDING`, `PROCESSING`, `COMPLETED`, `FAILED`
-*   `verification_status` (`VARCHAR(30)`, Not Null) - Values: `UNVERIFIED`, `VERIFIED`, `REJECTED`
-*   *Standard Audit Columns*
-
----
-
-### Verification Module
-
-#### `ai_verifications`
-*   `id` (`VARCHAR(36)`, PK)
-*   `property_id` (`VARCHAR(36)`, Not Null, Unique, FK referencing `properties(id)`)
-*   `ai_trust_score` (`DECIMAL(5,2)`, Not Null) - Scale `0.00` to `100.00`
-*   `forgery_score` (`DECIMAL(5,2)`, Not Null)
-*   `duplicate_score` (`DECIMAL(5,2)`, Not Null)
-*   `ownership_match` (`BOOLEAN`, Not Null)
-*   `risk_score` (`DECIMAL(5,2)`, Not Null)
-*   `summary` (`TEXT`)
-*   `confidence` (`DECIMAL(5,2)`, Not Null)
-*   `generated_date` (`TIMESTAMP`, Not Null, Default `CURRENT_TIMESTAMP`)
-*   *Standard Audit Columns*
-
-#### `government_verifications`
-*   `id` (`VARCHAR(36)`, PK)
-*   `property_id` (`VARCHAR(36)`, Not Null, Unique, FK referencing `properties(id)`)
-*   `officer_id` (`VARCHAR(36)`, Not Null, FK referencing `users(id)`)
-*   `remarks` (`TEXT`)
-*   `status` (`VARCHAR(30)`, Not Null) - Values: `APPROVED`, `REJECTED`, `DISPUTED`
-*   `verified_date` (`TIMESTAMP`, Not Null, Default `CURRENT_TIMESTAMP`)
-*   *Standard Audit Columns*
-
-#### `verification_timelines`
-*   `id` (`VARCHAR(36)`, PK)
-*   `property_id` (`VARCHAR(36)`, Not Null, FK referencing `properties(id)`)
-*   `timestamp` (`TIMESTAMP`, Not Null, Default `CURRENT_TIMESTAMP`)
-*   `action` (`VARCHAR(50)`, Not Null) - Values: `UPLOADED`, `AI_STARTED`, `AI_COMPLETED`, `GOVT_REVIEW_STARTED`, `APPROVED`, `REJECTED`, `DISPUTED`
-*   `remarks` (`TEXT`)
-*   `user_id` (`VARCHAR(36)`, Not Null, FK referencing `users(id)`)
-*   *Standard Audit Columns*
-
----
-
-### Fraud & Buyer Interactions Modules
-
-#### `duplicate_claims`
-*   `id` (`VARCHAR(36)`, PK)
-*   `property_a_id` (`VARCHAR(36)`, Not Null, FK referencing `properties(id)`)
-*   `property_b_id` (`VARCHAR(36)`, Not Null, FK referencing `properties(id)`)
-*   `similarity` (`DECIMAL(5,2)`, Not Null)
-*   `reason` (`TEXT`, Not Null)
-*   `status` (`VARCHAR(30)`, Not Null) - Values: `FLAGGED`, `INVESTIGATING`, `RESOLVED`, `FALSE_POSITIVE`
-*   `decision` (`VARCHAR(50)`) - Values: `MERGED`, `CANCELLED_A`, `CANCELLED_B`, `NO_ACTION`
-*   *Standard Audit Columns*
-
-#### `fraud_reports`
-*   `id` (`VARCHAR(36)`, PK)
-*   `reporter_id` (`VARCHAR(36)`, Not Null, FK referencing `users(id)`)
-*   `property_id` (`VARCHAR(36)`, Not Null, FK referencing `properties(id)`)
-*   `reason` (`VARCHAR(150)`, Not Null)
-*   `description` (`TEXT`, Not Null)
-*   `status` (`VARCHAR(30)`, Not Null) - Values: `SUBMITTED`, `UNDER_INVESTIGATION`, `RESOLVED_FRAUD`, `RESOLVED_DISMISSED`
-*   `officer_id` (`VARCHAR(36)`, FK referencing `users(id)`)
-*   *Standard Audit Columns*
-
-#### `property_visits`
-*   `id` (`VARCHAR(36)`, PK)
-*   `buyer_id` (`VARCHAR(36)`, Not Null, FK referencing `users(id)`)
-*   `property_id` (`VARCHAR(36)`, Not Null, FK referencing `properties(id)`)
-*   `visit_date` (`DATE`, Not Null)
-*   `visit_time` (`TIME`, Not Null)
-*   `status` (`VARCHAR(30)`, Not Null) - Values: `SCHEDULED`, `COMPLETED`, `CANCELLED`, `RESCHEDULED`
-*   *Standard Audit Columns*
-
-#### `saved_properties`
-*   `id` (`VARCHAR(36)`, PK)
-*   `buyer_id` (`VARCHAR(36)`, Not Null, FK referencing `users(id)`)
-*   `property_id` (`VARCHAR(36)`, Not Null, FK referencing `properties(id)`)
-*   *Standard Audit Columns*
-
----
-
-### Notifications, Chat & Developer API Modules
-
-#### `notifications`
-*   `id` (`VARCHAR(36)`, PK)
-*   `title` (`VARCHAR(150)`, Not Null)
-*   `message` (`TEXT`, Not Null)
-*   `type` (`VARCHAR(50)`, Not Null)
-*   `is_read` (`BOOLEAN`, Not Null, Default `false`)
-*   `receiver_id` (`VARCHAR(36)`, Not Null, FK referencing `users(id)`)
-*   `created_time` (`TIMESTAMP`, Not Null, Default `CURRENT_TIMESTAMP`)
-*   *Standard Audit Columns*
-
-#### `api_keys`
-*   `id` (`VARCHAR(36)`, PK)
-*   `user_id` (`VARCHAR(36)`, Not Null, FK referencing `users(id)`)
-*   `key_hash` (`VARCHAR(255)`, Not Null, Unique)
-*   `name` (`VARCHAR(100)`, Not Null)
-*   `prefix` (`VARCHAR(8)`, Not Null)
-*   `status` (`VARCHAR(20)`, Not Null) - Values: `ACTIVE`, `REVOKED`, `EXPIRED`
-*   `expiry_date` (`TIMESTAMP`)
-*   *Standard Audit Columns*
-
-#### `daily_analytics`
-*   `id` (`VARCHAR(36)`, PK)
-*   `analytics_date` (`DATE`, Not Null, Unique)
-*   `property_views` (`INT`, Not Null, Default `0`)
-*   `search_count` (`INT`, Not Null, Default `0`)
-*   `verification_count` (`INT`, Not Null, Default `0`)
-*   `fraud_count` (`INT`, Not Null, Default `0`)
-*   `api_calls` (`INT`, Not Null, Default `0`)
-*   *Standard Audit Columns*
-
----
-
-## 12. Full Entity Relationship Diagram (ERD)
+### Entity Relationship Diagram (ERD)
 
 ```mermaid
 erDiagram
