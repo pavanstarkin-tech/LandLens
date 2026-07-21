@@ -102,45 +102,51 @@ In an intensive **1-week engineering sprint**, Pavan and the team achieved major
 
 ## 5. Complete Technology Stack by Service
 
+| 🎨 Frontend Tier (`/frontend-react`) | ⚙️ Backend & DB Tier (`/back_end`) | ☁️ Cloud & DevOps Tier (AWS / Ops) |
+| :--- | :--- | :--- |
+| **React 18** — Component Architecture | **Spring Boot 3.4.0** — Java 21 Framework | **AWS CloudFront** — Global Edge CDN |
+| **Vite 5** — Fast HMR Bundler & Compiler | **Spring Security** — JWT Token Auth | **AWS S3** — Static Asset & Media Bucket |
+| **TypeScript 5.0** — Type-Safe Application | **Spring Data JPA** — Hibernate ORM | **AWS ECS Fargate** — Serverless Containers |
+| **Tailwind CSS** — Glassmorphism Design | **HikariCP** — Database Connection Pool | **AWS ALB** — Application Load Balancer |
+| **Mapbox GL JS** — GIS Interactive Mapping | **MySQL 8.0** — 3NF Relational Database | **AWS NAT Gateway** — Static Egress IP |
+| **Pannellum VR** — 360° Panorama Viewer | **BCrypt** — Secure Password Hashing | **Jenkins & GitHub Actions** — CI/CD Pipelines |
+| **Axios** — Auth Bearer Interceptors | **Jackson & OpenAPI** — JSON & Swagger | **SonarQube** — Static Code Analysis |
+
+### 🔄 Architectural Tier Interactions
 ```mermaid
-graph LR
-    subgraph Frontend [React 18 + Vite]
-        R[React 18]
-        V[Vite 5]
-        TS[TypeScript]
-        TW[Tailwind CSS]
-        MB[Mapbox GL JS]
-        PN[Pannellum 360 VR]
-        AX[Axios Interceptors]
+graph TD
+    subgraph ClientLayer [Client & User Layer]
+        FE[React 18 + Vite Frontend Application]
+        MB[Mapbox GIS Engine]
+        VR[Pannellum 360 VR Player]
     end
 
-    subgraph Backend [Spring Boot 3.4]
-        SB[Spring Boot 3.4]
-        J21[Java 21]
-        SEC[Spring Security JWT]
-        JPA[Spring Data JPA]
-        HIK[HikariCP]
-        ACT[Spring Actuator]
+    subgraph CDNEast [AWS CDN & Edge Distribution]
+        CF[Amazon CloudFront CDN]
+        S3[AWS S3 Bucket]
     end
 
-    subgraph Database [Relational DB]
-        MY[MySQL 8.0 3NF]
+    subgraph ServerLayer [Application Server Layer]
+        ALB[AWS Application Load Balancer]
+        ECS[AWS ECS Fargate - Spring Boot Container]
+        SEC[Spring Security & JWT Filter]
     end
 
-    subgraph CloudDevOps [AWS & Operations]
-        CF[AWS CloudFront]
-        S3[AWS S3]
-        ECS[AWS ECS Fargate]
-        ALB[AWS ALB]
-        NAT[AWS NAT Gateway]
-        JEN[Jenkins CI/CD]
-        SON[SonarQube Audit]
+    subgraph PersistenceLayer [Data & Persistence Layer]
+        NAT[AWS NAT Gateway Egress]
+        DB[(Hostinger MySQL 8.0 Database)]
+        AI[AI Trust & OCR Engine]
     end
 
-    Frontend -->|HTTPS API Requests| Backend
-    Backend -->|JDBC Queries| Database
-    CloudDevOps -->|Hosts & Deploys| Frontend
-    CloudDevOps -->|Hosts & Deploys| Backend
+    FE -->|1. Request Static Bundle| CF
+    CF -->|2. Fetch Assets| S3
+    FE -->|3. HTTPS API Calls| CF
+    CF -->|4. Proxy /api/*| ALB
+    ALB -->|5. Forward Port 8080| ECS
+    ECS -->|6. Intercept & Validate Token| SEC
+    ECS -->|7. Outbound Egress| NAT
+    NAT -->|8. JDBC SQL Queries| DB
+    ECS -->|9. Async Analysis| AI
 ```
 
 ---
