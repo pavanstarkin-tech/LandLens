@@ -25,24 +25,25 @@
 ## 📑 Master Table of Contents
 1. [Real-Time Need & Problem Statement](#1-real-time-need--problem-statement)
 2. [Project Abilities & Core Advantages](#2-project-abilities--core-advantages)
-3. [Engineering Lead & Team Hype](#3-engineering-lead--team-hype)
-4. [1-Week Rapid Implementation Sprint & Bug Fixes](#4-1-week-rapid-implementation-sprint--bug-fixes)
-5. [Complete Technology Stack by Service](#5-complete-technology-stack-by-service)
-6. [Platform & Cloud Infrastructure Services](#6-platform--cloud-infrastructure-services)
-7. [Live Deployment & Production Endpoints](#7-live-deployment--production-endpoints)
-8. [Folder & Package Architecture](#8-folder--package-architecture)
-9. [System Architecture & Sequence Diagrams](#9-system-architecture--sequence-diagrams)
-10. [Database Module Overview & Table Directory](#10-database-module-overview--table-directory)
-11. [Detailed Table Schemas & Column Specifications](#11-detailed-table-schemas--column-specifications)
-12. [Full Entity Relationship Diagram (ERD)](#12-full-entity-relationship-diagram-erd)
-13. [Complete REST API Directory](#13-complete-rest-api-directory)
-14. [Local Development & Setup Guide](#14-local-development--setup-guide)
-15. [Environment Variables Reference](#15-environment-variables-reference)
-16. [Security, Auth & Rate Limiting](#16-security-auth--rate-limiting)
-17. [Application Scalability & Performance](#17-application-scalability--performance)
-18. [AWS Infrastructure Cost Projections](#18-aws-infrastructure-cost-projections)
-19. [Future Roadmap & Improvements](#19-future-roadmap--improvements)
-20. [Contributing & License](#20-contributing--license)
+3. [Application Screenshots & UI Showcase](#3-application-screenshots--ui-showcase)
+4. [Engineering Lead & Team Hype](#4-engineering-lead--team-hype)
+5. [1-Week Rapid Implementation Sprint & Bug Fixes](#5-1-week-rapid-implementation-sprint--bug-fixes)
+6. [Complete Technology Stack by Service](#6-complete-technology-stack-by-service)
+7. [Platform & Cloud Infrastructure Services](#7-platform--cloud-infrastructure-services)
+8. [Live Deployment & Production Endpoints](#8-live-deployment--production-endpoints)
+9. [Folder & Package Architecture](#9-folder--package-architecture)
+10. [System Architecture & Sequence Diagrams](#10-system-architecture--sequence-diagrams)
+11. [Database Module Overview & Table Directory](#11-database-module-overview--table-directory)
+12. [Detailed Table Schemas & Column Specifications](#12-detailed-table-schemas--column-specifications)
+13. [Full Entity Relationship Diagram (ERD)](#13-full-entity-relationship-diagram-erd)
+14. [Complete REST API Directory](#14-complete-rest-api-directory)
+15. [Local Development & Setup Guide](#15-local-development--setup-guide)
+16. [Environment Variables Reference](#16-environment-variables-reference)
+17. [Security, Auth & Rate Limiting](#17-security-auth--rate-limiting)
+18. [Application Scalability & Performance](#18-application-scalability--performance)
+19. [AWS Infrastructure Cost Projections](#19-aws-infrastructure-cost-projections)
+20. [Future Roadmap & Improvements](#20-future-roadmap--improvements)
+21. [Contributing & License](#21-contributing--license)
 
 ---
 
@@ -69,7 +70,46 @@ Real estate and land transactions are plaguing buyers, financial institutions, a
 
 ---
 
-## 3. Engineering Lead & Team Hype
+## 3. Application Screenshots & UI Showcase
+
+Below is a visual walkthrough of the live **LandLens** platform across key user flows:
+
+### 🔐 Authentication & Responsive Mobile UI
+| Login Portal (Desktop Glassmorphism) | Mobile Responsive Interface |
+| :---: | :---: |
+| ![Login Desktop](./dashscreenshots/login-desktop.png) | ![Login Mobile](./dashscreenshots/login-mobile.png) |
+
+---
+
+### 🏡 Buyer Dashboard & Property Exploration Marketplace
+| Buyer Dashboard & Activity Overview | Property Exploration & Filter Engine |
+| :---: | :---: |
+| ![Buyer Dashboard](./dashscreenshots/userdash.png) | ![Property Marketplace](./dashscreenshots/userexplore.png) |
+
+---
+
+### 🗺️ Mapbox GIS Mapping & Land Location Details
+| Interactive Mapbox Boundaries & Survey Clusters | Land Location & Spatial Coordinates |
+| :---: | :---: |
+| ![Mapbox Boundaries](./dashscreenshots/usermap.png) | ![Location Details](./dashscreenshots/loacationdetaislofland.png) |
+
+---
+
+### 🤖 AI Trust Score & Property Details Page
+| AI Document Verification & Forgery Analysis | Property Detail Overview & 360° VR Viewer |
+| :---: | :---: |
+| ![AI Analysis](./dashscreenshots/aianalysis.png) | ![Property Details](./dashscreenshots/propertydetails.png) |
+
+---
+
+### 💼 Seller Portal, Tour Schedules & Account Profile
+| Land Provider / Seller Dashboard | Scheduled Inspection Visits | User Profile & Settings |
+| :---: | :---: | :---: |
+| ![Seller Dashboard](./dashscreenshots/sellerdash.png) | ![Scheduled Visits](./dashscreenshots/userschedules.png) | ![User Account](./dashscreenshots/useracct.png) |
+
+---
+
+## 4. Engineering Lead & Team Hype
 
 ### 🚀 Technical Architect & Core Engineering Lead: Pavan Kumar Swamy (`@Pavankumarswamy`)
 > **Pavan Kumar Swamy** is the **Primary Core Developer & Chief Technical Architect** behind LandLens. Pavan spearheaded the entire platform's technical vision from day one—architecting the initial 3NF database schema, building the high-performance React 18 + Vite frontend, designing the glassmorphic UI system, integrating Mapbox GL JS GIS mapping, embedding 360° virtual tour rendering, and assembling the full-stack Spring Boot REST API integration. In the spirit of servant leadership, Pavan designated the Team Lead title to Priya (`@santhipriyaa27`) to drive management and QA execution while remaining the hands-on engineering engine that powered LandLens to completion.
