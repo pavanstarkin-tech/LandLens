@@ -18,16 +18,16 @@
 
 ## 🏴‍☠️ Meet Team Pixel Pirates & Developers
 
-Behind **LandLens** is the **Pixel Pirates** team—6 talented developers who architected, designed, built, automated, and deployed this modern platform.
+Behind **LandLens** is the **Pixel Pirates** team—6 dedicated engineers who architected, designed, built, automated, and deployed this platform.
 
-| Avatar / Handle | Developer | Role & Contributions |
-| :--- | :--- | :--- |
-| 👑 **@santhipriyaa27** | **Santhi Priya (Team Lead)** | **Team Lead, DevOps & QA Automation**<br>Lead project manager; architected Jenkins CI/CD automation pipelines, SonarQube code quality auditing (`automate_sonar.py`), bug tracking, test suite execution, and system quality control. |
-| 🤖 **@hemanthkotipalli** | **Hemanth Kotipalli** | **AI & GenAI Systems Engineer**<br>Built the interactive AI Chatbot assistant (`landlens-ai-assistant`), OCR document extraction pipeline, GenAI verification algorithms, and automated land trust score calculations. |
-| 🗄️ **@keerthithammisetty** | **Keerthi Thammisetty** | **Database Architect & Schema Designer**<br>Designed and normalized the 3NF relational database schema (`schema.sql`), optimized complex JPA query relationships, entity mappings, and database transaction boundaries. |
-| 🎨 **@Pavankumarswamy** | **Pavan Kumar Swamy** | **Frontend UI/UX Designer & Lead Engineer**<br>Designed and implemented the glassmorphic React 18 UI, role-based dashboards (Buyer, Provider, Officer, Admin), Mapbox GL JS map engine, and 360° virtual tour viewer. |
-| 🚀 **@ramasai98** | **Rama Sai** | **DevOps & Cloud Infrastructure Architect**<br>Architected the AWS Cloud topology—configuring CloudFront CDN edge distribution, S3 static hosting, ECS Fargate container clusters, ALB load balancers, and Terraform IaC scripts. |
-| ⚙️ **@vasavi985** | **Rama Vasavi Patchikolla** | **Backend Lead Developer**<br>Developed the core Spring Boot 3.4 (Java 21) REST API services, Spring Security JWT authentication framework, role-based authorization filters, property listing modules, and analytics aggregators. |
+| Avatar | Developer | Role & Contributions | GitHub Profile |
+| :---: | :--- | :--- | :---: |
+| <img src="https://github.com/santhipriyaa27.png" width="60" style="border-radius:50%;"/> | **Santhi Priya** | **Team Lead, DevOps & QA Automation**<br>Project manager; architected Jenkins CI/CD automation pipelines, SonarQube code quality auditing (`automate_sonar.py`), bug tracking, test execution, and quality control. | [@santhipriyaa27](https://github.com/santhipriyaa27) |
+| <img src="https://github.com/hemanthkotipalli.png" width="60" style="border-radius:50%;"/> | **Hemanth Kotipalli** | **AI & GenAI Systems Engineer**<br>Built the interactive AI Chatbot assistant, OCR document extraction pipeline, GenAI verification algorithms, and automated land trust score calculations. | [@hemanthkotipalli](https://github.com/hemanthkotipalli) |
+| <img src="https://github.com/keerthithammisetty.png" width="60" style="border-radius:50%;"/> | **Keerthi Thammisetty** | **Database Architect & Schema Designer**<br>Engineered and normalized the 3NF relational database schema (`schema.sql`), optimized JPA query relationships, entity mappings, and database transaction boundaries. | [@keerthithammisetty](https://github.com/keerthithammisetty) |
+| <img src="https://github.com/Pavankumarswamy.png" width="60" style="border-radius:50%;"/> | **Pavan Kumar Swamy** | **Frontend UI/UX Designer & Lead Engineer**<br>Designed and implemented the glassmorphic React 18 UI, role-based dashboards (Buyer, Provider, Officer, Admin), Mapbox GL JS map engine, and 360° virtual tour player. | [@Pavankumarswamy](https://github.com/Pavankumarswamy) |
+| <img src="https://github.com/ramasai98.png" width="60" style="border-radius:50%;"/> | **Rama Sai** | **DevOps & Cloud Infrastructure Architect**<br>Architected the AWS Cloud topology—configuring CloudFront CDN edge distribution, S3 static hosting, ECS Fargate container clusters, ALB load balancers, and Terraform IaC scripts. | [@ramasai98](https://github.com/ramasai98) |
+| <img src="https://github.com/vasavi985.png" width="60" style="border-radius:50%;"/> | **Rama Vasavi Patchikolla** | **Backend Lead Developer**<br>Engineered the core Spring Boot 3.4 (Java 21) REST API services, Spring Security JWT authentication framework, role-based authorization filters, and analytics aggregators. | [@vasavi985](https://github.com/vasavi985) |
 
 ---
 
@@ -53,6 +53,54 @@ Behind **LandLens** is the **Pixel Pirates** team—6 talented developers who ar
 - **Network Egress**: AWS NAT Gateway (Elastic IP binding)
 - **Code Quality**: SonarQube Static Analysis & Automated Python Sonar Runner (`automate_sonar.py`)
 - **CI/CD & Automation**: GitHub Actions, Jenkins, PowerShell/Bash Cloud Deployment Scripts (`deploy.ps1`)
+
+---
+
+## 🔒 Security, Authentication & Rate Limiting
+
+*   **Credential Encryption**: Secure hashing using BCrypt for all password fields inside the `users` table.
+*   **Token Authorization**: Custom `JwtAuthenticationFilter` intercepts HTTP headers to validate bearer signatures.
+*   **Security Policy**: Stateless session management, explicitly allowing public property listings and actuator endpoints, while forcing credential validation for mutations.
+*   **External API Guarding**: Interceptor (`ApiKeyInterceptor`) locks all `/api/v1/external/**` routes. Calls require a valid `x-api-key` header.
+*   **Rate Limits**: Automated tracker logs developer usage and blocks keys exceeding defined thresholds (`429 Rate Limit Exceeded`).
+
+---
+
+## 🗄️ Database Schema & Entity Relationships
+
+The relational database is normalized into **3NF (Third Normal Form)** tables. Every table includes audit attributes (`id` UUID, `created_at`, `updated_at`, `is_active` soft delete).
+
+```mermaid
+erDiagram
+    roles ||--o{ users : "assigns"
+    users ||--o{ refresh_tokens : "generates"
+    users ||--o{ login_histories : "attempts"
+    users ||--o{ properties : "owns"
+    users ||--o{ government_verifications : "performs"
+    users ||--o{ verification_timelines : "triggers"
+    users ||--o{ fraud_reports : "reports"
+    users ||--o{ property_visits : "schedules"
+    users ||--o{ saved_properties : "saves"
+    users ||--o{ notifications : "receives"
+    users ||--o{ ai_conversations : "starts"
+    users ||--o{ api_keys : "creates"
+
+    properties ||--o{ property_images : "has"
+    properties ||--o{ property_videos : "has"
+    properties ||--o{ property_documents : "requires"
+    properties ||--|| ai_verifications : "analyzed"
+    properties ||--|| government_verifications : "assessed"
+    properties ||--o{ verification_timelines : "logs"
+    properties ||--o{ duplicate_claims : "acts-as-A"
+    properties ||--o{ fraud_reports : "accused-in"
+    properties ||--o{ property_visits : "hosts"
+    properties ||--o{ saved_properties : "saved-in"
+
+    ai_conversations ||--o{ ai_messages : "contains"
+    api_keys ||--o{ api_usages : "tracks"
+    api_keys ||--o{ api_logs : "records"
+    api_keys ||--|| api_rate_limits : "restricts"
+```
 
 ---
 
@@ -99,6 +147,20 @@ Below is the complete catalog of backend endpoints exposed by the Spring Boot se
 - `GET /api/analytics/daily` — Daily pre-aggregated platform metrics (views, listings, verifications)
 - `POST /api/developer/keys` — Generate developer API access key
 - `GET /api/developer/usage` — Track API request usage and rate-limit counters
+
+---
+
+## ⚙️ Environment Variables Reference
+
+| Variable Name | Description | Default Fallback |
+|---|---|---|
+| `DB_URL` | JDBC Connection URL for MySQL | `jdbc:mysql://localhost:3306/landlens` |
+| `DB_USERNAME` | Database Authentication User | `root` |
+| `DB_PASSWORD` | Database Authentication Password | `[blank]` |
+| `JWT_SECRET` | HMAC SHA-256 Signature Secret | `9a2f3f4e5d6c7b8a9f0e1d2c3b4a5f6e7d8c9b0a1f2e3d4c5b6a7f8e9d0c1b2a3` |
+| `JWT_EXPIRATION_MS` | JWT Access Token duration | `86400000` (24 Hours) |
+| `SPRING_PROFILES_ACTIVE` | Active profile (`prod` or `dev`) | `default` |
+| `PORT` | Embedded server port | `8080` |
 
 ---
 
@@ -201,7 +263,7 @@ Estimated monthly AWS cloud hosting and maintenance costs scaled across active u
 
 ```text
 LandLense/
- ├── README.md                      # Master Project & Team Documentation
+ ├── README.md                      # Master Unified Documentation
  ├── automate_sonar.py              # Automated SonarQube Code Quality Analysis Script
  ├── update_cf.py                   # CloudFront CDN Infrastructure Configuration Script
  ├── frontend-react/                # Production React 18 + Vite Frontend Application
@@ -210,15 +272,14 @@ LandLense/
  │    ├── .github/workflows/        # Automated Deployment CI/CD Workflow
  │    ├── package.json              # React Dependencies & Scripts
  │    └── vite.config.ts            # Vite Compiler Configuration
- ├── back_end/                      # Spring Boot 3.4 (Java 21) REST Backend Application
- │    ├── src/main/java/com/landlens/ # Feature Packages (Auth, Property, AI, Fraud, etc.)
- │    ├── src/main/resources/       # schema.sql, application.properties
- │    ├── terraform/                # Infrastructure-as-Code for AWS ECS/ALB/VPC
- │    ├── deploy.ps1                # Automated Windows Deployment Pipeline
- │    ├── deploy.sh                 # Automated Linux Deployment Pipeline
- │    ├── Dockerfile                # Multi-stage Docker Container Definition
- │    └── pom.xml                   # Maven Dependencies & Build Definitions
- └── landlens-ai-assistant/         # AI Chatbot & GenAI Service Engine
+ └── back_end/                      # Spring Boot 3.4 (Java 21) REST Backend Application
+      ├── src/main/java/com/landlens/ # Feature Packages (Auth, Property, AI, Fraud, etc.)
+      ├── src/main/resources/       # schema.sql, application.properties
+      ├── terraform/                # Infrastructure-as-Code for AWS ECS/ALB/VPC
+      ├── deploy.ps1                # Automated Windows Deployment Pipeline
+      ├── deploy.sh                 # Automated Linux Deployment Pipeline
+      ├── Dockerfile                # Multi-stage Docker Container Definition
+      └── pom.xml                   # Maven Dependencies & Build Definitions
 ```
 
 ---
