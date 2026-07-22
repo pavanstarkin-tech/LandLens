@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { AlertCircle, EyeOff, Maximize } from 'lucide-react';
+import { AlertCircle, EyeOff } from 'lucide-react';
 import { Viewer } from '@photo-sphere-viewer/core';
 import '@photo-sphere-viewer/core/index.css';
 
@@ -12,6 +12,7 @@ export const PanoramaViewer: React.FC<PanoramaViewerProps> = React.memo(({ url }
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [extractedUrl, setExtractedUrl] = useState<string>('');
   const [isNativeImage, setIsNativeImage] = useState<boolean>(false);
+  const [, setGyroEnabled] = useState<boolean>(false);
   
   const viewerRef = useRef<HTMLDivElement>(null);
   const viewerInstance = useRef<Viewer | null>(null);
@@ -43,45 +44,9 @@ export const PanoramaViewer: React.FC<PanoramaViewerProps> = React.memo(({ url }
         return;
       }
 
-      // Existing Iframe Logic
-      const isMomento = hostname.includes('momento360.com');
-      const isKuula = hostname.includes('kuula.co');
-      const is360PhotoCam = hostname.includes('360photocam.com');
-      const isGoogleMaps = hostname.includes('google.com') || hostname.includes('google.co.in');
-
-      if (!isMomento && !isKuula && !is360PhotoCam && !isGoogleMaps) {
-        setErrorMsg('This 360° provider is not officially supported. We support direct image uploads, Google Maps, Momento360, Kuula, and 360PhotoCam.');
-        return;
-      }
-
-      let embedUrl = currentUrl;
-
-      if (isMomento && !currentUrl.includes('/e/')) {
-        setErrorMsg('Invalid Momento360 format. Please copy the embed or share link of the form: https://momento360.com/e/u/...');
-        return;
-      }
-
-      if (isGoogleMaps && !currentUrl.includes('/maps/')) {
-        setErrorMsg('Invalid Google Maps format. Please provide a Google Maps street view embed URL.');
-        return;
-      }
-
-      // Handle Kuula specific UI hiding
-      if (isKuula) {
-        const baseUrl = currentUrl.split('?')[0];
-        embedUrl = `${baseUrl}?fs=0&vr=0&zoom=0&sd=1&info=0&logo=-1&thumbs=0&autoplay=1&autorotate=1&autorotation=1`;
-      } else {
-        // Add smooth autorotation if possible for others
-        if (!embedUrl.includes('?')) {
-          embedUrl += '?autoplay=1&autorotate=1&autorotation=1';
-        } else {
-          embedUrl += '&autoplay=1&autorotate=1&autorotation=1';
-        }
-      }
-
-      setSafeUrl(embedUrl);
+      setSafeUrl(currentUrl);
     } catch (e) {
-      setErrorMsg('The provided virtual tour link is not a valid URL.');
+      setSafeUrl(currentUrl);
     }
   }, [url]);
 
@@ -91,22 +56,58 @@ export const PanoramaViewer: React.FC<PanoramaViewerProps> = React.memo(({ url }
         viewerInstance.current.destroy();
       }
 
-      viewerInstance.current = new Viewer({
+      const instance = new Viewer({
         container: viewerRef.current,
         panorama: safeUrl,
-        navbar: ['autorotate', 'zoom', 'fullscreen'],
+        navbar: ['fullscreen'],
         autorotateDelay: 1000,
         autorotateSpeed: '1rpm',
         defaultZoomLvl: 50
       });
-    }
 
-    return () => {
-      if (viewerInstance.current) {
-        viewerInstance.current.destroy();
-        viewerInstance.current = null;
+      viewerInstance.current = instance;
+
+      // Handle Device Gyroscope / Motion tracking
+      const handleDeviceOrientation = (e: DeviceOrientationEvent) => {
+        if (!viewerInstance.current || e.gamma === null || e.beta === null) return;
+        
+        // Map phone tilt & rotation (gamma: roll, beta: pitch) to panorama longitude/latitude
+        const lon = (e.gamma || 0) * (Math.PI / 180);
+        const lat = Math.min(Math.max(((e.beta || 0) - 45) * (Math.PI / 180), -Math.PI / 2.2), Math.PI / 2.2);
+
+        try {
+          viewerInstance.current.rotate({
+            longitude: lon,
+            latitude: lat
+          });
+        } catch (err) {}
+      };
+
+      // Request Gyroscope permission if required by iOS Safari
+      if (typeof (DeviceOrientationEvent as any)?.requestPermission === 'function') {
+        (DeviceOrientationEvent as any).requestPermission()
+          .then((response: string) => {
+            if (response === 'granted') {
+              window.addEventListener('deviceorientation', handleDeviceOrientation, true);
+              setGyroEnabled(true);
+            }
+          })
+          .catch(() => {});
+      } else if (window.DeviceOrientationEvent) {
+        window.addEventListener('deviceorientation', handleDeviceOrientation, true);
+        setGyroEnabled(true);
       }
-    };
+
+      return () => {
+        if (window.DeviceOrientationEvent) {
+          window.removeEventListener('deviceorientation', handleDeviceOrientation, true);
+        }
+        if (viewerInstance.current) {
+          viewerInstance.current.destroy();
+          viewerInstance.current = null;
+        }
+      };
+    }
   }, [isNativeImage, safeUrl]);
 
   return (
@@ -129,9 +130,9 @@ export const PanoramaViewer: React.FC<PanoramaViewerProps> = React.memo(({ url }
           <div className="absolute inset-0 w-full h-full z-10 overflow-hidden">
             <iframe
               src={safeUrl}
-              style={{ width: 'calc(100% + 55px)', height: 'calc(100% + 45px)', border: 'none', display: 'block', position: 'absolute', top: 0, left: 0 }}
+              style={{ width: '100%', height: '100%', border: 'none', display: 'block', position: 'absolute', top: 0, left: 0 }}
               allowFullScreen
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture">
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; magnetometer; picture-in-picture; xr-spatial-tracking; fullscreen">
             </iframe>
           </div>
         )

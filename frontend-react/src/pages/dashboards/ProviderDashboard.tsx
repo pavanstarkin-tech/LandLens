@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { propertyService } from '../../services/property.service';
 import { authService } from '../../services/auth.service';
 import { Map } from '../../components/shared/Map';
+import { LazyIframe } from '../../components/shared/LazyIframe';
 import { parseBoundaryFromDescription, cleanDescription } from '../../utils/boundary';
 import { cloudinaryService } from '../../services/cloudinary.service';
 import { DashboardLayout } from '../../components/layout/DashboardLayout';
@@ -22,13 +23,92 @@ import {
   Upload, Image, Video, FileText, Clock, Edit2, BarChart3, Map as MapIcon, Eye, ExternalLink, LogOut, MessageSquare
 } from 'lucide-react';
 
+const getCleanIframeUrl = (url?: string) => {
+  if (!url) return '';
+  let cleaned = url.trim();
+
+  // Extract src from <iframe src="..."> if embedded as HTML snippet
+  if (cleaned.toLowerCase().includes('<iframe')) {
+    const match = cleaned.match(/src\s*=\s*["']([^"']+)["']/i);
+    if (match && match[1]) cleaned = match[1];
+  }
+
+  // Prepend https:// if missing scheme
+  if (!cleaned.startsWith('http://') && !cleaned.startsWith('https://')) {
+    cleaned = 'https://' + cleaned;
+  }
+
+  // Kuula formatting: convert /post/ to /share/ and add clean embed parameters
+  if (cleaned.includes('kuula.co')) {
+    cleaned = cleaned.replace('/post/', '/share/');
+    const baseUrl = cleaned.split('?')[0];
+    return `${baseUrl}?fs=1&vr=0&zoom=0&sd=0&info=0&logo=-1&thumbs=0`;
+  }
+
+  // Momento360 formatting: convert /p/ to /e/ for embeddable iframe
+  if (cleaned.includes('momento360.com')) {
+    if (cleaned.includes('/p/')) {
+      cleaned = cleaned.replace('/p/', '/e/');
+    }
+    return cleaned;
+  }
+
+  // Matterport formatting
+  if (cleaned.includes('matterport.com')) {
+    if (!cleaned.includes('/show/')) {
+      const match = cleaned.match(/m=([a-zA-Z0-9]+)/);
+      if (match && match[1]) {
+        return `https://my.matterport.com/show/?m=${match[1]}`;
+      }
+    }
+  }
+
+  return cleaned;
+};
+
+const isValidIframeUrl = (url?: string) => {
+  if (!url) return false;
+  const cleaned = getCleanIframeUrl(url);
+  if (!cleaned) return false;
+  try {
+    const parsed = new URL(cleaned);
+    return (parsed.protocol === 'http:' || parsed.protocol === 'https:') && parsed.hostname.includes('.');
+  } catch (e) {
+    return false;
+  }
+};
+
+const isDirectImage = (url?: string) => {
+  if (!url) return false;
+  return url.includes('cloudinary.com') || /\.(jpg|jpeg|png|webp)($|\?)/i.test(url);
+};
+
+const getFallbackPhoto = (p: Property) => {
+  if (p.images && p.images.length > 0 && p.images[0].url) {
+    return p.images[0].url;
+  }
+  const category = (p.category || '').toUpperCase();
+  if (category.includes('FARM') || category.includes('AGRICULTURAL') || category.includes('ORCHARD') || category.includes('POND')) {
+    return 'https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=800&q=80';
+  }
+  if (category.includes('COMMERCIAL') || category.includes('FACTORY') || category.includes('RETAIL') || category.includes('SHOPPING')) {
+    return 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=800&q=80';
+  }
+  if (category.includes('RESIDENTIAL') || category.includes('APARTMENT') || category.includes('HOSTEL') || category.includes('PG')) {
+    return 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&w=800&q=80';
+  }
+  return 'https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=800&q=80';
+};
+
 export const ProviderDashboard = () => {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<'listings' | 'add' | 'visits' | 'notifications'>('listings');
+  const [activeTab, setActiveTab] = useState<'listings' | 'add' | 'visits'>('listings');
+  const [isNotificationPanelOpen, setIsNotificationPanelOpen] = useState(false);
   const [detailSubTab, setDetailSubTab] = useState<'verify' | 'media' | 'docs' | 'timeline'>('verify');
   const [listingFilterTab, setListingFilterTab] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all');
 
   const [myProperties, setMyProperties] = useState<Property[]>([]);
+  const [allProperties, setAllProperties] = useState<Property[]>([]);
   const [myVisits, setMyVisits] = useState<PropertyVisit[]>([]);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [lastDrawnBoundary, setLastDrawnBoundary] = useState<[number, number][]>([]);
@@ -65,14 +145,29 @@ export const ProviderDashboard = () => {
   const pendingVisitsCount = myVisits.filter(v => v.status === 'SCHEDULED').length;
   const unreadCount = notifications.filter(n => !n.isRead).length;
 
+  const handleLogout = () => {
+    authService.logout();
+    navigate('/auth/login');
+  };
+
   useEffect(() => { loadData(); loadVisits(); loadNotifications(); }, []);
 
   const loadData = async () => {
     try {
       const properties = await propertyService.getProperties();
+      setAllProperties(properties);
       const userId = currentUser?.id || localStorage.getItem('user_id');
-      setMyProperties(userId ? properties.filter(p => p.providerId === userId || p.provider?.id === userId) : properties);
-    } catch { setMyProperties([]); }
+      let filtered = userId ? properties.filter(p => p.providerId === userId || p.provider?.id === userId) : properties;
+      filtered = filtered.filter(p => 
+        !p.threeSixtyImageUrl?.toLowerCase().includes('google.com') && 
+        !p.threeSixtyImageUrl?.toLowerCase().includes('google.co.in') &&
+        !isDirectImage(p.threeSixtyImageUrl)
+      );
+      setMyProperties(filtered);
+    } catch {
+      setMyProperties([]);
+      setAllProperties([]);
+    }
   };
 
   const loadVisits = async () => { try { setMyVisits(await propertyService.getVisits()); } catch {} };
@@ -280,7 +375,55 @@ export const ProviderDashboard = () => {
     `w-full bg-gray-50 border border-gray-200 text-gray-900 placeholder-gray-400 focus:outline-none focus:border-primary-500 rounded-xl px-4 py-2.5 text-sm transition-all ${formErrors[name] ? '!border-danger-500 !bg-danger-50' : ''}`;
 
   return (
-    <div className="min-h-screen bg-gray-50 text-gray-900 font-sans flex flex-col pb-28 relative overflow-x-hidden">
+    <div className="min-h-screen bg-gray-50 text-gray-900 font-sans flex flex-col pb-28 md:pb-6 relative overflow-x-hidden md:pl-64">
+      {/* ── DESKTOP SIDEBAR ── */}
+      <aside className="hidden md:flex flex-col fixed top-0 bottom-0 left-0 w-64 bg-white border-r border-gray-200 z-40 p-4 shadow-sm">
+        <div className="flex items-center gap-3 px-3 py-4 border-b border-gray-200">
+          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-600 to-teal-600 flex items-center justify-center text-white font-black text-sm shadow-sm">
+            LL
+          </div>
+          <div>
+            <h2 className="text-gray-900 font-bold text-base leading-tight">Land<span className="text-emerald-600">Lens</span></h2>
+            <p className="text-gray-500 text-[10px] font-semibold">Seller Portal</p>
+          </div>
+        </div>
+
+        <nav className="flex-1 py-4 space-y-1 overflow-y-auto">
+          {[
+            { id: 'listings', icon: Home, label: 'My Listings' },
+            { id: 'add', icon: Plus, label: 'Add Property' },
+            { id: 'visits', icon: Calendar, label: 'Visits & Tours', badge: pendingVisitsCount }
+          ].map(item => {
+            const Icon = item.icon;
+            const isActive = activeTab === item.id;
+            return (
+              <button
+                key={item.id}
+                onClick={() => item.id === 'add' ? openAddPropertyForm() : setActiveTab(item.id as any)}
+                className={`w-full flex items-center gap-3 px-3.5 py-3 rounded-xl text-xs font-bold transition-all text-left ${
+                  isActive ? 'bg-emerald-50 text-emerald-700 shadow-xs' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                }`}
+              >
+                <Icon className={`w-4 h-4 ${isActive ? 'text-emerald-600' : 'text-gray-400'}`} />
+                <span className="flex-1">{item.label}</span>
+                {item.badge !== undefined && item.badge > 0 && (
+                  <span className="px-2 py-0.5 rounded-full bg-red-500 text-white text-[9px] font-bold">
+                    {item.badge}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </nav>
+
+        <div className="pt-3 border-t border-gray-200">
+          <button onClick={handleLogout} className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-gray-500 hover:text-red-600 hover:bg-red-50 transition-all">
+            <LogOut className="w-4 h-4" />
+            Sign Out
+          </button>
+        </div>
+      </aside>
+
       {/* ── TOP HEADER APP BAR ── */}
       <div className="sticky top-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-b border-gray-200 px-4 sm:px-6 h-16 flex items-center justify-between shadow-xs">
         <div className="flex items-center gap-3">
@@ -295,12 +438,12 @@ export const ProviderDashboard = () => {
 
         <div className="flex items-center gap-2">
           <button
-            onClick={() => setActiveTab('notifications')}
+            onClick={() => setIsNotificationPanelOpen(true)}
             className="relative w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 hover:bg-gray-200 transition-colors"
           >
             <Bell className="w-4 h-4" />
             {unreadCount > 0 && (
-              <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-primary-600 rounded-full border-2 border-white" />
+              <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white animate-pulse" />
             )}
           </button>
           <button
@@ -312,7 +455,7 @@ export const ProviderDashboard = () => {
         </div>
       </div>
 
-      <div className="px-4 sm:px-6 lg:px-8 py-6 space-y-6 max-w-7xl mx-auto w-full">
+      <div className="px-4 sm:px-6 py-6 space-y-6 w-full">
         {/* SUCCESS TOAST */}
         <AnimatePresence>
           {successToast && (
@@ -377,10 +520,6 @@ export const ProviderDashboard = () => {
               {filteredProperties().length > 0 ? (
                 <div className={`grid gap-4 ${selectedProperty ? 'grid-cols-1 xl:grid-cols-2' : 'grid-cols-1 md:grid-cols-2 xl:grid-cols-3'}`}>
                   {filteredProperties().map(p => {
-                    const isDirectImage = p.threeSixtyImageUrl && (
-                      p.threeSixtyImageUrl.includes('cloudinary.com') ||
-                      /\.(jpg|jpeg|png|webp)($|\?)/i.test(p.threeSixtyImageUrl)
-                    );
                     return (
                       <div
                         key={p.id}
@@ -389,21 +528,27 @@ export const ProviderDashboard = () => {
                           ${selectedProperty?.id === p.id ? '!border-primary-500 shadow-[0_0_25px_rgba(37,99,235,0.25)] bg-primary-950/10' : ''}`}
                       >
                         {/* Thumbnail */}
-                        <div className="relative h-[65%] bg-dark-800 shrink-0 overflow-hidden">
-                          {isDirectImage ? (
-                            <img src={p.threeSixtyImageUrl} alt={p.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                          ) : p.threeSixtyImageUrl ? (
-                            <>
-                              <iframe src={p.threeSixtyImageUrl} style={{ width: '117.64%', height: '117.64%', border: 'none', position: 'absolute', top: 0, left: 0 }} className="pointer-events-none" />
-                              <div className="absolute top-2 left-2 flex items-center gap-1 bg-dark-900/80 px-2 py-0.5 rounded-full text-white text-[8px] font-bold backdrop-blur-md">
-                                <span className="w-1.5 h-1.5 bg-accent-400 rounded-full animate-ping" />
-                                360° LIVE
-                              </div>
-                            </>
+                        <div className="relative h-[65%] bg-gray-900 shrink-0 overflow-hidden">
+                          {isDirectImage(p.threeSixtyImageUrl) ? (
+                            <img
+                              src={p.threeSixtyImageUrl}
+                              alt={p.title}
+                              className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                            />
+                          ) : isValidIframeUrl(p.threeSixtyImageUrl) ? (
+                            <LazyIframe
+                              src={getCleanIframeUrl(p.threeSixtyImageUrl)!}
+                              fallbackImageSrc={getFallbackPhoto(p)}
+                              alt={p.title}
+                              label="360° LIVE"
+                            />
                           ) : (
-                            <div className="absolute inset-0 bg-gradient-to-br from-dark-800 to-dark-900 flex items-center justify-center group-hover:bg-dark-750 transition-colors">
-                              <MapIcon className="w-10 h-10 text-dark-600 group-hover:text-primary-400 transition-colors" />
-                            </div>
+                            <img
+                              src={getFallbackPhoto(p)}
+                              alt={p.title}
+                              onError={(e) => { e.currentTarget.src = 'https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=800&q=80'; }}
+                              className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                            />
                           )}
                           <div className="absolute top-2 right-2 z-10">
                             <StatusBadge status={p.status} size="sm" />
@@ -783,28 +928,11 @@ export const ProviderDashboard = () => {
                     className="input-dark" placeholder="Full address..." />
                 </div>
 
-                <div className="space-y-3">
-                  <label className="block text-gray-800 text-xs font-bold uppercase tracking-wider">360° Panoramic View</label>
-                  <div className="p-4 border-2 border-dashed border-gray-300 rounded-xl bg-gray-50 flex flex-col gap-3">
-                    <div>
-                      <span className="text-sm font-bold text-gray-800 block mb-1">Option 1: Upload High-Res 360° Image (Recommended)</span>
-                      <input type="file" accept="image/jpeg, image/png"
-                        onChange={e => setSelectedThreeSixtyFile(e.target.files?.[0] || null)}
-                        className="text-sm text-gray-600 font-semibold file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-bold file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100 cursor-pointer" />
-                      {selectedThreeSixtyFile && <p className="text-xs text-emerald-700 font-bold mt-1 flex items-center gap-1"><CheckCircle className="w-3 h-3"/> Selected: {selectedThreeSixtyFile.name}</p>}
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="h-px bg-gray-300 flex-1"></div>
-                      <span className="text-xs text-gray-500 font-bold">OR</span>
-                      <div className="h-px bg-gray-300 flex-1"></div>
-                    </div>
-                    <div>
-                      <span className="text-sm font-bold text-gray-800 block mb-1">Option 2: Provide Embed URL</span>
-                      <input type="url" value={propertyForm.threeSixtyImageUrl} disabled={!!selectedThreeSixtyFile}
-                        onChange={e => setPropertyForm({ ...propertyForm, threeSixtyImageUrl: e.target.value })}
-                        className={`input-dark ${selectedThreeSixtyFile ? 'opacity-50 bg-gray-100 cursor-not-allowed' : ''}`} placeholder="https://kuula.co/share/..." />
-                    </div>
-                  </div>
+                <div>
+                  <label className="block text-gray-800 text-xs font-bold mb-1.5 uppercase tracking-wider">360° Virtual Tour Embed URL</label>
+                  <input type="url" value={propertyForm.threeSixtyImageUrl}
+                    onChange={e => setPropertyForm({ ...propertyForm, threeSixtyImageUrl: e.target.value })}
+                    className="input-dark" placeholder="https://kuula.co/share/..." />
                 </div>
 
                 <div>
@@ -840,17 +968,24 @@ export const ProviderDashboard = () => {
 
             {/* Map */}
             <div className="flex flex-col gap-4">
-              <div className="overflow-hidden h-[660px] xl:h-[880px] bg-white border border-gray-200 shadow-xl rounded-2xl">
+              <div className="overflow-hidden h-[660px] xl:h-[880px] bg-white border border-gray-200 shadow-xl rounded-2xl relative">
                 <Map
                   mode="picker"
+                  properties={allProperties}
                   pickerLat={propertyForm.latitude}
                   pickerLng={propertyForm.longitude}
                   onLocationSelected={onLocationSelected}
                   initialBoundary={lastDrawnBoundary}
                 />
               </div>
-              <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
-                <h4 className="text-gray-900 text-xs font-black uppercase tracking-wider mb-3">Location Preview</h4>
+              <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm space-y-3">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-gray-900 text-xs font-black uppercase tracking-wider">Location & Boundary Layout</h4>
+                  <span className="text-[10px] font-bold text-amber-700 bg-amber-50 px-2.5 py-1 rounded-full border border-amber-200 flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                    {allProperties.length} Existing Plots Marked
+                  </span>
+                </div>
                 <div className="grid grid-cols-2 gap-2 text-xs">
                   <div className="bg-gray-50 border border-gray-200 rounded-xl p-3">
                     <p className="text-gray-500 font-bold text-[10px] uppercase">Latitude</p>
@@ -862,8 +997,11 @@ export const ProviderDashboard = () => {
                   </div>
                 </div>
                 {lastDrawnBoundary.length > 0 && (
-                  <p className="text-emerald-700 font-bold text-[10px] mt-2.5">✓ Custom boundary drawn ({lastDrawnBoundary.length} points)</p>
+                  <p className="text-emerald-700 font-bold text-[10px]">✓ Custom layout boundary drawn ({lastDrawnBoundary.length} points)</p>
                 )}
+                <div className="p-3 bg-blue-50/70 border border-blue-200 rounded-xl text-[11px] text-blue-900 leading-relaxed font-medium">
+                  💡 <span className="font-bold">Avoid Boundary Overlap:</span> All existing registered land boundaries are displayed in amber on the map. Draw or pin your new layout without overlapping existing plot boundaries.
+                </div>
               </div>
             </div>
           </div>
@@ -905,38 +1043,130 @@ export const ProviderDashboard = () => {
           )}
         </div>
 
-      {/* ─── NOTIFICATIONS TAB ─── */}
-      <div className={`${activeTab === 'notifications' ? 'block' : 'hidden'} space-y-5`}>
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-gray-900 font-bold text-xl">Notifications</h2>
-              <p className="text-gray-500 text-sm mt-0.5">Updates about your properties and visits</p>
-            </div>
-            {unreadCount > 0 && <Chip label={`${unreadCount} unread`} color="danger" dot />}
-          </div>
-          {notifications.length > 0 ? (
-            <div className="space-y-3">
-              {notifications.map(n => (
-                <div key={n.id} className={`bg-white border border-gray-200 rounded-2xl p-4 shadow-sm flex items-start justify-between gap-4 ${!n.isRead ? 'bg-primary-50/40 border-primary-200' : ''}`}>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="text-gray-900 font-semibold text-sm">{n.title}</h3>
-                    <p className="text-gray-600 text-xs mt-0.5 leading-relaxed">{n.message}</p>
-                    <p className="text-gray-400 text-[10px] mt-1.5 flex items-center gap-1">
-                      <Clock className="w-3 h-3" />
-                      {new Date(n.createdTime).toLocaleString()}
-                    </p>
-                  </div>
-                  {!n.isRead
-                    ? <Button variant="secondary" size="xs" onClick={() => markNotificationRead(n.id)}>Mark Read</Button>
-                    : <CheckCircle className="w-4 h-4 text-emerald-600 shrink-0" />}
-                </div>
-              ))}
-            </div>
-          ) : (
-            <EmptyState icon={<Bell className="w-8 h-8" />} title="No notifications" description="You're all caught up!" />
-          )}
-        </div>
+      {/* Notifications handled via right-side panel now, not a tab */}
       </div>
+
+      {/* ── NOTIFICATION SLIDE-IN PANEL ── */}
+      <AnimatePresence>
+        {isNotificationPanelOpen && (
+          <>
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[60]"
+              onClick={() => setIsNotificationPanelOpen(false)}
+            />
+
+            {/* Panel */}
+            <motion.div
+              initial={{ x: '100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '100%' }}
+              transition={{ type: 'spring', damping: 28, stiffness: 220 }}
+              className="fixed top-0 right-0 bottom-0 w-full max-w-sm bg-white border-l border-gray-200 z-[70] flex flex-col shadow-2xl"
+            >
+              {/* Panel Header */}
+              <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200 bg-white sticky top-0">
+                <div>
+                  <h2 className="text-gray-900 font-bold text-base">Notifications</h2>
+                  <p className="text-gray-400 text-xs mt-0.5">
+                    {unreadCount > 0 ? `${unreadCount} unread` : 'All caught up'}
+                  </p>
+                </div>
+                <button
+                  onClick={() => setIsNotificationPanelOpen(false)}
+                  className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 hover:bg-gray-200 transition-colors"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* Action Buttons */}
+              {notifications.length > 0 && (
+                <div className="flex items-center gap-2 px-5 py-3 border-b border-gray-100 bg-gray-50">
+                  <button
+                    onClick={async () => {
+                      await Promise.all(
+                        notifications.filter(n => !n.isRead).map(n => propertyService.markNotificationRead(n.id).catch(() => {}))
+                      );
+                      loadNotifications();
+                    }}
+                    disabled={unreadCount === 0}
+                    className="flex-1 py-2 rounded-xl text-xs font-bold bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                  >
+                    ✓ Read All ({unreadCount})
+                  </button>
+                  <button
+                    onClick={() => setNotifications([])}
+                    className="flex-1 py-2 rounded-xl text-xs font-bold bg-gray-100 text-gray-600 hover:bg-red-50 hover:text-red-600 border border-gray-200 hover:border-red-200 transition-all"
+                  >
+                    🗑 Clear All
+                  </button>
+                </div>
+              )}
+
+              {/* Notification List */}
+              <div className="flex-1 overflow-y-auto divide-y divide-gray-100">
+                {notifications.length > 0 ? notifications.map(n => (
+                  <div
+                    key={n.id}
+                    className={`px-5 py-4 flex items-start gap-3 transition-colors ${
+                      !n.isRead ? 'bg-emerald-50/60 hover:bg-emerald-100/60' : 'bg-white hover:bg-gray-50'
+                    }`}
+                  >
+                    {/* Type Icon */}
+                    <div className={`w-8 h-8 rounded-full shrink-0 flex items-center justify-center text-xs ${
+                      n.type === 'FRAUD_ALERT' ? 'bg-red-100 text-red-600' :
+                      n.type === 'PROPERTY_VERIFIED' ? 'bg-emerald-100 text-emerald-600' :
+                      n.type === 'VISIT_SCHEDULED' ? 'bg-blue-100 text-blue-600' :
+                      'bg-gray-100 text-gray-500'
+                    }`}>
+                      {n.type === 'FRAUD_ALERT' ? '⚠' :
+                       n.type === 'PROPERTY_VERIFIED' ? '✓' :
+                       n.type === 'VISIT_SCHEDULED' ? '📅' : '🔔'}
+                    </div>
+
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between gap-2">
+                        <p className={`text-sm font-semibold leading-snug ${!n.isRead ? 'text-gray-900' : 'text-gray-600'}`}>
+                          {n.title}
+                        </p>
+                        {!n.isRead && (
+                          <span className="w-2 h-2 bg-emerald-500 rounded-full shrink-0 mt-1" />
+                        )}
+                      </div>
+                      <p className="text-xs text-gray-500 mt-0.5 leading-relaxed">{n.message}</p>
+                      <div className="flex items-center justify-between mt-1.5">
+                        <span className="text-[10px] text-gray-400">
+                          {new Date(n.createdTime).toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                        {!n.isRead && (
+                          <button
+                            onClick={() => markNotificationRead(n.id)}
+                            className="text-[10px] text-emerald-600 font-semibold hover:underline"
+                          >
+                            Mark read
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )) : (
+                  <div className="flex flex-col items-center justify-center py-20 gap-3 text-center px-6">
+                    <div className="w-14 h-14 rounded-full bg-gray-100 flex items-center justify-center">
+                      <Bell className="w-6 h-6 text-gray-300" />
+                    </div>
+                    <p className="text-gray-500 font-semibold text-sm">No notifications</p>
+                    <p className="text-gray-400 text-xs">You're all caught up! New alerts will appear here.</p>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
 
       {/* ── FLOATING CHAT / AI BUTTON ── */}
       <button 
@@ -946,14 +1176,13 @@ export const ProviderDashboard = () => {
         <MessageSquare className="w-6 h-6 mr-1" />
       </button>
 
-      {/* ── FLOATING BOTTOM NAVIGATION BAR ── */}
-      <div className="fixed bottom-5 left-0 w-[calc(100%-72px)] pr-6 pl-4 bg-white border border-gray-200 border-l-0 z-50 rounded-r-full rounded-l-none shadow-[0_5px_30px_rgba(0,0,0,0.15)] transition-all duration-500">
+      {/* ── FLOATING BOTTOM NAVIGATION BAR (Mobile Only) ── */}
+      <div className="md:hidden fixed bottom-5 left-0 w-[calc(100%-72px)] pr-6 pl-4 bg-white border border-gray-200 border-l-0 z-50 rounded-r-full rounded-l-none shadow-[0_5px_30px_rgba(0,0,0,0.15)] transition-all duration-500">
         <div className="flex items-center justify-between w-full h-[60px]">
           {[
             { id: 'listings', icon: Home, label: 'Listings' },
             { id: 'add', icon: Plus, label: 'Add' },
-            { id: 'visits', icon: Calendar, label: 'Visits', badge: pendingVisitsCount },
-            { id: 'notifications', icon: Bell, label: 'Alerts', badge: unreadCount }
+            { id: 'visits', icon: Calendar, label: 'Visits', badge: pendingVisitsCount }
           ].map(item => {
              const Icon = item.icon;
              const isActive = activeTab === item.id;

@@ -1,5 +1,11 @@
-import React, { useEffect, useState } from 'react';
-import { motion } from 'framer-motion';
+import React, { useEffect, useState, useRef, useMemo } from 'react';
+import { LazyIframe } from '../../components/shared/LazyIframe';
+import { motion, AnimatePresence } from 'framer-motion';
+import {
+  ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
+  PieChart, Pie, Cell, LineChart, Line, AreaChart, Area, RadarChart, Radar, PolarGrid,
+  PolarAngleAxis, PolarRadiusAxis
+} from 'recharts';
 import { propertyService } from '../../services/property.service';
 import { authService } from '../../services/auth.service';
 import { DashboardLayout } from '../../components/layout/DashboardLayout';
@@ -24,23 +30,114 @@ import {
   Book, Plus, RefreshCw, Search, Map as MapIcon, Image, Video, FileText, LogOut, MessageSquare, BarChart3
 } from 'lucide-react';
 
+const getCleanIframeUrl = (url?: string) => {
+  if (!url) return '';
+  let cleaned = url.trim();
+
+  // Extract src from <iframe src="..."> if embedded as HTML snippet
+  if (cleaned.toLowerCase().includes('<iframe')) {
+    const match = cleaned.match(/src\s*=\s*["']([^"']+)["']/i);
+    if (match && match[1]) cleaned = match[1];
+  }
+
+  // Prepend https:// if missing scheme
+  if (!cleaned.startsWith('http://') && !cleaned.startsWith('https://')) {
+    cleaned = 'https://' + cleaned;
+  }
+
+  // Kuula formatting: convert /post/ to /share/ and add clean embed parameters
+  if (cleaned.includes('kuula.co')) {
+    cleaned = cleaned.replace('/post/', '/share/');
+    const baseUrl = cleaned.split('?')[0];
+    return `${baseUrl}?fs=1&vr=0&zoom=0&sd=0&info=0&logo=-1&thumbs=0`;
+  }
+
+  // Momento360 formatting: convert /p/ to /e/ for embeddable iframe
+  if (cleaned.includes('momento360.com')) {
+    if (cleaned.includes('/p/')) {
+      cleaned = cleaned.replace('/p/', '/e/');
+    }
+    return cleaned;
+  }
+
+  // Matterport formatting
+  if (cleaned.includes('matterport.com')) {
+    if (!cleaned.includes('/show/')) {
+      const match = cleaned.match(/m=([a-zA-Z0-9]+)/);
+      if (match && match[1]) {
+        return `https://my.matterport.com/show/?m=${match[1]}`;
+      }
+    }
+  }
+
+  return cleaned;
+};
+
+const isDirectImage = (url?: string) => {
+  if (!url) return false;
+  return url.includes('cloudinary.com') || /\.(jpg|jpeg|png|webp)($|\?)/i.test(url);
+};
+
+const isValidIframeUrl = (url?: string) => {
+  if (!url) return false;
+  const cleaned = getCleanIframeUrl(url);
+  if (!cleaned) return false;
+  if (cleaned.includes('example.com') || cleaned.endsWith('/share/') || cleaned.endsWith('/post/') || cleaned.endsWith('/e/')) {
+    return false;
+  }
+  try {
+    const parsed = new URL(cleaned);
+    return (parsed.protocol === 'http:' || parsed.protocol === 'https:') &&
+           parsed.hostname.includes('.') &&
+           !parsed.hostname.includes('localhost') &&
+           parsed.pathname.length > 3;
+  } catch (e) {
+    return false;
+  }
+};
+
+const getFallbackPhoto = (p: Property) => {
+  if (p.images && p.images.length > 0 && p.images[0].url) {
+    return p.images[0].url;
+  }
+  const category = (p.category || '').toUpperCase();
+  if (category.includes('FARM') || category.includes('AGRICULTURAL') || category.includes('ORCHARD') || category.includes('POND')) {
+    return 'https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=800&q=80';
+  }
+  if (category.includes('COMMERCIAL') || category.includes('FACTORY') || category.includes('RETAIL') || category.includes('SHOPPING')) {
+    return 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=800&q=80';
+  }
+  if (category.includes('RESIDENTIAL') || category.includes('APARTMENT') || category.includes('HOSTEL') || category.includes('PG')) {
+    return 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&w=800&q=80';
+  }
+  return 'https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=800&q=80';
+};
+
 const PropertyCard = React.memo(({ p, onClick, isSelected }: { p: Property; onClick: () => void; isSelected: boolean }) => (
   <div
     onClick={onClick}
     className={`bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden cursor-pointer transition-all duration-200 hover:-translate-y-0.5
       ${isSelected ? '!border-primary-500 shadow-[0_0_20px_rgba(37,99,235,0.15)] bg-primary-50/20' : ''}`}
   >
-    <div className="relative h-28 bg-gray-100 overflow-hidden">
-      {p.threeSixtyImageUrl ? (
-        <>
-          <iframe src={p.threeSixtyImageUrl} style={{ width: '117.64%', height: '117.64%', border: 'none', position: 'absolute', top: 0, left: 0 }} className="pointer-events-none" allow="accelerometer; gyroscope" />
-        </>
+    <div className="relative h-28 bg-gray-900 overflow-hidden">
+      {isDirectImage(p.threeSixtyImageUrl) ? (
+        <img src={p.threeSixtyImageUrl} alt={p.title} className="absolute inset-0 w-full h-full object-cover" />
+      ) : isValidIframeUrl(p.threeSixtyImageUrl) ? (
+        <LazyIframe
+          src={getCleanIframeUrl(p.threeSixtyImageUrl)!}
+          fallbackImageSrc={getFallbackPhoto(p)}
+          alt={p.title}
+          label="360° LIVE"
+        />
       ) : (
-        <div className="absolute inset-0 bg-gray-100 flex items-center justify-center">
-          <Search className="w-8 h-8 text-gray-300" />
-        </div>
+        <img
+          src={getFallbackPhoto(p)}
+          alt={p.title}
+          onError={(e) => { e.currentTarget.src = 'https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=800&q=80'; }}
+          className="absolute inset-0 w-full h-full object-cover"
+        />
       )}
-      <div className="absolute top-2 right-2">
+      <div className="absolute top-2 right-2 z-10">
         <StatusBadge status={p.status} size="sm" />
       </div>
     </div>
@@ -57,7 +154,8 @@ const PropertyCard = React.memo(({ p, onClick, isSelected }: { p: Property; onCl
 
 export const GovtDashboard = () => {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<'analytics' | 'queue' | 'disputes' | 'approved' | 'api' | 'notifications'>('analytics');
+  const [activeTab, setActiveTab] = useState<'analytics' | 'queue' | 'disputes' | 'approved' | 'api'>('analytics');
+  const [isNotificationPanelOpen, setIsNotificationPanelOpen] = useState(false);
   const [apiSubTab, setApiSubTab] = useState<'keys' | 'docs' | 'sandbox'>('keys');
 
   const [pendingProperties, setPendingProperties] = useState<Property[]>([]);
@@ -99,6 +197,11 @@ export const GovtDashboard = () => {
   const pendingFraudCount = fraudReports.filter(f => f.status === 'SUBMITTED' || f.status === 'UNDER_INVESTIGATION').length;
   const unreadCount = notifications.filter(n => !n.isRead).length;
 
+  const handleLogout = () => {
+    authService.logout();
+    navigate('/auth/login');
+  };
+
   useEffect(() => {
     loadAnalytics(); loadData(); loadFraud(); loadApproved(); loadKeys(); loadNotifications();
   }, []);
@@ -115,12 +218,24 @@ export const GovtDashboard = () => {
         propertyService.getProperties({ status: 'PENDING_GOVT' }),
         propertyService.getProperties({ status: 'PENDING_AI' })
       ]);
-      setPendingProperties([...govt, ...ai]);
+      const combined = [...govt, ...ai].filter(p => 
+        !p.threeSixtyImageUrl?.toLowerCase().includes('google.com') && 
+        !p.threeSixtyImageUrl?.toLowerCase().includes('google.co.in') &&
+        !isDirectImage(p.threeSixtyImageUrl)
+      );
+      setPendingProperties(combined);
     } catch { setPendingProperties([]); }
   };
 
   const loadApproved = async () => {
-    try { setApprovedProperties(await propertyService.getProperties({ status: 'APPROVED' })); } catch {}
+    try { 
+      const res = await propertyService.getProperties({ status: 'APPROVED' });
+      setApprovedProperties(res.filter(p => 
+        !p.threeSixtyImageUrl?.toLowerCase().includes('google.com') && 
+        !p.threeSixtyImageUrl?.toLowerCase().includes('google.co.in') &&
+        !isDirectImage(p.threeSixtyImageUrl)
+      )); 
+    } catch {}
   };
 
   const loadNotifications = async () => {
@@ -294,20 +409,20 @@ export const GovtDashboard = () => {
           </button>
         </div>
 
-        {/* Verification form (Moved to top) */}
-        {selectedProperty.status === 'PENDING_GOVT' && (
+        {/* Verification form – show for PENDING_GOVT and PENDING_AI */}
+        {(selectedProperty.status === 'PENDING_GOVT' || selectedProperty.status === 'PENDING_AI') && (
           <div className="space-y-3 mb-6 pb-6 border-b border-gray-200">
             <h4 className="text-gray-700 text-[10px] font-bold uppercase tracking-wider">Submit Verification Decision</h4>
             <div className="flex gap-2">
               <button
                 onClick={() => setVerifyStatus('APPROVED')}
-                className={`flex-1 py-2 rounded-xl text-xs font-bold border transition-all ${verifyStatus === 'APPROVED' ? 'bg-emerald-50 border-emerald-300 text-emerald-700' : 'bg-gray-50 border-gray-200 text-gray-500'}`}
+                className={`flex-1 py-2 rounded-xl text-xs font-bold border transition-all ${verifyStatus === 'APPROVED' ? 'bg-emerald-50 border-emerald-300 text-emerald-700 shadow-sm' : 'bg-gray-50 border-gray-200 text-gray-500 hover:bg-gray-100'}`}
               >
                 ✓ Approve
               </button>
               <button
                 onClick={() => setVerifyStatus('REJECTED')}
-                className={`flex-1 py-2 rounded-xl text-xs font-bold border transition-all ${verifyStatus === 'REJECTED' ? 'bg-red-50 border-red-300 text-red-700' : 'bg-gray-50 border-gray-200 text-gray-500'}`}
+                className={`flex-1 py-2 rounded-xl text-xs font-bold border transition-all ${verifyStatus === 'REJECTED' ? 'bg-red-50 border-red-300 text-red-700 shadow-sm' : 'bg-gray-50 border-gray-200 text-gray-500 hover:bg-gray-100'}`}
               >
                 ✕ Reject
               </button>
@@ -364,10 +479,9 @@ export const GovtDashboard = () => {
           </Button>
         </div>
 
-        {/* 3D Map / Map Placeholder */}
         <div className="relative h-40 rounded-xl overflow-hidden bg-gray-100 border border-gray-200 mb-5">
           {selectedProperty.threeSixtyImageUrl ? (
-            <iframe src={selectedProperty.threeSixtyImageUrl} className="w-full h-full border-none pointer-events-none" allow="accelerometer; gyroscope" />
+            <iframe src={getCleanIframeUrl(selectedProperty.threeSixtyImageUrl)} style={{ width: '100%', height: '100%', border: 'none', position: 'absolute', top: 0, left: 0 }} className="pointer-events-none" allow="accelerometer; gyroscope" />
           ) : (
             <div className="absolute inset-0 w-full h-full">
               <Map mode="detail" properties={[selectedProperty]} />
@@ -412,7 +526,7 @@ export const GovtDashboard = () => {
               {propertyVideos.map(vid => (
                 <div key={vid.id} className="relative w-20 h-20 shrink-0 rounded-lg overflow-hidden border border-gray-200 bg-gray-100 flex items-center justify-center">
                   <Video className="w-6 h-6 text-gray-400" />
-                  <div className="absolute inset-0 flex items-center justify-center bg-black/40"><Play className="w-6 h-6 text-white opacity-80" /></div>
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/40"><Play className="w-6 h-6 text-gray-900 opacity-80" /></div>
                 </div>
               ))}
             </div>
@@ -450,20 +564,20 @@ export const GovtDashboard = () => {
               </div>
             </div>
             {aiReport.summary && (
-              <div className="mt-3 p-3 bg-white/[0.03] rounded-xl border border-white/[0.06]">
+              <div className="mt-3 p-3 bg-gray-50 rounded-xl border border-gray-200">
                 <div className="flex justify-between items-center mb-1.5">
-                  <p className="text-white text-[11px] font-semibold flex items-center gap-1.5"><Shield className="w-3 h-3 text-primary-400" /> AI Summary</p>
-                  <span className="text-[10px] font-bold text-primary-400 bg-primary-500/10 px-2 py-0.5 rounded-full">{aiReport.confidence}% Confident</span>
+                  <p className="text-gray-700 text-[11px] font-semibold flex items-center gap-1.5"><Shield className="w-3 h-3 text-primary-500" /> AI Summary</p>
+                  <span className="text-[10px] font-bold text-primary-600 bg-primary-50 px-2 py-0.5 rounded-full border border-primary-200">{aiReport.confidence}% Confident</span>
                 </div>
-                <p className="text-dark-400 text-[11px] leading-relaxed mb-3">{aiReport.summary}</p>
+                <p className="text-gray-600 text-[11px] leading-relaxed mb-3">{aiReport.summary}</p>
                 {aiReport.reasoning && (
                   <details className="group">
-                    <summary className="text-[10px] text-primary-400 font-medium cursor-pointer hover:text-primary-300 transition-colors list-none flex items-center gap-1.5">
-                      <span className="w-1.5 h-1.5 rounded-full bg-primary-500/50 group-open:bg-primary-500"></span>
+                    <summary className="text-[10px] text-primary-500 font-medium cursor-pointer hover:text-primary-700 transition-colors list-none flex items-center gap-1.5">
+                      <span className="w-1.5 h-1.5 rounded-full bg-primary-400 group-open:bg-primary-600"></span>
                       View AI Reasoning Trace
                     </summary>
-                    <div className="mt-2 p-2.5 bg-black/40 rounded-lg border border-white/[0.05] max-h-40 overflow-y-auto">
-                      <p className="text-dark-500 text-[10px] leading-relaxed whitespace-pre-wrap font-mono">
+                    <div className="mt-2 p-2.5 bg-gray-100 rounded-lg border border-gray-200 max-h-40 overflow-y-auto">
+                      <p className="text-gray-700 text-[10px] leading-relaxed whitespace-pre-wrap font-mono">
                         {aiReport.reasoning}
                       </p>
                     </div>
@@ -477,25 +591,25 @@ export const GovtDashboard = () => {
         {/* OCR Documents */}
         {propertyDocs.length > 0 && (
           <div className="mb-5">
-            <h4 className="text-dark-400 text-[10px] font-semibold uppercase tracking-wider mb-3">Documents & OCR Extraction</h4>
+            <h4 className="text-gray-700 text-[10px] font-bold uppercase tracking-wider mb-3">Documents & OCR Extraction</h4>
             {propertyDocs.map(doc => (
-              <div key={doc.id} className="p-3 bg-dark-950/50 rounded-xl border border-white/[0.06] mb-2">
+              <div key={doc.id} className="p-3 bg-gray-50 rounded-xl border border-gray-200 mb-2">
                 <div className="flex items-center justify-between mb-2">
-                  <p className="text-white text-[11px] font-semibold flex items-center gap-1.5">
-                    <FileText className="w-3 h-3 text-primary-400" />
+                  <p className="text-gray-900 text-[11px] font-semibold flex items-center gap-1.5">
+                    <FileText className="w-3 h-3 text-primary-500" />
                     {doc.documentType}
                   </p>
                   {doc.fileUrl && doc.fileUrl !== '#' && (
-                    <a href={doc.fileUrl} target="_blank" rel="noreferrer" className="text-primary-400 text-[10px] hover:underline">View File</a>
+                    <a href={doc.fileUrl} target="_blank" rel="noreferrer" className="text-primary-500 text-[10px] hover:underline">View File</a>
                   )}
                 </div>
                 {doc.rawText && (
                   <details className="group">
-                    <summary className="text-[10px] text-dark-400 font-medium cursor-pointer hover:text-white transition-colors list-none">
+                    <summary className="text-[10px] text-gray-500 font-medium cursor-pointer hover:text-gray-800 transition-colors list-none">
                       Show Extracted Text...
                     </summary>
-                    <div className="mt-2 p-2 bg-black/30 rounded border border-white/[0.05]">
-                      <p className="text-dark-300 text-[10px] font-mono leading-relaxed whitespace-pre-wrap">{doc.rawText?.slice(0, 300)}...</p>
+                    <div className="mt-2 p-2 bg-gray-100 rounded border border-gray-200">
+                      <p className="text-gray-700 text-[10px] font-mono leading-relaxed whitespace-pre-wrap">{doc.rawText?.slice(0, 300)}...</p>
                     </div>
                   </details>
                 )}
@@ -510,11 +624,61 @@ export const GovtDashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 text-gray-900 font-sans flex flex-col pb-28 relative overflow-x-hidden">
+    <div className="min-h-screen bg-gray-50 text-gray-900 font-sans flex flex-col pb-28 md:pb-6 relative overflow-x-hidden md:pl-64">
+      {/* ── DESKTOP SIDEBAR ── */}
+      <aside className="hidden md:flex flex-col fixed top-0 bottom-0 left-0 w-64 bg-white border-r border-gray-200 z-40 p-4 shadow-sm">
+        <div className="flex items-center gap-3 px-3 py-4 border-b border-gray-200">
+          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center text-gray-900 font-black text-sm shadow-sm">
+            LL
+          </div>
+          <div>
+            <h2 className="text-gray-900 font-bold text-base leading-tight">Land<span className="text-blue-600">Lens</span></h2>
+            <p className="text-gray-500 text-[10px] font-semibold">Government Portal</p>
+          </div>
+        </div>
+
+        <nav className="flex-1 py-4 space-y-1 overflow-y-auto">
+          {[
+            { id: 'analytics', icon: BarChart3, label: 'Analytics' },
+            { id: 'queue', icon: Shield, label: 'Verification Queue', badge: pendingProperties.length },
+            { id: 'disputes', icon: AlertOctagon, label: 'Community Disputes', badge: pendingFraudCount },
+            { id: 'approved', icon: CheckCircle, label: 'Live Properties' },
+            { id: 'api', icon: Code2, label: 'Developer API' },
+          ].map(item => {
+            const Icon = item.icon;
+            const isActive = activeTab === item.id;
+            return (
+              <button
+                key={item.id}
+                onClick={() => handleTabChange(item.id as any)}
+                className={`w-full flex items-center gap-3 px-3.5 py-3 rounded-xl text-xs font-bold transition-all text-left ${
+                  isActive ? 'bg-blue-50 text-blue-700 shadow-xs' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                }`}
+              >
+                <Icon className={`w-4 h-4 ${isActive ? 'text-blue-600' : 'text-gray-400'}`} />
+                <span className="flex-1">{item.label}</span>
+                {item.badge !== undefined && item.badge > 0 && (
+                  <span className="px-2 py-0.5 rounded-full bg-red-500 text-gray-900 text-[9px] font-bold">
+                    {item.badge}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </nav>
+
+        <div className="pt-3 border-t border-gray-200">
+          <button onClick={handleLogout} className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-gray-500 hover:text-red-600 hover:bg-red-50 transition-all">
+            <LogOut className="w-4 h-4" />
+            Sign Out
+          </button>
+        </div>
+      </aside>
+
       {/* ── TOP HEADER APP BAR ── */}
       <div className="sticky top-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-b border-gray-200 px-4 sm:px-6 h-16 flex items-center justify-between shadow-xs">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-600 to-teal-600 flex items-center justify-center text-white font-black text-sm shadow-sm">
+          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-600 to-teal-600 flex items-center justify-center text-gray-900 font-black text-sm shadow-sm">
             GV
           </div>
           <div>
@@ -525,12 +689,12 @@ export const GovtDashboard = () => {
 
         <div className="flex items-center gap-2">
           <button
-            onClick={() => setActiveTab('notifications')}
+            onClick={() => setIsNotificationPanelOpen(true)}
             className="relative w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 hover:bg-gray-200 transition-colors"
           >
             <Bell className="w-4 h-4" />
             {unreadCount > 0 && (
-              <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-primary-600 rounded-full border-2 border-white" />
+              <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white animate-pulse" />
             )}
           </button>
           <button
@@ -542,43 +706,348 @@ export const GovtDashboard = () => {
         </div>
       </div>
 
-      <div className="px-4 sm:px-6 lg:px-8 py-6 space-y-6 max-w-7xl mx-auto w-full">
+      <div className="px-4 sm:px-6 py-6 space-y-6 w-full">
 
       {/* ── ANALYTICS ── */}
       <div className={`${activeTab === 'analytics' ? 'block' : 'hidden'} space-y-6`}>
-          <GlassCard className="relative overflow-hidden !bg-gradient-to-r !from-primary-900/40 !to-primary-800/20 !border-primary-500/20">
-            <div className="absolute inset-0 opacity-5" style={{ backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.8) 1px, transparent 1px)', backgroundSize: '24px 24px' }} />
-            <div className="relative">
-              <h2 className="text-white font-bold text-lg">Government Land Registry Analytics</h2>
-              <p className="text-dark-400 text-sm mt-1">Pre-aggregated property and verification metrics</p>
-            </div>
-          </GlassCard>
 
-          {analyticsError ? (
-            <GlassCard className="text-center py-10">
-              <AlertOctagon className="w-10 h-10 text-warning-400 mx-auto mb-3" />
-              <p className="text-white font-semibold text-sm">Analytics access restricted</p>
-              <p className="text-dark-400 text-xs mt-1">Available only to Admin role</p>
-            </GlassCard>
-          ) : analytics ? (
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-              <StatCard label="Property Views" value={analytics.propertyViews} icon={<Eye className="w-5 h-5" />} color="cyan" delay={0} />
-              <StatCard label="Verifications" value={analytics.verificationCount} icon={<Shield className="w-5 h-5" />} color="accent" delay={0.1} />
-              <StatCard label="Fraud Cases" value={analytics.fraudCount} icon={<AlertOctagon className="w-5 h-5" />} color="danger" delay={0.2} />
-              <StatCard label="API Calls" value={analytics.apiCalls} icon={<Activity className="w-5 h-5" />} color="primary" delay={0.3} />
+        {/* Header Banner */}
+        <div className="bg-gradient-to-r from-blue-700 to-indigo-700 rounded-2xl p-6 text-gray-900 relative overflow-hidden shadow-lg">
+          <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.8) 1px, transparent 1px)', backgroundSize: '24px 24px' }} />
+          <div className="relative flex items-center justify-between">
+            <div>
+              <h2 className="font-bold text-xl text-white">Government Land Registry Analytics</h2>
+              <p className="text-blue-100 text-sm mt-1">Live insights derived from properties, verifications & disputes</p>
             </div>
-          ) : (
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-              {[0,1,2,3].map(i => <SkeletonStatCard key={i} />)}
+            <div className="flex items-center gap-2">
+              <span className="flex items-center gap-1.5 text-xs font-bold text-emerald-300 bg-emerald-900/40 px-3 py-1.5 rounded-full border border-emerald-500/30">
+                <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-ping" />
+                Live Data
+              </span>
             </div>
-          )}
+          </div>
         </div>
+
+        {/* KPI Row */}
+        {(() => {
+          const allProps = [...pendingProperties, ...approvedProperties];
+          const approved = approvedProperties.length;
+          const pending = pendingProperties.filter(p => p.status === 'PENDING_GOVT').length;
+          const pendingAI = pendingProperties.filter(p => p.status === 'PENDING_AI').length;
+          const activeFraud = fraudReports.filter(f => f.status === 'SUBMITTED' || f.status === 'UNDER_INVESTIGATION').length;
+          return (
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              {[
+                { label: 'Approved Properties', value: approved, color: 'bg-emerald-50 border-emerald-200', text: 'text-emerald-700', sub: 'text-emerald-500', icon: '✓' },
+                { label: 'Pending Govt Review', value: pending, color: 'bg-amber-50 border-amber-200', text: 'text-amber-700', sub: 'text-amber-500', icon: '⏳' },
+                { label: 'Pending AI Verify', value: pendingAI, color: 'bg-blue-50 border-blue-200', text: 'text-blue-700', sub: 'text-blue-500', icon: '🤖' },
+                { label: 'Active Disputes', value: activeFraud, color: 'bg-red-50 border-red-200', text: 'text-red-700', sub: 'text-red-500', icon: '⚠' },
+              ].map(kpi => (
+                <div key={kpi.label} className={`${kpi.color} border rounded-2xl p-5 flex flex-col gap-1 shadow-sm`}>
+                  <span className="text-2xl">{kpi.icon}</span>
+                  <p className={`text-3xl font-black ${kpi.text}`}>{kpi.value}</p>
+                  <p className={`text-xs font-semibold ${kpi.sub}`}>{kpi.label}</p>
+                </div>
+              ))}
+            </div>
+          );
+        })()}
+
+        {/* Row 1: Verification Status Donut + Category Bar */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+          {/* Verification Status Donut */}
+          <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
+            <h3 className="text-gray-900 font-bold text-sm mb-1">Verification Status Breakdown</h3>
+            <p className="text-gray-400 text-xs mb-4">All properties by current status</p>
+            {(() => {
+              const all = [...pendingProperties, ...approvedProperties];
+              const data = [
+                { name: 'Approved', value: approvedProperties.length, color: '#10b981' },
+                { name: 'Pending Govt', value: pendingProperties.filter(p => p.status === 'PENDING_GOVT').length, color: '#f59e0b' },
+                { name: 'Pending AI', value: pendingProperties.filter(p => p.status === 'PENDING_AI').length, color: '#3b82f6' },
+                { name: 'Disputed', value: pendingProperties.filter(p => p.status === 'DISPUTED').length, color: '#ef4444' },
+              ].filter(d => d.value > 0);
+              const total = data.reduce((s, d) => s + d.value, 0);
+              return (
+                <div className="flex items-center gap-4">
+                  <ResponsiveContainer width="55%" height={200}>
+                    <PieChart>
+                      <Pie data={data} cx="50%" cy="50%" innerRadius={55} outerRadius={85} paddingAngle={3} dataKey="value">
+                        {data.map((entry, i) => <Cell key={i} fill={entry.color} />)}
+                      </Pie>
+                      <Tooltip formatter={(v: number) => [`${v} properties`, '']} contentStyle={{ borderRadius: '12px', border: '1px solid #e5e7eb', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', fontSize: 12 }} />
+                    </PieChart>
+                  </ResponsiveContainer>
+                  <div className="flex flex-col gap-2 flex-1">
+                    {data.map(d => (
+                      <div key={d.name} className="flex items-center gap-2">
+                        <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: d.color }} />
+                        <span className="text-xs text-gray-600 font-medium flex-1">{d.name}</span>
+                        <span className="text-xs font-bold text-gray-900">{d.value}</span>
+                        <span className="text-[10px] text-gray-400">({total > 0 ? Math.round(d.value/total*100) : 0}%)</span>
+                      </div>
+                    ))}
+                    <div className="mt-2 pt-2 border-t border-gray-100">
+                      <p className="text-[11px] text-gray-500 font-semibold">Total: <span className="text-gray-900 font-black">{total}</span> properties</p>
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
+          </div>
+
+          {/* Category Breakdown Bar */}
+          <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
+            <h3 className="text-gray-900 font-bold text-sm mb-1">Properties by Category</h3>
+            <p className="text-gray-400 text-xs mb-4">Approved vs. Pending count per category</p>
+            {(() => {
+              const cats = ['AGRICULTURAL', 'RESIDENTIAL', 'COMMERCIAL', 'INDUSTRIAL'];
+              const data = cats.map(cat => ({
+                name: cat.charAt(0) + cat.slice(1).toLowerCase(),
+                Approved: approvedProperties.filter(p => p.category === cat).length,
+                Pending: pendingProperties.filter(p => p.category === cat).length,
+              }));
+              return (
+                <ResponsiveContainer width="100%" height={200}>
+                  <BarChart data={data} barSize={18} barGap={4}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                    <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#64748b' }} axisLine={false} tickLine={false} />
+                    <YAxis tick={{ fontSize: 11, fill: '#64748b' }} axisLine={false} tickLine={false} allowDecimals={false} />
+                    <Tooltip contentStyle={{ borderRadius: '12px', border: '1px solid #e5e7eb', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', fontSize: 12 }} />
+                    <Legend wrapperStyle={{ fontSize: 11 }} />
+                    <Bar dataKey="Approved" fill="#10b981" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="Pending" fill="#f59e0b" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              );
+            })()}
+          </div>
+        </div>
+
+        {/* Row 2: State-wise Distribution + Dispute Status */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+          {/* State-wise Distribution */}
+          <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
+            <h3 className="text-gray-900 font-bold text-sm mb-1">State-wise Property Distribution</h3>
+            <p className="text-gray-400 text-xs mb-4">Top states by total registered properties</p>
+            {(() => {
+              const all = [...pendingProperties, ...approvedProperties];
+              const stateMap: Record<string, number> = {};
+              all.forEach(p => { stateMap[p.state] = (stateMap[p.state] || 0) + 1; });
+              const data = Object.entries(stateMap)
+                .map(([state, count]) => ({ state: state.length > 14 ? state.slice(0, 12) + '..' : state, count }))
+                .sort((a, b) => b.count - a.count)
+                .slice(0, 8);
+              if (data.length === 0) {
+                return <div className="h-44 flex items-center justify-center text-gray-400 text-sm">No state data available yet</div>;
+              }
+              return (
+                <ResponsiveContainer width="100%" height={220}>
+                  <BarChart data={data} layout="vertical" barSize={16}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" horizontal={false} />
+                    <XAxis type="number" tick={{ fontSize: 11, fill: '#64748b' }} axisLine={false} tickLine={false} allowDecimals={false} />
+                    <YAxis type="category" dataKey="state" tick={{ fontSize: 11, fill: '#64748b' }} axisLine={false} tickLine={false} width={90} />
+                    <Tooltip contentStyle={{ borderRadius: '12px', border: '1px solid #e5e7eb', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', fontSize: 12 }} formatter={(v) => [`${v} properties`, 'Count']} />
+                    <Bar dataKey="count" radius={[0, 4, 4, 0]}>
+                      {data.map((_, i) => (
+                        <Cell key={i} fill={['#3b82f6','#6366f1','#8b5cf6','#a78bfa','#60a5fa','#34d399','#f59e0b','#ef4444'][i % 8]} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              );
+            })()}
+          </div>
+
+          {/* Dispute Status Donut */}
+          <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
+            <h3 className="text-gray-900 font-bold text-sm mb-1">Community Dispute Status</h3>
+            <p className="text-gray-400 text-xs mb-4">Breakdown of all fraud report statuses</p>
+            {(() => {
+              const disputeData = [
+                { name: 'Submitted', value: fraudReports.filter(f => f.status === 'SUBMITTED').length, color: '#ef4444' },
+                { name: 'Under Investigation', value: fraudReports.filter(f => f.status === 'UNDER_INVESTIGATION').length, color: '#f59e0b' },
+                { name: 'Resolved Fraudulent', value: fraudReports.filter(f => f.status === 'RESOLVED_FRAUDULENT').length, color: '#6b7280' },
+                { name: 'Dismissed', value: fraudReports.filter(f => f.status === 'RESOLVED_DISMISSED').length, color: '#10b981' },
+              ].filter(d => d.value > 0);
+              if (fraudReports.length === 0) {
+                return (
+                  <div className="h-44 flex flex-col items-center justify-center gap-2 text-gray-400">
+                    <CheckCircle className="w-10 h-10 text-emerald-400" />
+                    <p className="text-sm font-semibold text-gray-500">No disputes filed</p>
+                    <p className="text-xs">Registry is clean</p>
+                  </div>
+                );
+              }
+              return (
+                <div className="flex items-center gap-4">
+                  <ResponsiveContainer width="55%" height={200}>
+                    <PieChart>
+                      <Pie data={disputeData} cx="50%" cy="50%" outerRadius={85} paddingAngle={3} dataKey="value">
+                        {disputeData.map((entry, i) => <Cell key={i} fill={entry.color} />)}
+                      </Pie>
+                      <Tooltip formatter={(v: number) => [`${v} reports`, '']} contentStyle={{ borderRadius: '12px', border: '1px solid #e5e7eb', fontSize: 12 }} />
+                    </PieChart>
+                  </ResponsiveContainer>
+                  <div className="flex flex-col gap-2 flex-1">
+                    {disputeData.map(d => (
+                      <div key={d.name} className="flex items-center gap-2">
+                        <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: d.color }} />
+                        <span className="text-xs text-gray-600 font-medium flex-1 leading-tight">{d.name}</span>
+                        <span className="text-xs font-bold text-gray-900">{d.value}</span>
+                      </div>
+                    ))}
+                    <div className="mt-2 pt-2 border-t border-gray-100">
+                      <p className="text-[11px] text-gray-500 font-semibold">Total: <span className="text-gray-900 font-black">{fraudReports.length}</span> reports</p>
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
+          </div>
+        </div>
+
+        {/* Row 3: Verification Queue Radar + Area Price Distribution */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+          {/* Radar: Queue Health by Category */}
+          <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
+            <h3 className="text-gray-900 font-bold text-sm mb-1">Verification Queue Radar</h3>
+            <p className="text-gray-400 text-xs mb-4">Pending count by category across all statuses</p>
+            {(() => {
+              const cats = ['Agricultural', 'Residential', 'Commercial', 'Industrial'];
+              const data = cats.map(name => ({
+                category: name,
+                'Pending Govt': pendingProperties.filter(p => p.category === name.toUpperCase() && p.status === 'PENDING_GOVT').length,
+                'Pending AI': pendingProperties.filter(p => p.category === name.toUpperCase() && p.status === 'PENDING_AI').length,
+              }));
+              return (
+                <ResponsiveContainer width="100%" height={220}>
+                  <RadarChart data={data}>
+                    <PolarGrid stroke="#e5e7eb" />
+                    <PolarAngleAxis dataKey="category" tick={{ fontSize: 11, fill: '#64748b' }} />
+                    <PolarRadiusAxis tick={{ fontSize: 10, fill: '#94a3b8' }} axisLine={false} />
+                    <Radar name="Pending Govt" dataKey="Pending Govt" stroke="#f59e0b" fill="#f59e0b" fillOpacity={0.3} />
+                    <Radar name="Pending AI" dataKey="Pending AI" stroke="#3b82f6" fill="#3b82f6" fillOpacity={0.3} />
+                    <Tooltip contentStyle={{ borderRadius: '12px', border: '1px solid #e5e7eb', fontSize: 12 }} />
+                    <Legend wrapperStyle={{ fontSize: 11 }} />
+                  </RadarChart>
+                </ResponsiveContainer>
+              );
+            })()}
+          </div>
+
+          {/* Live Alerts Summary */}
+          <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
+            <h3 className="text-gray-900 font-bold text-sm mb-1">Live Registry Alerts</h3>
+            <p className="text-gray-400 text-xs mb-4">Real-time status of active items requiring attention</p>
+            <div className="space-y-3">
+              {[
+                {
+                  label: 'Properties awaiting Govt review',
+                  value: pendingProperties.filter(p => p.status === 'PENDING_GOVT').length,
+                  color: 'bg-amber-500',
+                  bg: 'bg-amber-50 border-amber-200',
+                  text: 'text-amber-700',
+                  urgent: pendingProperties.filter(p => p.status === 'PENDING_GOVT').length > 5,
+                },
+                {
+                  label: 'Properties in AI pipeline',
+                  value: pendingProperties.filter(p => p.status === 'PENDING_AI').length,
+                  color: 'bg-blue-500',
+                  bg: 'bg-blue-50 border-blue-200',
+                  text: 'text-blue-700',
+                  urgent: false,
+                },
+                {
+                  label: 'Fraud reports under investigation',
+                  value: fraudReports.filter(f => f.status === 'UNDER_INVESTIGATION').length,
+                  color: 'bg-red-500',
+                  bg: 'bg-red-50 border-red-200',
+                  text: 'text-red-700',
+                  urgent: fraudReports.filter(f => f.status === 'UNDER_INVESTIGATION').length > 0,
+                },
+                {
+                  label: 'New unread alerts',
+                  value: notifications.filter(n => !n.isRead).length,
+                  color: 'bg-purple-500',
+                  bg: 'bg-purple-50 border-purple-200',
+                  text: 'text-purple-700',
+                  urgent: notifications.filter(n => !n.isRead).length > 3,
+                },
+                {
+                  label: 'Approved & live properties',
+                  value: approvedProperties.length,
+                  color: 'bg-emerald-500',
+                  bg: 'bg-emerald-50 border-emerald-200',
+                  text: 'text-emerald-700',
+                  urgent: false,
+                },
+              ].map(item => (
+                <div key={item.label} className={`${item.bg} border rounded-xl px-4 py-3 flex items-center gap-3`}>
+                  <span className={`w-2 h-2 rounded-full ${item.color} ${item.urgent ? 'animate-ping' : ''}`} />
+                  <span className="text-xs text-gray-600 font-medium flex-1">{item.label}</span>
+                  <span className={`text-sm font-black ${item.text}`}>{item.value}</span>
+                  {item.urgent && <span className="text-[9px] font-bold text-red-600 bg-red-100 px-1.5 py-0.5 rounded-full border border-red-200">ACTION NEEDED</span>}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Row 4: Area range histogram */}
+        <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
+          <h3 className="text-gray-900 font-bold text-sm mb-1">Property Area Distribution (Acres)</h3>
+          <p className="text-gray-400 text-xs mb-4">Count of approved properties within each size bucket</p>
+          {(() => {
+            const buckets = [
+              { range: '0–5ac', min: 0, max: 5 },
+              { range: '5–15ac', min: 5, max: 15 },
+              { range: '15–30ac', min: 15, max: 30 },
+              { range: '30–60ac', min: 30, max: 60 },
+              { range: '60–100ac', min: 60, max: 100 },
+              { range: '100ac+', min: 100, max: Infinity },
+            ];
+            const data = buckets.map(b => ({
+              range: b.range,
+              Approved: approvedProperties.filter(p => p.area >= b.min && p.area < b.max).length,
+              Pending: pendingProperties.filter(p => p.area >= b.min && p.area < b.max).length,
+            }));
+            return (
+              <ResponsiveContainer width="100%" height={200}>
+                <AreaChart data={data}>
+                  <defs>
+                    <linearGradient id="gradApproved" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#10b981" stopOpacity={0.3} />
+                      <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
+                    </linearGradient>
+                    <linearGradient id="gradPending" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.3} />
+                      <stop offset="95%" stopColor="#f59e0b" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                  <XAxis dataKey="range" tick={{ fontSize: 11, fill: '#64748b' }} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fontSize: 11, fill: '#64748b' }} axisLine={false} tickLine={false} allowDecimals={false} />
+                  <Tooltip contentStyle={{ borderRadius: '12px', border: '1px solid #e5e7eb', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', fontSize: 12 }} />
+                  <Legend wrapperStyle={{ fontSize: 11 }} />
+                  <Area type="monotone" dataKey="Approved" stroke="#10b981" strokeWidth={2} fill="url(#gradApproved)" />
+                  <Area type="monotone" dataKey="Pending" stroke="#f59e0b" strokeWidth={2} fill="url(#gradPending)" />
+                </AreaChart>
+              </ResponsiveContainer>
+            );
+          })()}
+        </div>
+
+      </div>
 
       {/* ── PENDING QUEUE ── */}
       <div className={`${activeTab === 'queue' ? 'block' : 'hidden'} space-y-5`}>
           <div className="flex justify-between items-start">
             <div>
-              <h2 className="text-white font-bold text-lg">Pending Verification Queue</h2>
+              <h2 className="text-gray-900 font-bold text-lg">Pending Verification Queue</h2>
               <p className="text-dark-400 text-sm mt-0.5">{pendingProperties.length} properties awaiting government inspection</p>
             </div>
             <Button variant="glass" size="sm" icon={<RefreshCw className="w-3.5 h-3.5" />} onClick={loadData}>Refresh</Button>
@@ -607,7 +1076,7 @@ export const GovtDashboard = () => {
       {/* ── DISPUTES ── */}
       <div className={`${activeTab === 'disputes' ? 'block' : 'hidden'} space-y-5`}>
           <div>
-            <h2 className="text-white font-bold text-lg">Community Disputes & Fraud Reports</h2>
+            <h2 className="text-gray-900 font-bold text-lg">Community Disputes & Fraud Reports</h2>
             <p className="text-dark-400 text-sm mt-0.5">{pendingFraudCount} active dispute(s) under investigation</p>
           </div>
           <div className="flex flex-col lg:flex-row gap-5 items-start">
@@ -618,7 +1087,7 @@ export const GovtDashboard = () => {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1.5">
                         <AlertOctagon className={`w-4 h-4 ${f.status === 'SUBMITTED' ? 'text-danger-400' : 'text-warning-400'}`} />
-                        <h3 className="text-white font-semibold text-sm">{f.reason}</h3>
+                        <h3 className="text-gray-900 font-semibold text-sm">{f.reason}</h3>
                         <Chip
                           label={f.status.replace(/_/g, ' ')}
                           color={f.status === 'SUBMITTED' ? 'danger' : f.status === 'UNDER_INVESTIGATION' ? 'warning' : 'accent'}
@@ -652,7 +1121,7 @@ export const GovtDashboard = () => {
       {/* ── APPROVED PROPERTIES ── */}
       <div className={`${activeTab === 'approved' ? 'block' : 'hidden'} space-y-5`}>
           <div>
-            <h2 className="text-white font-bold text-lg">Live Verified Properties</h2>
+            <h2 className="text-gray-900 font-bold text-lg">Live Verified Properties</h2>
             <p className="text-dark-400 text-sm mt-0.5">{approvedProperties.length} properties in active registry</p>
           </div>
           {approvedProperties.length > 0 ? (
@@ -668,7 +1137,7 @@ export const GovtDashboard = () => {
       <div className={`${activeTab === 'api' ? 'block' : 'hidden'} space-y-5`}>
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-white font-bold text-lg">API Integration Hub</h2>
+              <h2 className="text-gray-900 font-bold text-lg">API Integration Hub</h2>
               <p className="text-dark-400 text-sm mt-0.5">Manage partner integration keys and test the API sandbox</p>
             </div>
           </div>
@@ -679,7 +1148,7 @@ export const GovtDashboard = () => {
               <button
                 key={tab}
                 onClick={() => setApiSubTab(tab)}
-                className={`px-4 py-2 rounded-lg text-xs font-semibold capitalize transition-all ${apiSubTab === tab ? 'bg-white/10 text-white' : 'text-dark-500 hover:text-dark-300'}`}
+                className={`px-4 py-2 rounded-lg text-xs font-semibold capitalize transition-all ${apiSubTab === tab ? 'bg-white/10 text-gray-900' : 'text-dark-500 hover:text-dark-300'}`}
               >
                 {tab === 'keys' ? '🔑 API Keys' : tab === 'docs' ? '📖 Docs' : '🧪 Sandbox'}
               </button>
@@ -697,7 +1166,7 @@ export const GovtDashboard = () => {
 
               {showCreateKey && (
                 <GlassCard className="!border-primary-500/20">
-                  <h4 className="text-white font-semibold text-sm mb-4 flex items-center gap-2">
+                  <h4 className="text-gray-900 font-semibold text-sm mb-4 flex items-center gap-2">
                     <Key className="w-4 h-4 text-primary-400" />
                     Create Integration Key
                   </h4>
@@ -719,7 +1188,7 @@ export const GovtDashboard = () => {
                       <p className="text-warning-400 text-xs font-bold mb-2">⚠️ Save this key now — it will not be shown again!</p>
                       <div className="flex items-center gap-2 bg-dark-950/60 rounded-xl p-3 border border-white/[0.06]">
                         <code className="text-accent-300 text-xs font-mono flex-1 truncate">{generatedRawKey}</code>
-                        <button onClick={() => copyKey(generatedRawKey)} className="text-dark-400 hover:text-white transition-colors">
+                        <button onClick={() => copyKey(generatedRawKey)} className="text-dark-400 hover:text-gray-900 transition-colors">
                           {copiedKey ? <CheckCircle className="w-4 h-4 text-accent-400" /> : <Copy className="w-4 h-4" />}
                         </button>
                       </div>
@@ -730,14 +1199,14 @@ export const GovtDashboard = () => {
 
               <GlassCard padding="p-0">
                 <div className="px-5 py-4 border-b border-white/[0.06] flex items-center justify-between">
-                  <h3 className="text-white font-semibold text-sm flex items-center gap-2"><Code2 className="w-4 h-4 text-primary-400" /> Active Keys</h3>
+                  <h3 className="text-gray-900 font-semibold text-sm flex items-center gap-2"><Code2 className="w-4 h-4 text-primary-400" /> Active Keys</h3>
                   <Chip label={`${developerKeys.length} total`} color="primary" />
                 </div>
                 {developerKeys.length > 0 ? developerKeys.map(key => (
                   <div key={key.id || key.apiKeyId} className="px-5 py-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-white/[0.04] hover:bg-white/[0.02] transition-colors">
                     <div>
                       <div className="flex items-center gap-2">
-                        <span className="text-white font-semibold text-sm">{key.name}</span>
+                        <span className="text-gray-900 font-semibold text-sm">{key.name}</span>
                         <Chip label={key.status} color={key.status === 'ACTIVE' ? 'accent' : 'danger'} size="xs" dot />
                       </div>
                       <p className="text-dark-500 text-[10px] font-mono mt-0.5">Prefix: {key.prefix}***</p>
@@ -753,8 +1222,8 @@ export const GovtDashboard = () => {
               {selectedKeyLogs && (
                 <GlassCard padding="p-0">
                   <div className="px-5 py-4 border-b border-white/[0.06] flex items-center justify-between">
-                    <h4 className="text-white font-semibold text-sm">HTTP Access Logs</h4>
-                    <button onClick={() => setSelectedKeyLogs(null)} className="text-dark-500 hover:text-white text-xs transition-colors">Close</button>
+                    <h4 className="text-gray-900 font-semibold text-sm">HTTP Access Logs</h4>
+                    <button onClick={() => setSelectedKeyLogs(null)} className="text-dark-500 hover:text-gray-900 text-xs transition-colors">Close</button>
                   </div>
                   <div className="overflow-x-auto">
                     <table className="w-full text-xs">
@@ -791,7 +1260,7 @@ export const GovtDashboard = () => {
             <GlassCard>
               <div className="flex items-center gap-2 mb-6">
                 <Book className="w-5 h-5 text-primary-400" />
-                <h3 className="text-white font-bold">LandLens Open API — Reference Documentation</h3>
+                <h3 className="text-gray-900 font-bold">LandLens Open API — Reference Documentation</h3>
               </div>
               <div className="space-y-4">
                 {[
@@ -804,7 +1273,7 @@ export const GovtDashboard = () => {
                   <div key={i} className="p-4 bg-white/[0.03] rounded-xl border border-white/[0.06]">
                     <div className="flex items-center gap-3 mb-2">
                       <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${ep.method === 'GET' ? 'bg-cyan-500/20 text-cyan-400' : 'bg-accent-500/20 text-accent-400'}`}>{ep.method}</span>
-                      <code className="text-white font-mono text-xs">{ep.path}</code>
+                      <code className="text-gray-900 font-mono text-xs">{ep.path}</code>
                       <Chip label={ep.scope} color="primary" size="xs" />
                     </div>
                     <p className="text-dark-400 text-xs">{ep.desc}</p>
@@ -818,7 +1287,7 @@ export const GovtDashboard = () => {
           {apiSubTab === 'sandbox' && (
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
               <GlassCard>
-                <h4 className="text-white font-semibold text-sm mb-4 flex items-center gap-2">
+                <h4 className="text-gray-900 font-semibold text-sm mb-4 flex items-center gap-2">
                   <Terminal className="w-4 h-4 text-cyan-400" />
                   API Sandbox Console
                 </h4>
@@ -891,49 +1360,141 @@ export const GovtDashboard = () => {
           )}
         </div>
 
-      {/* ── NOTIFICATIONS ── */}
-      <div className={`${activeTab === 'notifications' ? 'block' : 'hidden'} space-y-5`}>
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-gray-900 font-bold text-xl">Notifications</h2>
-              <p className="text-gray-500 text-sm mt-0.5">Government portal alerts and verification updates</p>
-            </div>
-            {unreadCount > 0 && <Chip label={`${unreadCount} unread`} color="danger" dot />}
-          </div>
-          {notifications.length > 0 ? (
-            <div className="space-y-3">
-              {notifications.map(n => (
-                <div key={n.id} className={`bg-white border border-gray-200 rounded-2xl p-4 shadow-sm flex items-start justify-between gap-4 ${!n.isRead ? 'bg-primary-50/40 border-primary-200' : ''}`}>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="text-gray-900 font-semibold text-sm">{n.title}</h3>
-                    <p className="text-gray-600 text-xs mt-0.5 leading-relaxed">{n.message}</p>
-                    <p className="text-gray-400 text-[10px] mt-1.5 flex items-center gap-1">
-                      <Clock className="w-3 h-3" />
-                      {new Date(n.createdTime).toLocaleString()}
-                    </p>
-                  </div>
-                  {!n.isRead
-                    ? <Button variant="secondary" size="xs" onClick={() => markNotificationRead(n.id)}>Mark Read</Button>
-                    : <CheckCircle className="w-4 h-4 text-emerald-600 shrink-0" />}
-                </div>
-              ))}
-            </div>
-          ) : (
-            <EmptyState icon={<Bell className="w-8 h-8" />} title="No notifications" description="You're all caught up!" />
-          )}
-        </div>
+      {/* Notifications handled via right-side panel now, not a tab */}
       </div>
+
+      {/* ── NOTIFICATION SLIDE-IN PANEL ── */}
+      <AnimatePresence>
+        {isNotificationPanelOpen && (
+          <>
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[60]"
+              onClick={() => setIsNotificationPanelOpen(false)}
+            />
+
+            {/* Panel */}
+            <motion.div
+              initial={{ x: '100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '100%' }}
+              transition={{ type: 'spring', damping: 28, stiffness: 220 }}
+              className="fixed top-0 right-0 bottom-0 w-full max-w-sm bg-white border-l border-gray-200 z-[70] flex flex-col shadow-2xl"
+            >
+              {/* Panel Header */}
+              <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200 bg-white sticky top-0">
+                <div>
+                  <h2 className="text-gray-900 font-bold text-base">Notifications</h2>
+                  <p className="text-gray-400 text-xs mt-0.5">
+                    {unreadCount > 0 ? `${unreadCount} unread` : 'All caught up'}
+                  </p>
+                </div>
+                <button
+                  onClick={() => setIsNotificationPanelOpen(false)}
+                  className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 hover:bg-gray-200 transition-colors"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* Action Buttons */}
+              {notifications.length > 0 && (
+                <div className="flex items-center gap-2 px-5 py-3 border-b border-gray-100 bg-gray-50">
+                  <button
+                    onClick={async () => {
+                      await Promise.all(
+                        notifications.filter(n => !n.isRead).map(n => propertyService.markNotificationRead(n.id).catch(() => {}))
+                      );
+                      loadNotifications();
+                    }}
+                    disabled={unreadCount === 0}
+                    className="flex-1 py-2 rounded-xl text-xs font-bold bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                  >
+                    ✓ Read All ({unreadCount})
+                  </button>
+                  <button
+                    onClick={() => setNotifications([])}
+                    className="flex-1 py-2 rounded-xl text-xs font-bold bg-gray-100 text-gray-600 hover:bg-red-50 hover:text-red-600 border border-gray-200 hover:border-red-200 transition-all"
+                  >
+                    🗑 Clear All
+                  </button>
+                </div>
+              )}
+
+              {/* Notification List */}
+              <div className="flex-1 overflow-y-auto divide-y divide-gray-100">
+                {notifications.length > 0 ? notifications.map(n => (
+                  <div
+                    key={n.id}
+                    className={`px-5 py-4 flex items-start gap-3 transition-colors ${
+                      !n.isRead ? 'bg-blue-50 hover:bg-blue-100/60' : 'bg-white hover:bg-gray-50'
+                    }`}
+                  >
+                    {/* Type Icon */}
+                    <div className={`w-8 h-8 rounded-full shrink-0 flex items-center justify-center text-xs ${
+                      n.type === 'FRAUD_ALERT' ? 'bg-red-100 text-red-600' :
+                      n.type === 'PROPERTY_VERIFIED' ? 'bg-emerald-100 text-emerald-600' :
+                      n.type === 'VISIT_SCHEDULED' ? 'bg-blue-100 text-blue-600' :
+                      'bg-gray-100 text-gray-500'
+                    }`}>
+                      {n.type === 'FRAUD_ALERT' ? '⚠' :
+                       n.type === 'PROPERTY_VERIFIED' ? '✓' :
+                       n.type === 'VISIT_SCHEDULED' ? '📅' : '🔔'}
+                    </div>
+
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between gap-2">
+                        <p className={`text-sm font-semibold leading-snug ${!n.isRead ? 'text-gray-900' : 'text-gray-600'}`}>
+                          {n.title}
+                        </p>
+                        {!n.isRead && (
+                          <span className="w-2 h-2 bg-blue-500 rounded-full shrink-0 mt-1" />
+                        )}
+                      </div>
+                      <p className="text-xs text-gray-500 mt-0.5 leading-relaxed">{n.message}</p>
+                      <div className="flex items-center justify-between mt-1.5">
+                        <span className="text-[10px] text-gray-400">
+                          {new Date(n.createdTime).toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                        {!n.isRead && (
+                          <button
+                            onClick={() => markNotificationRead(n.id)}
+                            className="text-[10px] text-blue-600 font-semibold hover:underline"
+                          >
+                            Mark read
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )) : (
+                  <div className="flex flex-col items-center justify-center py-20 gap-3 text-center px-6">
+                    <div className="w-14 h-14 rounded-full bg-gray-100 flex items-center justify-center">
+                      <Bell className="w-6 h-6 text-gray-300" />
+                    </div>
+                    <p className="text-gray-500 font-semibold text-sm">No notifications</p>
+                    <p className="text-gray-400 text-xs">You're all caught up! New alerts will appear here.</p>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
 
       {/* ── FLOATING CHAT / AI BUTTON ── */}
       <button 
         onClick={() => navigate('/buyer-dashboard')} 
-        className="fixed bottom-5 right-0 z-[55] w-14 h-14 !bg-blue-600 rounded-l-full rounded-r-none shadow-[0_5px_20px_rgba(37,99,235,0.4)] flex items-center justify-center text-white hover:!bg-blue-500 transition-all duration-500 active:scale-95"
+        className="fixed bottom-5 right-0 z-[55] w-14 h-14 !bg-blue-600 rounded-l-full rounded-r-none shadow-[0_5px_20px_rgba(37,99,235,0.4)] flex items-center justify-center text-gray-900 hover:!bg-blue-500 transition-all duration-500 active:scale-95"
       >
         <MessageSquare className="w-6 h-6 mr-1" />
       </button>
 
-      {/* ── FLOATING BOTTOM NAVIGATION BAR ── */}
-      <div className="fixed bottom-5 left-0 w-[calc(100%-72px)] pr-6 pl-4 bg-white border border-gray-200 border-l-0 z-50 rounded-r-full rounded-l-none shadow-[0_5px_30px_rgba(0,0,0,0.15)] transition-all duration-500">
+      {/* ── FLOATING BOTTOM NAVIGATION BAR (Mobile Only) ── */}
+      <div className="md:hidden fixed bottom-5 left-0 w-[calc(100%-72px)] pr-6 pl-4 bg-white border border-gray-200 border-l-0 z-50 rounded-r-full rounded-l-none shadow-[0_5px_30px_rgba(0,0,0,0.15)] transition-all duration-500">
         <div className="flex items-center justify-between w-full h-[60px]">
           {[
             { id: 'analytics', icon: BarChart3, label: 'Analytics' },
@@ -941,7 +1502,6 @@ export const GovtDashboard = () => {
             { id: 'disputes', icon: AlertOctagon, label: 'Disputes', badge: pendingFraudCount },
             { id: 'approved', icon: CheckCircle, label: 'Approved' },
             { id: 'api', icon: Code2, label: 'Developer' },
-            { id: 'notifications', icon: Bell, label: 'Alerts', badge: unreadCount }
           ].map(item => {
              const Icon = item.icon;
              const isActive = activeTab === item.id;
@@ -954,7 +1514,7 @@ export const GovtDashboard = () => {
                   <div className={`w-8 h-8 rounded-xl flex items-center justify-center transition-all duration-300 ${isActive ? 'bg-primary-50' : ''}`}>
                     <Icon className={`w-5 h-5 transition-colors ${isActive ? 'text-primary-600' : 'text-gray-400'}`} />
                     {item.badge !== undefined && item.badge > 0 && (
-                      <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[8px] font-bold rounded-full flex items-center justify-center">
+                      <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-gray-900 text-[8px] font-bold rounded-full flex items-center justify-center">
                         {item.badge}
                       </span>
                     )}
@@ -973,3 +1533,4 @@ export const GovtDashboard = () => {
     </div>
   );
 };
+

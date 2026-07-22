@@ -68,6 +68,7 @@ interface CircularProgressProps {
   color?: 'primary' | 'cyan' | 'accent' | 'danger' | 'warning';
   label?: string;
   sublabel?: string;
+  showValue?: boolean;
   className?: string;
 }
 
@@ -86,6 +87,7 @@ export const CircularProgress: React.FC<CircularProgressProps> = ({
   color = 'primary',
   label,
   sublabel,
+  showValue = true,
   className = '',
 }) => {
   const clampedValue = Math.max(0, Math.min(100, value));
@@ -128,17 +130,21 @@ export const CircularProgress: React.FC<CircularProgressProps> = ({
           />
         </svg>
         {/* Center text */}
-        <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <motion.span
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.8 }}
-            className="text-2xl font-bold text-gray-900"
-          >
-            {clampedValue}
-          </motion.span>
-          {sublabel && <span className="text-[10px] text-gray-700 font-medium">{sublabel}</span>}
-        </div>
+        {(showValue || sublabel) && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center">
+            {showValue && (
+              <motion.span
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.8 }}
+                className="text-2xl font-bold text-gray-900"
+              >
+                {clampedValue}
+              </motion.span>
+            )}
+            {sublabel && <span className="text-[10px] text-gray-700 font-medium">{sublabel}</span>}
+          </div>
+        )}
       </div>
       {label && <p className="text-gray-700 text-xs font-medium mt-2 text-center">{label}</p>}
     </div>

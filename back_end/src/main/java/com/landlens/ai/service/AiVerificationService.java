@@ -130,13 +130,12 @@ public class AiVerificationService {
                     .POST(HttpRequest.BodyPublishers.ofString(requestBody))
                     .build();
 
-            try (HttpClient client = HttpClient.newHttpClient()) {
-                HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-                if (response.statusCode() == 200) {
-                    parseLlmResponse(response.body(), result);
-                } else {
-                    throw new AiVerificationApiException("API Call failed with status: " + response.statusCode());
-                }
+            HttpClient client = HttpClient.newHttpClient();
+            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+            if (response.statusCode() == 200) {
+                parseLlmResponse(response.body(), result);
+            } else {
+                throw new AiVerificationApiException("API Call failed with status: " + response.statusCode());
             }
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();

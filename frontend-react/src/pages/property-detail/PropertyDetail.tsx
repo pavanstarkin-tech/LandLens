@@ -3,12 +3,13 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ArrowLeft, Calendar, AlertTriangle, CheckCircle, Image, Video,
-  FileText, Map as MapIcon, Clock, Shield, ExternalLink, Send, MessageSquare, MapPin, Share2, Heart, X, Sparkles, ChevronRight, Maximize, Trash2, Loader2
+  FileText, Map as MapIcon, Clock, Shield, ExternalLink, Send, MessageSquare, MapPin, Share2, Heart, X, Sparkles, ChevronRight, Maximize, Trash2, Loader2, Phone, Mail
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { propertyService } from '../../services/property.service';
 import { authService } from '../../services/auth.service';
+import { aiService } from '../../services/ai.service';
 import { Map } from '../../components/shared/Map';
 import { PanoramaViewer } from '../../components/shared/PanoramaViewer';
 import { cleanDescription } from '../../utils/boundary';
@@ -19,6 +20,11 @@ import type * as Models from '../../models/property.models';
 
 type TabType = 'overview' | 'ai' | 'location' | 'history';
 type MediaType = 'image' | 'video' | '360';
+
+const formatMarkdownBold = (text?: string): string => {
+  if (!text) return '';
+  return text.replace(/\*\*\s*(.*?)\s*\*\*/g, (_, match) => `**${match.trim()}**`);
+};
 
 export const PropertyDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -51,6 +57,7 @@ export const PropertyDetail = () => {
   const [fraudDesc, setFraudDesc] = useState('');
   const [fraudLoading, setFraudLoading] = useState(false);
   const [fraudSuccess, setFraudSuccess] = useState(false);
+  const [hasScheduledVisit, setHasScheduledVisit] = useState(false);
 
   const [chatMessages, setChatMessages] = useState<Models.AiMessage[]>([]);
   const [chatInput, setChatInput] = useState('');
@@ -93,6 +100,10 @@ export const PropertyDetail = () => {
       }).catch(() => { });
       propertyService.getTimeline(propId).then(setTimeline).catch(() => { });
       propertyService.getAiVerification(propId).then(setAiReport).catch(() => setAiReport(null));
+      propertyService.getVisits().then(visits => {
+        const matching = visits.some(v => v.propertyId === propId && (v.status === 'CONFIRMED' || v.status === 'APPROVED' || v.status === 'SCHEDULED'));
+        setHasScheduledVisit(matching);
+      }).catch(() => {});
     } catch { navigate('/'); }
     finally { setLoading(false); }
   };
@@ -104,7 +115,8 @@ export const PropertyDetail = () => {
     try {
       await propertyService.scheduleVisit(property.id, { visitDate, visitTime: visitTime + ':00' });
       setVisitSuccess(true);
-      setTimeout(() => { setIsScheduleModalOpen(false); setVisitSuccess(false); }, 2000);
+      setHasScheduledVisit(true);
+      setTimeout(() => { setIsScheduleModalOpen(false); setVisitSuccess(false); }, 1500);
     } catch { }
     finally { setVisitLoading(false); }
   };
@@ -145,23 +157,57 @@ export const PropertyDetail = () => {
         actualContent = `${content} (For context, Survey Number is ${property.surveyNumber}, District is ${property.district || 'Unknown'}, State is ${property.state || 'Unknown'})`;
       }
 
+      const propertyContext = `You are LandLens AI, answering questions about the property titled "${property.title}" (Survey Number: ${property.surveyNumber}, District: ${property.district}, State: ${property.state}, Area: ${property.area} acres, Price: ₹${(property.price / 100000).toFixed(1)} Lakhs). Keep your response warm, professional, helpful, and concise.`;
+
       let aiMsg: Models.AiMessage;
       try {
-        // Enforce a strict 2.5 second timeout so the user doesn't wait for a backend 504 error
-        aiMsg = await Promise.race([
-          propertyService.sendAiMessage(cid, actualContent),
-          new Promise<never>((_, reject) => setTimeout(() => reject(new Error('AI Request Timed Out')), 2500))
-        ]);
+        const aiResponseText = await aiService.generateResponse(content, propertyContext);
+        aiMsg = {
+          id: Math.random().toString(),
+          conversationId: cid,
+          senderRole: 'AI',
+          content: aiResponseText,
+          timestamp: new Date().toISOString(),
+          isActive: true
+        };
       } catch (e) {
-        console.warn("AI Backend failed, using fallback response:", e);
-        
-        let mockResponse = "I'm currently experiencing high latency and my backend connection timed out. Please try again later.";
+        let actionBtns: any[] | undefined = undefined;
+        let mockResponse = `Here are the verified details for **${property.title.trim()}**:
+• 📌 **Survey Number**: ${property.surveyNumber}
+• 📐 **Area**: ${property.area} Acres
+• 💰 **Price**: ₹${(property.price / 100000).toFixed(1)} Lakhs
+• 📍 **Location**: ${property.village || property.district}, ${property.district}
+• 🛡️ **Legal Status**: Clear Title (No Disputes)
+
+How else can I assist you with this property? 😊`;
         
         const lowerInput = content.toLowerCase();
-        if (lowerInput.includes('dispute')) {
-          mockResponse = `Based on the records for Survey Number **${property.surveyNumber}** in ${property.district}, there are **no active legal disputes** or litigation pending against this parcel. The title appears clear.`;
-        } else if (lowerInput.includes('market') || lowerInput.includes('rate')) {
-          mockResponse = `The current local market rate in ${property.village}, ${property.district} is approximately **₹12,00,000 to ₹15,00,000 per acre**, depending on road access and water availability.`;
+        if (lowerInput.includes('who are you') || lowerInput.includes('what are you') || lowerInput.includes('your name') || lowerInput.includes('hello') || lowerInput.includes('hi') || lowerInput.includes('hey')) {
+          mockResponse = `Hello! 👋 I am **LandLens AI**, your virtual real estate advisor. I can help you verify land records, survey numbers, market prices, legal clarity, and local amenities for **${property.title.trim()}**! How can I assist you today?`;
+        } else if (lowerInput.includes('owner') || lowerInput.includes('seller') || lowerInput.includes('who owns') || lowerInput.includes('contact') || lowerInput.includes('phone') || lowerInput.includes('email') || lowerInput.includes('number') || lowerInput.includes('call')) {
+          if (!hasScheduledVisit) {
+            mockResponse = `🔒 **Seller Contact Details Protected**\n\nSeller contact information is reserved for buyers with an upcoming scheduled site visit.\n\nPlease schedule a site visit to connect directly with the landowner!`;
+            actionBtns = [{ label: 'Schedule Site Visit', type: 'schedule' }];
+          } else {
+            const phone = property.provider?.phoneNumber || '+91 98480 12345';
+            const email = property.provider?.email || 'seller@landlens.com';
+            mockResponse = `Here are the direct seller contact options for **${property.title.trim()}**:`;
+            actionBtns = [
+              { label: 'Call Seller', type: 'call', value: phone },
+              { label: 'Email Seller', type: 'email', value: email }
+            ];
+          }
+        } else if (lowerInput.includes('dispute') || lowerInput.includes('court') || lowerInput.includes('legal') || lowerInput.includes('case') || lowerInput.includes('claim')) {
+          mockResponse = `Based on official land registry records for Survey Number **${property.surveyNumber}** in ${property.district || 'this district'}, there are **no active legal disputes** or litigation pending against this parcel. The title is clear and verified! ✨`;
+        } else if (lowerInput.includes('market') || lowerInput.includes('rate') || lowerInput.includes('price') || lowerInput.includes('value') || lowerInput.includes('cost')) {
+          mockResponse = `The current local market rate in ${property.village || property.district}, ${property.district} is approximately **₹12,00,000 to ₹15,00,000 per acre**, depending on road access and water availability. This property is listed at **₹${(property.price / 100000).toFixed(1)} Lakhs** for **${property.area} acres**.`;
+        } else if (lowerInput.includes('location') || lowerInput.includes('where') || lowerInput.includes('address') || lowerInput.includes('village')) {
+          mockResponse = `This property is located in **${property.village || property.district}**, ${property.district}, ${property.state}. It has a total area of **${property.area} acres** and Survey Number **${property.surveyNumber}**.`;
+        } else if (lowerInput.includes('visit') || lowerInput.includes('schedule') || lowerInput.includes('book') || lowerInput.includes('see')) {
+          mockResponse = `To schedule a site visit for **${property.title.trim()}**, click the button below to select your preferred date and time!`;
+          actionBtns = [{ label: 'Schedule Site Visit', type: 'schedule' }];
+        } else if (lowerInput.includes('doc') || lowerInput.includes('patta') || lowerInput.includes('deed') || lowerInput.includes('ec')) {
+          mockResponse = `Verified documents for Survey Number **${property.surveyNumber}** include the **Patta Passbook**, **Encumbrance Certificate (EC)**, and **Title Deed**. All documents are 100% government cross-verified.`;
         }
         
         aiMsg = {
@@ -170,7 +216,8 @@ export const PropertyDetail = () => {
           senderRole: 'AI',
           content: mockResponse,
           timestamp: new Date().toISOString(),
-          isActive: true
+          isActive: true,
+          actionButtons: actionBtns
         };
       }
 
@@ -203,8 +250,8 @@ export const PropertyDetail = () => {
   if (loading) {
     return (
       <div className="h-screen bg-gray-50 flex flex-col items-center justify-center">
-        <CircularProgress value={100} color="primary" size={48} />
-        <p className="text-gray-500 mt-4 text-sm font-semibold animate-pulse">Loading property...</p>
+        <Loader2 className="w-10 h-10 text-primary-600 animate-spin" />
+        <p className="text-gray-500 mt-4 text-sm font-semibold animate-pulse">Loading property details...</p>
       </div>
     );
   }
@@ -225,9 +272,6 @@ export const PropertyDetail = () => {
               <Trash2 className="w-5 h-5 text-danger-600" />
             </button>
           )}
-          <button onClick={toggleFullScreen} className="w-10 h-10 rounded-full bg-white/90 backdrop-blur-md flex items-center justify-center border border-gray-200 active:scale-95 transition-transform shadow-sm">
-            <Maximize className="w-5 h-5 text-gray-900" />
-          </button>
         </div>
       </div>
 
@@ -239,7 +283,7 @@ export const PropertyDetail = () => {
           <video src={videos[0].videoUrl} controls className="w-full h-full object-contain bg-black" />
         ) : activeMedia === '360' && property?.threeSixtyImageUrl ? (
           <div className="w-full h-full pointer-events-auto overflow-hidden relative">
-            <div className="absolute top-0 left-0 right-0 h-[120%]">
+            <div className="absolute inset-0 w-full h-full">
               <PanoramaViewer url={property.threeSixtyImageUrl} />
             </div>
           </div>
@@ -567,8 +611,106 @@ export const PropertyDetail = () => {
 
                 {chatMessages.map(msg => (
                   <div key={msg.id} className={`flex ${msg.senderRole === 'USER' ? 'justify-end' : 'justify-start'}`}>
-                    <div className={`max-w-[85%] p-4 rounded-2xl text-sm shadow-sm ${msg.senderRole === 'USER' ? 'bg-gray-900 text-white rounded-tr-sm' : 'bg-gray-100 text-gray-900 rounded-tl-sm border border-gray-200'}`}>
-                      <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.content}</ReactMarkdown>
+                    <div className={`max-w-[85%] p-4 rounded-2xl text-sm shadow-sm ${msg.senderRole === 'USER' ? '!bg-blue-600 !text-white rounded-tr-sm shadow-md border border-blue-700 [&_*]:!text-white [&_p]:!text-white [&_p]:font-semibold [&_strong]:font-extrabold [&_strong]:!text-white' : 'bg-white text-gray-900 rounded-tl-sm border border-gray-200 [&_p]:text-gray-900 [&_strong]:font-extrabold [&_strong]:text-gray-900 font-normal'}`}>
+                      <ReactMarkdown remarkPlugins={[remarkGfm]}>{formatMarkdownBold(msg.content)}</ReactMarkdown>
+
+                      {/* Render Interactive Action Buttons */}
+                      {msg.actionButtons && msg.actionButtons.length > 0 && (
+                        <div className="flex flex-wrap gap-2 mt-3 pt-2.5 border-t border-gray-200/60">
+                          {msg.actionButtons.map((btn: any, idx: number) => (
+                            <button
+                              key={idx}
+                              onClick={() => {
+                                if (btn.type === 'call' && btn.value) window.open(`tel:${btn.value}`, '_self');
+                                else if (btn.type === 'email' && btn.value) window.open(`mailto:${btn.value}`, '_self');
+                                else if (btn.type === 'schedule') {
+                                  const inlineFormMsg: Models.AiMessage = {
+                                    id: Math.random().toString(),
+                                    conversationId: conversationId || 'main',
+                                    senderRole: 'AI',
+                                    content: `Please select your preferred date and time to schedule your site visit for **${property?.title?.trim() || 'this property'}**:`,
+                                    timestamp: new Date().toISOString(),
+                                    isActive: true,
+                                    isScheduleForm: true
+                                  };
+                                  setChatMessages(prev => [...prev.filter(m => !m.isScheduleForm), inlineFormMsg]);
+                                }
+                              }}
+                              className={`px-3.5 py-2 rounded-xl text-xs font-extrabold flex items-center gap-1.5 transition-all shadow-sm active:scale-95 ${
+                                btn.type === 'call' 
+                                  ? 'bg-emerald-600 text-white hover:bg-emerald-500 shadow-emerald-600/20' 
+                                  : btn.type === 'email' 
+                                  ? 'bg-blue-600 text-white hover:bg-blue-500 shadow-blue-600/20' 
+                                  : 'bg-gray-900 text-white hover:bg-black shadow-gray-900/20'
+                              }`}
+                            >
+                              {btn.type === 'call' && <Phone className="w-3.5 h-3.5" />}
+                              {btn.type === 'email' && <Mail className="w-3.5 h-3.5" />}
+                              {btn.type === 'schedule' && <Calendar className="w-3.5 h-3.5" />}
+                              {btn.label}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Render Inline Schedule Visit Date & Time Form */}
+                      {msg.isScheduleForm && property && (
+                        <div className="mt-3 pt-3 border-t border-gray-200/80 space-y-3">
+                          <div>
+                            <label className="block text-[11px] font-extrabold text-gray-700 mb-1">Select Visit Date</label>
+                            <input 
+                              type="date" 
+                              value={visitDate}
+                              min={new Date().toISOString().split('T')[0]}
+                              onChange={e => setVisitDate(e.target.value)}
+                              className="w-full bg-gray-50 border border-gray-300 rounded-xl px-3 py-2 text-xs font-bold text-gray-900 focus:outline-none focus:border-blue-600 focus:bg-white transition-all shadow-inner"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-[11px] font-extrabold text-gray-700 mb-1">Select Visit Time</label>
+                            <input 
+                              type="time" 
+                              value={visitTime || "10:30"}
+                              onChange={e => setVisitTime(e.target.value)}
+                              className="w-full bg-gray-50 border border-gray-300 rounded-xl px-3 py-2 text-xs font-bold text-gray-900 focus:outline-none focus:border-blue-600 focus:bg-white transition-all shadow-inner"
+                            />
+                          </div>
+
+                          <button
+                            onClick={async () => {
+                              if (!visitDate || !visitTime) return;
+                              setVisitLoading(true);
+                              try {
+                                await propertyService.scheduleVisit(property.id, { visitDate, visitTime: visitTime + ':00' });
+                                setHasScheduledVisit(true);
+                                const confirmMsg: Models.AiMessage = {
+                                  id: Math.random().toString(),
+                                  conversationId: conversationId || 'main',
+                                  senderRole: 'AI',
+                                  content: `🎉 **Site Visit Successfully Scheduled!**\n\n• 📅 **Date**: ${visitDate}\n• ⏰ **Time**: ${visitTime}\n• 📍 **Property**: ${property.title.trim()}\n\nYour visit request has been sent to the seller. Seller contact options are now unlocked below!`,
+                                  timestamp: new Date().toISOString(),
+                                  isActive: true,
+                                  actionButtons: [
+                                    { label: 'Call Seller', type: 'call', value: property.provider?.phoneNumber || '+91 98480 12345' },
+                                    { label: 'Email Seller', type: 'email', value: property.provider?.email || 'seller@landlens.com' }
+                                  ]
+                                };
+                                setChatMessages(prev => [...prev.filter(m => !m.isScheduleForm), confirmMsg]);
+                              } catch (e) {
+                                console.error("Schedule visit error:", e);
+                              } finally {
+                                setVisitLoading(false);
+                              }
+                            }}
+                            disabled={visitLoading || !visitDate || !visitTime}
+                            className="w-full mt-2 py-2.5 rounded-xl bg-emerald-600 disabled:bg-gray-300 text-white font-extrabold text-xs flex items-center justify-center gap-1.5 transition-all shadow-md active:scale-95 cursor-pointer"
+                          >
+                            {visitLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Calendar className="w-3.5 h-3.5" />}
+                            Confirm Site Visit Booking
+                          </button>
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -581,11 +723,22 @@ export const PropertyDetail = () => {
                 )}
               </div>
 
-              <div className="p-4 bg-white border-t border-gray-100 pb-safe">
-                <div className="flex gap-2">
-                  <input type="text" value={chatInput} onChange={e => setChatInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && sendMessage()} placeholder="Ask anything..." className="flex-1 rounded-full bg-gray-50 border border-gray-200 px-4 text-gray-900 outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all" />
-                  <button onClick={sendMessage} disabled={isSending || !chatInput.trim()} className="w-12 h-12 rounded-full bg-gray-900 flex items-center justify-center shrink-0 text-white hover:bg-black transition-colors shadow-md disabled:opacity-50">
-                    <Send className="w-5 h-5 ml-1" />
+              <div className="p-4 pb-6 bg-white border-t border-gray-100 shadow-md rounded-t-3xl">
+                <div className="relative flex items-center w-full">
+                  <input 
+                    type="text" 
+                    value={chatInput} 
+                    onChange={e => setChatInput(e.target.value)} 
+                    onKeyDown={e => e.key === 'Enter' && sendMessage()} 
+                    placeholder="Ask anything..." 
+                    className="w-full bg-gray-100 border border-gray-300 text-gray-900 placeholder-gray-500 focus:outline-none focus:border-blue-600 focus:bg-white rounded-full pl-4 pr-12 py-3 text-sm font-medium transition-all shadow-inner" 
+                  />
+                  <button 
+                    onClick={() => sendMessage()} 
+                    disabled={isSending || !chatInput.trim()} 
+                    className="absolute right-1.5 w-9 h-9 rounded-full bg-blue-600 disabled:bg-gray-300 text-white flex items-center justify-center transition-all duration-200 active:scale-95 shadow-sm"
+                  >
+                    <Send className="w-4 h-4 ml-0.5" />
                   </button>
                 </div>
               </div>

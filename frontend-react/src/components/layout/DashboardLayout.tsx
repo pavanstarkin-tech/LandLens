@@ -160,11 +160,11 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
           navItems={syncedNavItems}
           role={role}
           unreadCount={unreadCount}
-          className="hidden lg:flex"
+          className="hidden md:flex"
         />
 
         {/* Main Scrollable Content */}
-        <main className="flex-1 overflow-y-auto scrollbar-premium pb-20 lg:pb-0">
+        <main className="flex-1 overflow-y-auto scrollbar-premium pb-20 md:pb-0">
           <motion.div
             key={activeTab}
             initial={{ opacity: 0, y: 12 }}
@@ -180,7 +180,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
       {/* Mobile Bottom Navigation */}
       {syncedMobileNavItems && syncedMobileNavItems.length > 0 && (
         <nav
-          className="lg:hidden fixed bottom-0 inset-x-0 z-30 bg-dark-900/95 backdrop-blur-xl border-t border-white/[0.07]"
+          className="md:hidden fixed bottom-0 inset-x-0 z-30 bg-dark-900/95 backdrop-blur-xl border-t border-white/[0.07]"
           style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
         >
           <div className="flex items-center h-16">

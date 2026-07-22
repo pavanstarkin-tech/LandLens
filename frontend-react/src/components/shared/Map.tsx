@@ -324,6 +324,37 @@ export const Map: React.FC<MapProps> = ({
         } else {
           handleReverseGeocode(pickerLng, pickerLat, []);
         }
+
+        // Render existing properties markers & polygons if provided
+        if (properties && properties.length > 0) {
+          propertyMarkersRef.current.forEach(m => m.remove());
+          propertyMarkersRef.current = properties.map(p => mapboxService.addPropertyMarker(map, p));
+
+          const features = properties.map(p => {
+            const parsed = parseBoundaryFromDescription(p.description || '');
+            if (parsed && parsed.length > 2) {
+              const closedCoords = [...parsed, parsed[0]];
+              return {
+                type: 'Feature',
+                geometry: { type: 'Polygon', coordinates: [closedCoords] },
+                properties: { id: p.id, title: p.title, category: p.category }
+              };
+            }
+            return null;
+          }).filter(Boolean) as any[];
+
+          if (features.length > 0) {
+            map.addSource('picker-polygons', { type: 'geojson', data: { type: 'FeatureCollection', features } });
+            map.addLayer({
+              id: 'picker-polygons-fill', type: 'fill', source: 'picker-polygons',
+              paint: { 'fill-color': '#f59e0b', 'fill-opacity': 0.2 }
+            });
+            map.addLayer({
+              id: 'picker-polygons-line', type: 'line', source: 'picker-polygons',
+              paint: { 'line-color': '#d97706', 'line-width': 2.5, 'line-dasharray': [3, 2] }
+            });
+          }
+        }
       } else if (mode === 'detail' && properties.length > 0) {
         const p = properties[0];
         mapboxService.addPropertyMarker(map, p);
@@ -441,17 +472,36 @@ export const Map: React.FC<MapProps> = ({
     };
   }, []); // Run exactly once!
 
-  // Watch properties updates (only in view mode, no re-initialization)
+  // Watch properties updates (in view mode and picker mode)
   useEffect(() => {
     const map = mapRef.current;
-    if (map && map.isStyleLoaded() && mode === 'view') {
+    if (!map || (mode !== 'view' && mode !== 'picker')) return;
+
+    const renderExisting = () => {
+      if (!properties || properties.length === 0) return;
       propertyMarkersRef.current.forEach(m => m.remove());
       propertyMarkersRef.current = properties.map(p => mapboxService.addPropertyMarker(map, p));
 
       const features = properties.map(p => {
-        const parsed = parseBoundaryFromDescription(p.description || '');
-        if (parsed && parsed.length > 2) {
-          const closedCoords = [...parsed, parsed[0]];
+        let coords: [number, number][] | null = parseBoundaryFromDescription(p.description || '');
+        if (!coords || coords.length < 3) {
+          if (p.latitude && p.longitude) {
+            const areaSqMeters = (p.area || 1) * 4046.86;
+            const r = Math.sqrt(areaSqMeters / Math.PI);
+            const R = 6378137;
+            const pts: [number, number][] = [];
+            for (let i = 0; i < 6; i++) {
+              const angle = (i * 60) * Math.PI / 180;
+              const dLat = (r * Math.sin(angle)) / R * 180 / Math.PI;
+              const dLng = (r * Math.cos(angle)) / (R * Math.cos(p.latitude * Math.PI / 180)) * 180 / Math.PI;
+              pts.push([p.longitude + dLng, p.latitude + dLat]);
+            }
+            coords = pts;
+          }
+        }
+
+        if (coords && coords.length > 2) {
+          const closedCoords = [...coords, coords[0]];
           return {
             type: 'Feature',
             geometry: { type: 'Polygon', coordinates: [closedCoords] },
@@ -461,25 +511,33 @@ export const Map: React.FC<MapProps> = ({
         return null;
       }).filter(Boolean) as any[];
 
+      const sourceId = mode === 'picker' ? 'picker-polygons' : 'view-polygons';
+      const fillId = mode === 'picker' ? 'picker-polygons-fill' : 'view-polygons-fill';
+      const lineId = mode === 'picker' ? 'picker-polygons-line' : 'view-polygons-line';
+      const color = mode === 'picker' ? '#f59e0b' : '#3b82f6';
+      const stroke = mode === 'picker' ? '#d97706' : '#3b82f6';
+
       if (features.length > 0) {
-        if (map.getSource('view-polygons')) {
-          (map.getSource('view-polygons') as mapboxgl.GeoJSONSource).setData({ type: 'FeatureCollection', features });
+        if (map.getSource(sourceId)) {
+          (map.getSource(sourceId) as mapboxgl.GeoJSONSource).setData({ type: 'FeatureCollection', features });
         } else {
-          map.addSource('view-polygons', { type: 'geojson', data: { type: 'FeatureCollection', features } });
+          map.addSource(sourceId, { type: 'geojson', data: { type: 'FeatureCollection', features } });
           map.addLayer({
-            id: 'view-polygons-fill', type: 'fill', source: 'view-polygons',
-            paint: { 'fill-color': '#3b82f6', 'fill-opacity': 0.15 }
+            id: fillId, type: 'fill', source: sourceId,
+            paint: { 'fill-color': color, 'fill-opacity': 0.22 }
           });
           map.addLayer({
-            id: 'view-polygons-line', type: 'line', source: 'view-polygons',
-            paint: { 'line-color': '#3b82f6', 'line-width': 2 }
+            id: lineId, type: 'line', source: sourceId,
+            paint: { 'line-color': stroke, 'line-width': 2.5, 'line-dasharray': [3, 2] }
           });
-        }
-      } else {
-        if (map.getSource('view-polygons')) {
-          (map.getSource('view-polygons') as mapboxgl.GeoJSONSource).setData({ type: 'FeatureCollection', features: [] });
         }
       }
+    };
+
+    if (map.isStyleLoaded()) {
+      renderExisting();
+    } else {
+      map.once('style.load', renderExisting);
     }
   }, [properties, mode]);
 
@@ -518,50 +576,76 @@ export const Map: React.FC<MapProps> = ({
       )}
 
       {mode === 'picker' && !loading && (
-        <div className="absolute top-4 left-4 z-40 glass-card p-3 flex flex-col gap-2 max-w-[200px] shadow-2xl border border-gray-200">
-          <span className="text-[10px] font-bold text-gray-900 uppercase tracking-wider">Boundary Drawing Tool</span>
-          <div className="flex bg-gray-100/50 p-0.5 rounded-lg border border-gray-200">
-            <button
-              type="button"
-              onClick={() => setDrawMode('pin')}
-              className={`flex-1 py-1 text-[9px] font-bold rounded-md transition-all text-center flex items-center justify-center gap-1
-                ${drawMode === 'pin' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
-            >
-              <MapPin className="w-2.5 h-2.5" /> Pin Point
-            </button>
-            <button
-              type="button"
-              onClick={() => setDrawMode('draw')}
-              className={`flex-1 py-1 text-[9px] font-bold rounded-md transition-all text-center flex items-center justify-center gap-1
-                ${drawMode === 'draw' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
-            >
-              Draw Area
-            </button>
-          </div>
-
-          {drawMode === 'draw' && (
-            <div className="space-y-2 pt-1 border-t border-gray-200 text-left">
-              <p className="text-[9px] text-gray-600 leading-tight">
-                Click map to add boundary points. Drag points to adjust.
-              </p>
-              {pointCount > 0 && (
-                <div className="flex justify-between items-center text-[9px] text-accent-400 font-semibold">
-                  <span>Points Placed:</span>
-                  <span>{pointCount}</span>
-                </div>
-              )}
+        <React.Fragment>
+          {/* Badge showing existing properties count + fit button */}
+          {properties.length > 0 && (
+            <div className="absolute top-4 right-14 z-40 bg-white/95 backdrop-blur-md px-3 py-1.5 rounded-full border border-gray-200 shadow-md flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+              <span className="text-[10px] font-bold text-gray-900">
+                {properties.length} existing plots marked
+              </span>
               <button
                 type="button"
-                onClick={() => clearBoundary(true)}
-                className="w-full py-1.5 bg-danger-500/10 hover:bg-danger-500/20 text-danger-400 font-bold text-[9px] rounded-lg transition border border-danger-500/20 flex items-center justify-center gap-1"
+                onClick={() => {
+                  const map = mapRef.current;
+                  if (!map || properties.length === 0) return;
+                  const bounds = new mapboxgl.LngLatBounds();
+                  properties.forEach(p => {
+                    if (p.longitude && p.latitude) bounds.extend([p.longitude, p.latitude]);
+                  });
+                  map.fitBounds(bounds, { padding: 60, maxZoom: 16, duration: 1000 });
+                }}
+                className="text-[9px] font-extrabold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full hover:bg-blue-100 transition-colors"
               >
-                <Trash2 className="w-2.5 h-2.5" /> Clear Points
+                Fit All
               </button>
             </div>
           )}
-        </div>
-      )}
 
+          <div className="absolute top-4 left-4 z-40 glass-card p-3 flex flex-col gap-2 max-w-[210px] shadow-2xl border border-gray-200">
+            <span className="text-[10px] font-bold text-gray-900 uppercase tracking-wider">Boundary Drawing Tool</span>
+            <div className="flex bg-gray-100/50 p-0.5 rounded-lg border border-gray-200">
+              <button
+                type="button"
+                onClick={() => setDrawMode('pin')}
+                className={`flex-1 py-1 text-[9px] font-bold rounded-md transition-all text-center flex items-center justify-center gap-1
+                  ${drawMode === 'pin' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+              >
+                <MapPin className="w-2.5 h-2.5" /> Pin Point
+              </button>
+              <button
+                type="button"
+                onClick={() => setDrawMode('draw')}
+                className={`flex-1 py-1 text-[9px] font-bold rounded-md transition-all text-center flex items-center justify-center gap-1
+                  ${drawMode === 'draw' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+              >
+                Draw Area
+              </button>
+            </div>
+
+            {drawMode === 'draw' && (
+              <div className="space-y-2 pt-1 border-t border-gray-200 text-left">
+                <p className="text-[9px] text-gray-600 leading-tight">
+                  Click map to add boundary points. Drag points to adjust.
+                </p>
+                {pointCount > 0 && (
+                  <div className="flex justify-between items-center text-[9px] text-accent-400 font-semibold">
+                    <span>Points Placed:</span>
+                    <span>{pointCount}</span>
+                  </div>
+                )}
+                <button
+                  type="button"
+                  onClick={() => clearBoundary(true)}
+                  className="w-full py-1.5 bg-danger-500/10 hover:bg-danger-500/20 text-danger-400 font-bold text-[9px] rounded-lg transition border border-danger-500/20 flex items-center justify-center gap-1"
+                >
+                  <Trash2 className="w-2.5 h-2.5" /> Clear Points
+                </button>
+              </div>
+            )}
+          </div>
+        </React.Fragment>
+      )}
     </div>
   );
 };

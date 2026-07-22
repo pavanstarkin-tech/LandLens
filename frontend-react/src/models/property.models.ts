@@ -148,6 +148,13 @@ export interface AiMessage {
   senderRole: 'USER' | 'AI';
   content: string;
   timestamp: string;
+  isActive?: boolean;
+  isScheduleForm?: boolean;
+  actionButtons?: Array<{
+    label: string;
+    type: 'call' | 'email' | 'schedule' | 'map';
+    value?: string;
+  }>;
 }
 
 export interface DeveloperKey {

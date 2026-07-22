@@ -1,4 +1,5 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { RootRedirect } from './components/guards/RootRedirect';
 import { GuestRoute } from './components/guards/GuestRoute';
 import { ProtectedRoute } from './components/guards/ProtectedRoute';
@@ -11,9 +12,22 @@ import { GovtDashboard } from './pages/dashboards/GovtDashboard';
 import { AdminDashboard } from './pages/dashboards/AdminDashboard';
 import { PropertyDetail } from './pages/property-detail/PropertyDetail';
 
+const ScrollToTop = () => {
+  const { pathname } = useLocation();
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
+    document.documentElement.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
+    document.body.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
+  }, [pathname]);
+
+  return null;
+};
+
 function App() {
   return (
     <Router>
+      <ScrollToTop />
       <Routes>
         <Route path="/" element={<RootRedirect />} />
         

@@ -67,8 +67,8 @@ export const mapboxService = {
       style: config.style,
       center,
       zoom,
-      pitch: 0,
-      bearing: 0
+      pitch: 60,
+      bearing: -17.6
     });
 
     mapInstance.addControl(new mapboxgl.NavigationControl(), 'top-right');

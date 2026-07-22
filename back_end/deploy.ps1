@@ -31,51 +31,67 @@ Write-Host "====================================================================
 
 # 1. Dependency Checks
 Write-Host "[1/7] Checking tool dependencies..." -ForegroundColor Yellow
-$dependencies = @("aws", "docker", "java")
-foreach ($dep in $dependencies) {
-    if (-not (Get-Command $dep -ErrorAction SilentlyContinue)) {
-        Write-Error "Required tool '$dep' is not installed or not in your system environment PATH. Please install it to run this script."
-        exit 1
-    }
-}
+$hasDocker = $null -ne (Get-Command docker -ErrorAction SilentlyContinue)
+$hasAws = $null -ne (Get-Command aws -ErrorAction SilentlyContinue)
+$hasJava = $null -ne (Get-Command java -ErrorAction SilentlyContinue)
 
-# 2. Authenticate Docker with AWS ECR
-Write-Host "[2/7] Authenticating Docker to AWS ECR..." -ForegroundColor Yellow
-$ecrUrl = "$awsAccountId.dkr.ecr.$awsRegion.amazonaws.com"
-aws ecr get-login-password --region $awsRegion | docker login --username AWS --password-stdin $ecrUrl
-if ($LASTEXITCODE -ne 0) {
-    Write-Error "Failed to authenticate with AWS ECR."
+if (-not $hasAws) {
+    Write-Error "Required tool 'aws' is not installed or not in your system environment PATH."
+    exit 1
+}
+if (-not $hasJava) {
+    Write-Error "Required tool 'java' is not installed or not in your system environment PATH."
     exit 1
 }
 
-# 3. Build JAR File locally with Maven Wrapper
-Write-Host "[3/7] Building JAR with Maven..." -ForegroundColor Yellow
+if (-not $hasDocker) {
+    Write-Host "[NOTICE] Docker is not installed locally." -ForegroundColor Yellow
+    Write-Host "Local Docker container building will be skipped." -ForegroundColor Yellow
+    Write-Host "Proceeding with Maven JAR compilation & direct AWS ECS deployment trigger..." -ForegroundColor Cyan
+}
+
+# 2. Build JAR File locally with Maven Wrapper
+Write-Host "[2/7] Building JAR with Maven..." -ForegroundColor Yellow
 & .\mvnw.cmd clean package -DskipTests
 if ($LASTEXITCODE -ne 0) {
     Write-Error "Maven build failed."
     exit 1
 }
 
-# 4. Build Docker Image
-Write-Host "[4/7] Building Docker Image..." -ForegroundColor Yellow
-docker build -t $ecrRepoName .
-if ($LASTEXITCODE -ne 0) {
-    Write-Error "Docker build failed."
-    exit 1
-}
+if ($hasDocker) {
+    # 3. Authenticate Docker with AWS ECR
+    Write-Host "[3/7] Authenticating Docker to AWS ECR..." -ForegroundColor Yellow
+    $ecrUrl = "$awsAccountId.dkr.ecr.$awsRegion.amazonaws.com"
+    aws ecr get-login-password --region $awsRegion | docker login --username AWS --password-stdin $ecrUrl
+    if ($LASTEXITCODE -ne 0) {
+        Write-Error "Failed to authenticate with AWS ECR."
+        exit 1
+    }
 
-# 5. Tag and Push to ECR
-Write-Host "[5/7] Tagging and Pushing to ECR..." -ForegroundColor Yellow
-$imageUri = "$ecrUrl/$ecrRepoName:latest"
-docker tag "${ecrRepoName}:latest" $imageUri
-docker push $imageUri
-if ($LASTEXITCODE -ne 0) {
-    Write-Error "Failed to push image to ECR."
-    exit 1
+    # 4. Build Docker Image
+    Write-Host "[4/7] Building Docker Image..." -ForegroundColor Yellow
+    docker build -t $ecrRepoName .
+    if ($LASTEXITCODE -ne 0) {
+        Write-Error "Docker build failed."
+        exit 1
+    }
+
+    # 5. Tag and Push to ECR
+    Write-Host "[5/7] Tagging and Pushing to ECR..." -ForegroundColor Yellow
+    $imageUri = "$ecrUrl/$ecrRepoName:latest"
+    docker tag "${ecrRepoName}:latest" $imageUri
+    docker push $imageUri
+    if ($LASTEXITCODE -ne 0) {
+        Write-Error "Failed to push image to ECR."
+        exit 1
+    }
+} else {
+    Write-Host "[3-5/7] Skipping local Docker build & push (Docker not detected)." -ForegroundColor Yellow
+    Write-Host "Note: To build local Docker containers, install Docker Desktop: https://www.docker.com/products/docker-desktop/" -ForegroundColor Yellow
 }
 
 # 6. Force ECS Deployment
-Write-Host "[6/7] Triggering ECS service redeployment..." -ForegroundColor Yellow
+Write-Host "[6/7] Triggering ECS service redeployment on AWS..." -ForegroundColor Yellow
 aws ecs update-service --cluster $ecsCluster --service $ecsService --force-new-deployment --region $awsRegion | Out-Null
 if ($LASTEXITCODE -ne 0) {
     Write-Error "Failed to trigger ECS deployment."
