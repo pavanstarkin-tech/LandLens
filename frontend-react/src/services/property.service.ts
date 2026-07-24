@@ -270,5 +270,10 @@ export const propertyService = {
   getAdminAnalytics: async (): Promise<Models.AnalyticsDashboard> => {
     const response = await api.get<Models.AnalyticsDashboard>('/api/analytics/dashboard');
     return response.data;
+  },
+
+  deconflictCoordinates: async (): Promise<string> => {
+    const response = await api.post<string>('/api/properties/deconflict-coordinates');
+    return response.data;
   }
 };

@@ -57,4 +57,10 @@ public class AuthController {
         authService.logout(refreshTokenRequest.getRefreshToken());
         return ResponseEntity.ok("User logged out successfully");
     }
+
+    @PostMapping("/forgot-password")
+    public ResponseEntity<Object> forgotPassword(@Valid @RequestBody com.landlens.auth.dto.ForgotPasswordRequest request) {
+        authService.forgotPassword(request.getEmail(), request.getNewPassword());
+        return ResponseEntity.ok("Password has been reset successfully. You can now login with your new password.");
+    }
 }

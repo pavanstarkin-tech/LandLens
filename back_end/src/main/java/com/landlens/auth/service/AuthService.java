@@ -151,4 +151,13 @@ public class AuthService {
             refreshTokenRepository.save(token);
         });
     }
+
+    @Transactional
+    public void forgotPassword(String email, String newPassword) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("No account found registered with email: " + email));
+
+        user.setPasswordHash(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
+    }
 }

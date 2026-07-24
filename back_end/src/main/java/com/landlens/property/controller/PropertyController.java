@@ -72,10 +72,15 @@ public class PropertyController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAnyRole('PROVIDER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('PROVIDER', 'ADMIN', 'GOVT', 'GOVERNMENT')")
     public ResponseEntity<Object> deleteProperty(@PathVariable UUID id, Principal principal) {
-        UUID providerId = UUID.fromString(principal.getName());
-        propertyService.deleteProperty(id, providerId);
+        UUID userId = UUID.fromString(principal.getName());
+        boolean isAdminOrGovt = org.springframework.security.core.context.SecurityContextHolder.getContext()
+                .getAuthentication().getAuthorities().stream()
+                .anyMatch(auth -> auth.getAuthority().equals("ROLE_ADMIN") || 
+                                  auth.getAuthority().equals("ROLE_GOVT") || 
+                                  auth.getAuthority().equals("ROLE_GOVERNMENT"));
+        propertyService.deleteProperty(id, userId, isAdminOrGovt);
         return ResponseEntity.ok("Property listing removed successfully");
     }
 
@@ -196,5 +201,12 @@ public class PropertyController {
         UUID userId = UUID.fromString(principal.getName());
         PropertyVisit updated = propertyService.updateVisitStatus(visitId, status, userId);
         return ResponseEntity.ok(PropertyMapper.toResponseDto(updated));
+    }
+
+    @PostMapping("/deconflict-coordinates")
+    @PreAuthorize("hasAnyRole('ADMIN', 'GOVT', 'GOVERNMENT')")
+    public ResponseEntity<String> deconflictPropertyCoordinates() {
+        int updatedCount = propertyService.deconflictPlottedProperties();
+        return ResponseEntity.ok("Deconfliction process complete. Adjusted coordinates for " + updatedCount + " overlapping properties.");
     }
 }

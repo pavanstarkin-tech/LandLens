@@ -107,5 +107,12 @@ export const authService = {
       role: role,
       isActive: true
     };
+  },
+
+  forgotPassword: async (email: string, newPassword: string): Promise<string> => {
+    const response = await api.post('/api/auth/forgot-password', { email, newPassword }, {
+      responseType: 'text'
+    });
+    return response.data;
   }
 };

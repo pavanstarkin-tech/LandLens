@@ -146,6 +146,13 @@ export const Login = () => {
             </div>
           </div>
 
+          {/* Forgot Password Link */}
+          <div className="flex justify-end -mt-1 mb-1">
+            <Link to="/auth/forgot-password" className="text-xs text-emerald-400 hover:text-emerald-300 font-semibold transition-colors">
+              Forgot password?
+            </Link>
+          </div>
+
           {/* Submit Button */}
           <button 
             type="submit"

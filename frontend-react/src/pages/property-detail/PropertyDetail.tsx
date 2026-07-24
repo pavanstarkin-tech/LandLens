@@ -157,11 +157,16 @@ export const PropertyDetail = () => {
         actualContent = `${content} (For context, Survey Number is ${property.surveyNumber}, District is ${property.district || 'Unknown'}, State is ${property.state || 'Unknown'})`;
       }
 
-      const propertyContext = `You are LandLens AI, answering questions about the property titled "${property.title}" (Survey Number: ${property.surveyNumber}, District: ${property.district}, State: ${property.state}, Area: ${property.area} acres, Price: ₹${(property.price / 100000).toFixed(1)} Lakhs). Keep your response warm, professional, helpful, and concise.`;
+      const propertyContext = `You are LandLens AI, a warm, friendly, highly conversational real estate advisor answering questions about the property titled "${property.title}" (Survey Number: ${property.surveyNumber}, District: ${property.district}, State: ${property.state}, Area: ${property.area} acres, Price: ₹${(property.price / 100000).toFixed(1)} Lakhs). Keep your response warm, natural, helpful, engaging, and concise.`;
+
+      const chatHistoryPayload = chatMessages.slice(-10).map(m => ({
+        role: (m.senderRole === 'USER' ? 'user' : 'assistant') as 'user' | 'assistant',
+        content: m.content
+      }));
 
       let aiMsg: Models.AiMessage;
       try {
-        const aiResponseText = await aiService.generateResponse(content, propertyContext);
+        const aiResponseText = await aiService.generateResponse(content, propertyContext, chatHistoryPayload, cid);
         aiMsg = {
           id: Math.random().toString(),
           conversationId: cid,
@@ -261,14 +266,14 @@ How else can I assist you with this property? 😊`;
   return (
     <div className="min-h-screen bg-gray-50 text-gray-900 font-sans flex flex-col pb-32 relative overflow-x-hidden">
 
-      {/* ── ABSOLUTE APP BAR (SCROLLABLE) ── */}
-      <div className="absolute top-0 left-0 right-0 z-50 px-4 pt-4 h-16 flex items-center justify-between">
-        <button onClick={goBack} className="w-10 h-10 rounded-full bg-white/90 backdrop-blur-md flex items-center justify-center border border-gray-200 active:scale-95 transition-transform shadow-sm">
+      {/* ── FIXED APP BAR ── */}
+      <div className="fixed top-0 left-0 right-0 z-50 px-4 pt-4 h-16 flex items-center justify-between pointer-events-none">
+        <button onClick={goBack} className="pointer-events-auto w-10 h-10 rounded-full bg-white/90 backdrop-blur-md flex items-center justify-center border border-gray-200 active:scale-95 transition-transform shadow-md hover:bg-white">
           <ArrowLeft className="w-5 h-5 text-gray-900" />
         </button>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 pointer-events-auto">
           {authService.getUserRole() === 'ADMIN' && (
-            <button onClick={handleDeleteProperty} className="w-10 h-10 rounded-full bg-danger-50 flex items-center justify-center border border-danger-200 active:scale-95 transition-transform shadow-sm">
+            <button onClick={handleDeleteProperty} className="w-10 h-10 rounded-full bg-danger-50 flex items-center justify-center border border-danger-200 active:scale-95 transition-transform shadow-md">
               <Trash2 className="w-5 h-5 text-danger-600" />
             </button>
           )}
@@ -617,39 +622,42 @@ How else can I assist you with this property? 😊`;
                       {/* Render Interactive Action Buttons */}
                       {msg.actionButtons && msg.actionButtons.length > 0 && (
                         <div className="flex flex-wrap gap-2 mt-3 pt-2.5 border-t border-gray-200/60">
-                          {msg.actionButtons.map((btn: any, idx: number) => (
-                            <button
-                              key={idx}
-                              onClick={() => {
-                                if (btn.type === 'call' && btn.value) window.open(`tel:${btn.value}`, '_self');
-                                else if (btn.type === 'email' && btn.value) window.open(`mailto:${btn.value}`, '_self');
-                                else if (btn.type === 'schedule') {
-                                  const inlineFormMsg: Models.AiMessage = {
-                                    id: Math.random().toString(),
-                                    conversationId: conversationId || 'main',
-                                    senderRole: 'AI',
-                                    content: `Please select your preferred date and time to schedule your site visit for **${property?.title?.trim() || 'this property'}**:`,
-                                    timestamp: new Date().toISOString(),
-                                    isActive: true,
-                                    isScheduleForm: true
-                                  };
-                                  setChatMessages(prev => [...prev.filter(m => !m.isScheduleForm), inlineFormMsg]);
-                                }
-                              }}
-                              className={`px-3.5 py-2 rounded-xl text-xs font-extrabold flex items-center gap-1.5 transition-all shadow-sm active:scale-95 ${
-                                btn.type === 'call' 
-                                  ? 'bg-emerald-600 text-white hover:bg-emerald-500 shadow-emerald-600/20' 
-                                  : btn.type === 'email' 
-                                  ? 'bg-blue-600 text-white hover:bg-blue-500 shadow-blue-600/20' 
-                                  : 'bg-gray-900 text-white hover:bg-black shadow-gray-900/20'
-                              }`}
-                            >
-                              {btn.type === 'call' && <Phone className="w-3.5 h-3.5" />}
-                              {btn.type === 'email' && <Mail className="w-3.5 h-3.5" />}
-                              {btn.type === 'schedule' && <Calendar className="w-3.5 h-3.5" />}
-                              {btn.label}
-                            </button>
-                          ))}
+                          {msg.actionButtons.map((btn: any, idx: number) => {
+                            const cleanLabel = (btn.label || '').replace(/^[^\w\s]+/, '').trim() || btn.label;
+                            const isPrimary = btn.type === 'schedule' || btn.type === 'confirm';
+
+                            return (
+                              <button
+                                key={idx}
+                                onClick={() => {
+                                  if (btn.type === 'call' && btn.value) window.open(`tel:${btn.value}`, '_self');
+                                  else if (btn.type === 'email' && btn.value) window.open(`mailto:${btn.value}`, '_self');
+                                  else if (btn.type === 'schedule') {
+                                    const inlineFormMsg: Models.AiMessage = {
+                                      id: Math.random().toString(),
+                                      conversationId: conversationId || 'main',
+                                      senderRole: 'AI',
+                                      content: `Please select your preferred date and time to schedule your site visit for **${property?.title?.trim() || 'this property'}**:`,
+                                      timestamp: new Date().toISOString(),
+                                      isActive: true,
+                                      isScheduleForm: true
+                                    };
+                                    setChatMessages(prev => [...prev.filter(m => !m.isScheduleForm), inlineFormMsg]);
+                                  }
+                                }}
+                                className={`px-3.5 py-2 rounded-xl text-xs font-extrabold flex items-center gap-2 transition-all shadow-xs active:scale-95 cursor-pointer ${
+                                  isPrimary 
+                                    ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-sm border border-blue-700' 
+                                    : 'bg-blue-50/90 text-blue-700 hover:bg-blue-100/90 border border-blue-200/80'
+                                }`}
+                              >
+                                {btn.type === 'call' && <Phone className="w-3.5 h-3.5 text-blue-600 shrink-0" />}
+                                {btn.type === 'email' && <Mail className="w-3.5 h-3.5 text-blue-600 shrink-0" />}
+                                {btn.type === 'schedule' && <Calendar className="w-3.5 h-3.5 text-white shrink-0" />}
+                                <span>{cleanLabel}</span>
+                              </button>
+                            );
+                          })}
                         </div>
                       )}
 

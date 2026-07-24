@@ -140,13 +140,18 @@ public class PropertyService {
     }
 
     @Transactional
-    public void deleteProperty(UUID id, UUID providerId) {
+    public void deleteProperty(UUID id, UUID userId, boolean isAdminOrGovt) {
         Property property = getPropertyById(id);
-        if (!property.getProvider().getId().equals(providerId)) {
+        if (!isAdminOrGovt && !property.getProvider().getId().equals(userId)) {
             throw new UnauthorizedException("Unauthorized delete: not the listing owner");
         }
         property.setIsActive(false);
         propertyRepository.save(property);
+    }
+
+    @Transactional
+    public void deleteProperty(UUID id, UUID providerId) {
+        deleteProperty(id, providerId, false);
     }
 
     @Transactional
@@ -258,5 +263,49 @@ public class PropertyService {
 
     public List<PropertyVisit> getProviderVisits(UUID providerId) {
         return propertyVisitRepository.findByPropertyProviderIdAndIsActiveTrue(providerId);
+    }
+
+    @Transactional
+    public int deconflictPlottedProperties() {
+        List<Property> activeProperties = propertyRepository.findByIsActiveTrueOrderByCreatedAtAsc();
+        if (activeProperties.isEmpty()) {
+            return 0;
+        }
+
+        int updatedCount = 0;
+        java.util.Map<String, Integer> locationCounts = new java.util.HashMap<>();
+
+        for (Property property : activeProperties) {
+            if (property.getLatitude() == null || property.getLongitude() == null) {
+                continue;
+            }
+
+            double lat = property.getLatitude().doubleValue();
+            double lng = property.getLongitude().doubleValue();
+            String locationKey = String.format(java.util.Locale.US, "%.5f,%.5f", lat, lng);
+
+            if (!locationCounts.containsKey(locationKey)) {
+                locationCounts.put(locationKey, 1);
+            } else {
+                int index = locationCounts.get(locationKey);
+                locationCounts.put(locationKey, index + 1);
+
+                double goldenAngle = 2.39996323;
+                double radiusStep = 0.00018; // ~20m radius step
+                double angle = index * goldenAngle;
+                double radius = radiusStep * Math.sqrt(index);
+
+                double newLat = lat + (radius * Math.cos(angle));
+                double newLng = lng + (radius * Math.sin(angle));
+
+                property.setLatitude(BigDecimal.valueOf(newLat).setScale(6, java.math.RoundingMode.HALF_UP));
+                property.setLongitude(BigDecimal.valueOf(newLng).setScale(6, java.math.RoundingMode.HALF_UP));
+
+                propertyRepository.save(property);
+                updatedCount++;
+            }
+        }
+
+        return updatedCount;
     }
 }

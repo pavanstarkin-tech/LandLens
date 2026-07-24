@@ -84,8 +84,9 @@ const isDirectImage = (url?: string) => {
 };
 
 const getFallbackPhoto = (p: Property) => {
-  if (p.images && p.images.length > 0 && p.images[0].url) {
-    return p.images[0].url;
+  if (p.images && p.images.length > 0) {
+    const imgUrl = p.images[0].imageUrl || p.images[0].url;
+    if (imgUrl) return imgUrl;
   }
   const category = (p.category || '').toUpperCase();
   if (category.includes('FARM') || category.includes('AGRICULTURAL') || category.includes('ORCHARD') || category.includes('POND')) {

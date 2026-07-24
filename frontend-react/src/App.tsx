@@ -5,6 +5,7 @@ import { GuestRoute } from './components/guards/GuestRoute';
 import { ProtectedRoute } from './components/guards/ProtectedRoute';
 import { Login } from './pages/auth/Login';
 import { Register } from './pages/auth/Register';
+import { ForgotPassword } from './pages/auth/ForgotPassword';
 
 import { BuyerDashboard } from './pages/dashboards/BuyerDashboard';
 import { ProviderDashboard } from './pages/dashboards/ProviderDashboard';
@@ -24,9 +25,38 @@ const ScrollToTop = () => {
   return null;
 };
 
+const AutoFullScreen = () => {
+  useEffect(() => {
+    const triggerFullScreen = () => {
+      if (!document.fullscreenElement) {
+        const elem = document.documentElement as any;
+        if (elem.requestFullscreen) {
+          elem.requestFullscreen().catch(() => {});
+        } else if (elem.webkitRequestFullscreen) {
+          elem.webkitRequestFullscreen().catch(() => {});
+        } else if (elem.msRequestFullscreen) {
+          elem.msRequestFullscreen().catch(() => {});
+        }
+      }
+    };
+
+    // Trigger on first user gesture (click/tap) to satisfy browser autoplay/fullscreen policies
+    window.addEventListener('click', triggerFullScreen, { once: true });
+    window.addEventListener('touchstart', triggerFullScreen, { once: true });
+
+    return () => {
+      window.removeEventListener('click', triggerFullScreen);
+      window.removeEventListener('touchstart', triggerFullScreen);
+    };
+  }, []);
+
+  return null;
+};
+
 function App() {
   return (
     <Router>
+      <AutoFullScreen />
       <ScrollToTop />
       <Routes>
         <Route path="/" element={<RootRedirect />} />
@@ -35,6 +65,7 @@ function App() {
         <Route element={<GuestRoute />}>
           <Route path="/auth/login" element={<Login />} />
           <Route path="/auth/register" element={<Register />} />
+          <Route path="/auth/forgot-password" element={<ForgotPassword />} />
         </Route>
 
         {/* Protected Routes by Role */}

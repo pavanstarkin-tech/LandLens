@@ -33,6 +33,7 @@ export interface Property {
   status: PropertyStatus;
   providerId: string;
   provider?: User;
+  images?: PropertyImage[];
   createdAt?: string;
   updatedAt?: string;
 }
@@ -43,6 +44,7 @@ export interface PropertyImage {
   imageUrl: string;
   thumbnailUrl: string;
   displayOrder: number;
+  url?: string;
 }
 
 export interface PropertyVideo {
@@ -150,9 +152,10 @@ export interface AiMessage {
   timestamp: string;
   isActive?: boolean;
   isScheduleForm?: boolean;
+  matchedProperties?: Property[];
   actionButtons?: Array<{
     label: string;
-    type: 'call' | 'email' | 'schedule' | 'map';
+    type: 'call' | 'email' | 'schedule' | 'map' | 'search_agri' | 'search_res';
     value?: string;
   }>;
 }

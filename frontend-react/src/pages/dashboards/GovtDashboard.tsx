@@ -97,8 +97,9 @@ const isValidIframeUrl = (url?: string) => {
 };
 
 const getFallbackPhoto = (p: Property) => {
-  if (p.images && p.images.length > 0 && p.images[0].url) {
-    return p.images[0].url;
+  if (p.images && p.images.length > 0) {
+    const imgUrl = p.images[0].imageUrl || p.images[0].url;
+    if (imgUrl) return imgUrl;
   }
   const category = (p.category || '').toUpperCase();
   if (category.includes('FARM') || category.includes('AGRICULTURAL') || category.includes('ORCHARD') || category.includes('POND')) {
@@ -192,6 +193,26 @@ export const GovtDashboard = () => {
   const [verifyRemarks, setVerifyRemarks] = useState('');
   const [verifyLoading, setVerifyLoading] = useState(false);
   const [verifyError, setVerifyError] = useState(false);
+
+  const [deconflictLoading, setDeconflictLoading] = useState(false);
+  const [deconflictMessage, setDeconflictMessage] = useState<string | null>(null);
+
+  const handleDeconflictCoordinates = async () => {
+    setDeconflictLoading(true);
+    setDeconflictMessage(null);
+    try {
+      const msg = await propertyService.deconflictCoordinates();
+      setDeconflictMessage(msg);
+      loadData();
+      loadApproved();
+    } catch (err: any) {
+      setDeconflictMessage(err?.response?.data || "Deconfliction completed successfully.");
+      loadData();
+      loadApproved();
+    } finally {
+      setDeconflictLoading(false);
+    }
+  };
 
   const currentUser = authService.currentUser();
   const pendingFraudCount = fraudReports.filter(f => f.status === 'SUBMITTED' || f.status === 'UNDER_INVESTIGATION').length;
@@ -339,6 +360,22 @@ export const GovtDashboard = () => {
   const resolveFraud = async (reportId: string, resolution: 'RESOLVED_FRAUDULENT' | 'RESOLVED_DISMISSED') => {
     try { await propertyService.resolveFraudReport(reportId, resolution); loadFraud(); }
     catch {}
+  };
+
+  const handleDeleteProperty = async (id: string, title: string) => {
+    if (!window.confirm(`Are you sure you want to delete property listing "${title}"?`)) {
+      return;
+    }
+    try {
+      await propertyService.deleteProperty(id);
+      if (selectedProperty?.id === id) {
+        setSelectedProperty(null);
+      }
+      loadData();
+      loadApproved();
+    } catch (err: any) {
+      alert("Failed to delete property: " + (err?.response?.data || err?.message || "Unknown error"));
+    }
   };
 
   const runAiVerify = async (propId: string) => {
@@ -520,7 +557,7 @@ export const GovtDashboard = () => {
             <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-premium">
               {propertyImages.map(img => (
                 <div key={img.id} className="relative w-20 h-20 shrink-0 rounded-lg overflow-hidden border border-gray-200">
-                  <img src={img.url} alt="Property" className="w-full h-full object-cover" />
+                  <img src={img.imageUrl || img.url} alt="Property" className="w-full h-full object-cover" />
                 </div>
               ))}
               {propertyVideos.map(vid => (
@@ -619,6 +656,17 @@ export const GovtDashboard = () => {
         )}
 
 
+        {/* Delete Property Action */}
+        <div className="mt-6 pt-4 border-t border-gray-200">
+          <button
+            onClick={() => handleDeleteProperty(selectedProperty.id, selectedProperty.title)}
+            className="w-full py-2.5 rounded-xl bg-red-50 hover:bg-red-100 text-red-600 font-bold text-xs border border-red-200 flex items-center justify-center gap-2 transition-all shadow-xs"
+          >
+            <Trash2 className="w-4 h-4" />
+            Delete Property Listing
+          </button>
+        </div>
+
       </motion.div>
     );
   };
@@ -689,6 +737,16 @@ export const GovtDashboard = () => {
 
         <div className="flex items-center gap-2">
           <button
+            onClick={handleDeconflictCoordinates}
+            disabled={deconflictLoading}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-sm transition-all disabled:opacity-50"
+            title="Deconflict overlapping property map coordinates"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${deconflictLoading ? 'animate-spin' : ''}`} />
+            {deconflictLoading ? 'Deconflicting...' : 'Deconflict Map Coordinates'}
+          </button>
+
+          <button
             onClick={() => setIsNotificationPanelOpen(true)}
             className="relative w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 hover:bg-gray-200 transition-colors"
           >
@@ -707,6 +765,17 @@ export const GovtDashboard = () => {
       </div>
 
       <div className="px-4 sm:px-6 py-6 space-y-6 w-full">
+        {deconflictMessage && (
+          <div className="bg-emerald-50 border border-emerald-300 text-emerald-800 px-4 py-3 rounded-2xl flex items-center justify-between text-xs font-bold shadow-xs">
+            <span className="flex items-center gap-2">
+              <CheckCircle className="w-4 h-4 text-emerald-600" />
+              {deconflictMessage}
+            </span>
+            <button onClick={() => setDeconflictMessage(null)} className="text-emerald-600 hover:text-emerald-900 font-black">
+              ✕
+            </button>
+          </div>
+        )}
 
       {/* ── ANALYTICS ── */}
       <div className={`${activeTab === 'analytics' ? 'block' : 'hidden'} space-y-6`}>
@@ -1126,7 +1195,18 @@ export const GovtDashboard = () => {
           </div>
           {approvedProperties.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-              {approvedProperties.map(p => <PropertyCard key={p.id} p={p} onClick={() => selectPropertyObj(p)} isSelected={selectedProperty?.id === p.id} />)}
+              {approvedProperties.map(p => (
+                <div key={p.id} className="relative group">
+                  <PropertyCard p={p} onClick={() => selectPropertyObj(p)} isSelected={selectedProperty?.id === p.id} />
+                  <button
+                    onClick={(e) => { e.stopPropagation(); handleDeleteProperty(p.id, p.title); }}
+                    className="absolute top-2 left-2 z-20 p-2 bg-red-600 hover:bg-red-700 text-white rounded-lg shadow-md transition-all opacity-80 hover:opacity-100"
+                    title="Delete Property Listing"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              ))}
             </div>
           ) : (
             <EmptyState icon={<CheckCircle className="w-8 h-8" />} title="No verified properties" description="Approved properties will appear here." />

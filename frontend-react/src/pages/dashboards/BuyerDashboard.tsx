@@ -19,7 +19,7 @@ import {
   Heart, ExternalLink, Clock, CheckCircle, Send, Plus,
   Filter, User, Settings, LogOut, ChevronRight, Home, Bookmark, 
   RefreshCw, X, Shield, Play, Video, FileText, ArrowLeft, Star, MapPin, Menu,
-  Compass, Phone, Mail, Briefcase
+  Compass, Phone, Mail, Briefcase, Loader2
 } from 'lucide-react';
 import logo from '../../assets/logo.png';
 import logoText from '../../assets/logo-text.png';
@@ -101,7 +101,89 @@ const isDirectImage = (url?: string) => {
   return url.includes('cloudinary.com') || /\.(jpg|jpeg|png|webp)($|\?)/i.test(url);
 };
 
-const MobilePropertyCard = ({ p, vertical = false, isHidden = false }: { p: Property, vertical?: boolean, isHidden?: boolean }) => {
+const getFallbackPhoto = (p: Property) => {
+  if (p.images && p.images.length > 0) {
+    const imgUrl = p.images[0].imageUrl || p.images[0].url;
+    if (imgUrl) return imgUrl;
+  }
+  return 'https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=400&q=80';
+};
+
+const HeroSkeleton = () => (
+  <div className="relative h-[200px] w-full rounded-2xl overflow-hidden border border-gray-200 shadow-xs bg-gray-200 animate-pulse p-5 flex flex-col justify-center gap-3">
+    <div className="h-6 bg-gray-300 rounded-md w-3/5" />
+    <div className="h-4 bg-gray-300 rounded-md w-2/5" />
+    <div className="h-9 bg-gray-300 rounded-xl w-32 mt-2" />
+  </div>
+);
+
+const CategorySkeleton = () => (
+  <div className="grid grid-cols-4 gap-2">
+    {[0, 1, 2, 3].map(i => (
+      <div key={i} className="flex flex-col items-center gap-2 w-full animate-pulse">
+        <div className="w-[68px] h-[68px] rounded-2xl bg-gray-200 border border-gray-300/60" />
+        <div className="h-3 bg-gray-200 rounded-md w-12" />
+      </div>
+    ))}
+  </div>
+);
+
+const HorizontalCardSkeleton = () => (
+  <div className="w-[340px] sm:w-[400px] shrink-0 bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-xs animate-pulse flex flex-col aspect-video">
+    <div className="h-[75%] bg-gray-200 relative" />
+    <div className="h-[25%] px-3 flex flex-col justify-center gap-1.5 bg-white">
+      <div className="flex justify-between items-center">
+        <div className="h-4 bg-gray-200 rounded-md w-1/2" />
+        <div className="h-4 bg-gray-200 rounded-md w-1/4" />
+      </div>
+      <div className="flex justify-between items-center">
+        <div className="h-3 bg-gray-200 rounded-md w-1/3" />
+        <div className="h-3 bg-gray-200 rounded-md w-1/6" />
+      </div>
+    </div>
+  </div>
+);
+
+const VerticalCardSkeleton = () => (
+  <div className="w-full bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-xs animate-pulse flex flex-col aspect-video">
+    <div className="h-[75%] bg-gray-200 relative" />
+    <div className="h-[25%] px-3 flex flex-col justify-center gap-1.5 bg-white">
+      <div className="flex justify-between items-center">
+        <div className="h-4 bg-gray-200 rounded-md w-1/2" />
+        <div className="h-4 bg-gray-200 rounded-md w-1/4" />
+      </div>
+      <div className="flex justify-between items-center">
+        <div className="h-3 bg-gray-200 rounded-md w-1/3" />
+        <div className="h-3 bg-gray-200 rounded-md w-1/6" />
+      </div>
+    </div>
+  </div>
+);
+
+const ExploreCardSkeleton = () => (
+  <div className="break-inside-avoid relative h-[240px] w-full rounded-2xl overflow-hidden shadow-xs border border-gray-200 bg-white animate-pulse flex flex-col mb-4">
+    <div className="h-[70%] bg-gray-200" />
+    <div className="h-[30%] p-3 flex flex-col justify-between">
+      <div className="space-y-1.5">
+        <div className="h-4 bg-gray-200 rounded-md w-3/4" />
+        <div className="h-3 bg-gray-200 rounded-md w-1/2" />
+      </div>
+    </div>
+  </div>
+);
+
+const VisitSkeletonCard = () => (
+  <div className="shadow-xs border border-gray-200 rounded-2xl p-4 flex gap-3.5 items-center bg-white animate-pulse">
+    <div className="w-12 h-12 rounded-xl bg-gray-200 shrink-0" />
+    <div className="flex-1 space-y-2">
+      <div className="h-4 bg-gray-200 rounded-md w-3/4" />
+      <div className="h-3 bg-gray-200 rounded-md w-1/2" />
+    </div>
+    <div className="w-20 h-7 bg-gray-200 rounded-full shrink-0" />
+  </div>
+);
+
+const MobilePropertyCard = ({ p, vertical = false, isHidden = false, onScheduleVisit }: { p: Property, vertical?: boolean, isHidden?: boolean, onScheduleVisit?: (p: Property) => void }) => {
   const navigate = useNavigate();
   return (
     <div
@@ -120,19 +202,31 @@ const MobilePropertyCard = ({ p, vertical = false, isHidden = false }: { p: Prop
         ) : isValidIframeUrl(p.threeSixtyImageUrl) ? (
           <LazyIframe
             src={getCleanIframeUrl(p.threeSixtyImageUrl)}
-            fallbackImageSrc={p.images?.[0]?.url}
+            fallbackImageSrc={p.images?.[0]?.imageUrl || p.images?.[0]?.url}
             alt={p.title}
             label="360° LIVE"
           />
         ) : (
           <img
-            src={p.images?.[0]?.url || 'https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=400&q=80'}
+            src={p.images?.[0]?.imageUrl || p.images?.[0]?.url || 'https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=400&q=80'}
             alt={p.title}
             onError={(e) => { e.currentTarget.src = 'https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=400&q=80'; }}
             className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
           />
         )}
         
+        {/* Schedule Visit Button Overlay */}
+        {onScheduleVisit && (
+          <button
+            onClick={(e) => { e.stopPropagation(); onScheduleVisit(p); }}
+            className="absolute top-2 left-2 z-20 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-[10px] font-bold shadow-md transition-all flex items-center gap-1.5 active:scale-95"
+            title="Schedule Property Visit"
+          >
+            <Calendar className="w-3.5 h-3.5" />
+            Schedule Visit
+          </button>
+        )}
+
         {/* Verified Badge - Top Right Corner */}
         {p.status === 'APPROVED' && (
           <div className="absolute top-0 right-0 bg-emerald-500 text-black px-3 py-1 rounded-bl-xl z-10 shadow-sm">
@@ -171,6 +265,33 @@ export const BuyerDashboard = () => {
   const [messages, setMessages] = useState<AiMessage[]>([]);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(false);
+
+  // Schedule Visit bottom sheet states
+  const [schedulingProperty, setSchedulingProperty] = useState<Property | null>(null);
+  const [scheduleDate, setScheduleDate] = useState<string>('');
+  const [scheduleTime, setScheduleTime] = useState<string>('10:00');
+  const [scheduleLoading, setScheduleLoading] = useState(false);
+  const [scheduleSuccess, setScheduleSuccess] = useState<string | null>(null);
+  const [mapSearchQuery, setMapSearchQuery] = useState('');
+
+  const handleConfirmSchedule = async () => {
+    if (!schedulingProperty || !scheduleDate || !scheduleTime) return;
+    setScheduleLoading(true);
+    try {
+      await propertyService.scheduleVisit(schedulingProperty.id, {
+        visitDate: scheduleDate,
+        visitTime: scheduleTime
+      });
+      setScheduleSuccess(`Site visit scheduled for "${schedulingProperty.title}" on ${scheduleDate} at ${scheduleTime}!`);
+      setSchedulingProperty(null);
+      loadVisits();
+    } catch (err: any) {
+      alert("Failed to schedule visit: " + (err?.response?.data?.message || err?.message || "Unknown error"));
+    } finally {
+      setScheduleLoading(false);
+    }
+  };
+;
 
   // Detail panel states
   const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
@@ -291,8 +412,12 @@ export const BuyerDashboard = () => {
     } catch {}
   };
 
+  const [visitsLoading, setVisitsLoading] = useState(true);
+
   const loadVisits = async () => {
+    setVisitsLoading(true);
     try { setVisits(await propertyService.getVisits()); } catch {}
+    finally { setVisitsLoading(false); }
   };
 
   const loadNotifications = async () => {
@@ -328,37 +453,192 @@ export const BuyerDashboard = () => {
   };
 
   const createNewChat = async (topicSuggestion?: string) => {
-    const title = prompt('Enter chat topic:', typeof topicSuggestion === 'string' ? topicSuggestion : 'Land Query');
-    if (!title) return;
+    const title = typeof topicSuggestion === 'string' && topicSuggestion.trim() 
+      ? topicSuggestion.trim() 
+      : `Chat ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
     try {
       const res = await propertyService.startAiConversation(title);
       loadConversations();
-      selectConversation(res.id);
-      setIsChatOpen(true);
-    } catch {}
+      setSelectedConvoId(res.id);
+      setMessages([]);
+    } catch {
+      setSelectedConvoId(`local-${Date.now()}`);
+      setMessages([]);
+    }
   };
 
-  const getLocalSmartResponse = (query: string): string => {
+  const [aiVisitDate, setAiVisitDate] = useState('');
+  const [aiVisitTime, setAiVisitTime] = useState('10:30');
+  const [aiVisitLoading, setAiVisitLoading] = useState(false);
+
+  const getLocalSmartResponse = (query: string): {
+    content: string;
+    actionButtons?: AiMessage['actionButtons'];
+    matchedProperties?: Property[];
+    isScheduleForm?: boolean;
+  } => {
     const q = query.toLowerCase();
+
+    // 1. Agricultural query
+    if (q.includes('agri') || q.includes('farm') || q.includes('crop') || q.includes('land')) {
+      const matched = properties.filter(p => (p.category || '').toUpperCase() === 'AGRICULTURAL');
+      const list = matched.length > 0 ? matched.slice(0, 4) : properties.slice(0, 4);
+      return {
+        content: `🌾 **Found ${list.length} Verified Agricultural Properties in LandLens:**\n\n${list.map(p => `• **${p.title.trim()}**\n  📍 Location: ${p.village || p.district}, ${p.district}\n  📐 Area: ${p.area} Acres | 💰 Price: ₹${(p.price / 100000).toFixed(1)} Lakhs\n  🛡️ Legal Status: Government Title Verified`).join('\n\n')}\n\nClick any property card below to view details, inspect 360° virtual tours, or schedule a site visit!`,
+        actionButtons: [
+          { label: '📅 Schedule Site Visit', type: 'schedule' },
+          { label: '📍 View on Map', type: 'map' },
+          { label: '📞 Call Seller', type: 'call', value: list[0]?.provider?.phoneNumber || '+91 98480 12345' },
+          { label: '✉️ Email Seller', type: 'email', value: list[0]?.provider?.email || 'seller@landlens.com' }
+        ],
+        matchedProperties: list
+      };
+    }
+
+    // 2. Residential query
+    if (q.includes('residen') || q.includes('house') || q.includes('home') || q.includes('plot')) {
+      const matched = properties.filter(p => (p.category || '').toUpperCase() === 'RESIDENTIAL');
+      const list = matched.length > 0 ? matched.slice(0, 4) : properties.slice(0, 4);
+      return {
+        content: `🏡 **Found ${list.length} Verified Residential Properties in LandLens:**\n\n${list.map(p => `• **${p.title.trim()}**\n  📍 Location: ${p.village || p.district}, ${p.district}\n  📐 Area: ${p.area} Acres | 💰 Price: ₹${(p.price / 100000).toFixed(1)} Lakhs`).join('\n\n')}\n\nSelect a property below or click **Schedule Site Visit**!`,
+        actionButtons: [
+          { label: '📅 Schedule Site Visit', type: 'schedule' },
+          { label: '📍 View on Map', type: 'map' }
+        ],
+        matchedProperties: list
+      };
+    }
+
+    // 3. Commercial query
+    if (q.includes('commer') || q.includes('shop') || q.includes('office')) {
+      const matched = properties.filter(p => (p.category || '').toUpperCase() === 'COMMERCIAL');
+      const list = matched.length > 0 ? matched.slice(0, 4) : properties.slice(0, 4);
+      return {
+        content: `🏢 **Found ${list.length} Verified Commercial Properties in LandLens:**\n\n${list.map(p => `• **${p.title.trim()}**\n  📍 Location: ${p.village || p.district}, ${p.district}\n  📐 Area: ${p.area} Acres | 💰 Price: ₹${(p.price / 100000).toFixed(1)} Lakhs`).join('\n\n')}`,
+        actionButtons: [
+          { label: '📅 Schedule Site Visit', type: 'schedule' },
+          { label: '📍 View on Map', type: 'map' }
+        ],
+        matchedProperties: list
+      };
+    }
+
+    // 4. Industrial query
+    if (q.includes('indust') || q.includes('factory')) {
+      const matched = properties.filter(p => (p.category || '').toUpperCase() === 'INDUSTRIAL');
+      const list = matched.length > 0 ? matched.slice(0, 4) : properties.slice(0, 4);
+      return {
+        content: `🏭 **Found ${list.length} Verified Industrial Properties in LandLens:**\n\n${list.map(p => `• **${p.title.trim()}**\n  📍 Location: ${p.village || p.district}, ${p.district}\n  📐 Area: ${p.area} Acres | 💰 Price: ₹${(p.price / 100000).toFixed(1)} Lakhs`).join('\n\n')}`,
+        actionButtons: [
+          { label: '📅 Schedule Site Visit', type: 'schedule' },
+          { label: '📍 View on Map', type: 'map' }
+        ],
+        matchedProperties: list
+      };
+    }
+
+    // 5. Generic property search queries
+    if (q.includes('list') || q.includes('all') || q.includes('show') || q.includes('search') || q.includes('available') || q.includes('property') || q.includes('properties')) {
+      const list = properties.slice(0, 4);
+      return {
+        content: `✨ **Here are top verified available properties in LandLens:**\n\n${list.map(p => `• **${p.title.trim()}** (${p.category})\n  📍 Location: ${p.village || p.district}, ${p.district}\n  📐 Area: ${p.area} Acres | 💰 Price: ₹${(p.price / 100000).toFixed(1)} Lakhs`).join('\n\n')}\n\nClick any property card below or use the action buttons to schedule a visit or contact the seller!`,
+        actionButtons: [
+          { label: '📅 Schedule Site Visit', type: 'schedule' },
+          { label: '📍 View on Map', type: 'map' },
+          { label: '📞 Call Seller', type: 'call', value: '+91 98480 12345' }
+        ],
+        matchedProperties: list
+      };
+    }
+
+    // 6. Schedule / Visit queries
+    if (q.includes('visit') || q.includes('schedule') || q.includes('book') || q.includes('see')) {
+      return {
+        content: "To schedule a site visit for any verified parcel, select your preferred date & time below and click **Confirm Site Visit Booking**! Your visit request will be sent to the seller immediately.",
+        actionButtons: [{ label: '📅 Schedule Site Visit', type: 'schedule' }],
+        isScheduleForm: true
+      };
+    }
+
+    // 7. Contact / Owner queries
+    if (q.includes('owner') || q.includes('seller') || q.includes('who owns') || q.includes('contact') || q.includes('phone') || q.includes('email') || q.includes('number') || q.includes('call')) {
+      return {
+        content: "Direct seller contact options are available below for verified properties! Feel free to call or email the landowner directly, or schedule an upcoming site visit.",
+        actionButtons: [
+          { label: '📞 Call Seller', type: 'call', value: '+91 98480 12345' },
+          { label: '✉️ Email Seller', type: 'email', value: 'seller@landlens.com' },
+          { label: '📅 Schedule Site Visit', type: 'schedule' }
+        ]
+      };
+    }
+
+    // 8. Greeting queries
     if (q.includes('who are you') || q.includes('what are you') || q.includes('your name') || q.includes('hi') || q.includes('hello') || q.includes('hey')) {
-      return "Hello! 👋 I am **LandLens AI**, your virtual real estate assistant. I can help you search verified land parcels, check market rates, inspect 360° virtual tours, and schedule site visits. How can I help you today?";
+      return {
+        content: "Hello! 👋 I am **LandLens AI**, your virtual real estate assistant. I can help you search verified land parcels, check market rates, inspect 360° virtual tours, and schedule site visits. How can I help you today?",
+        actionButtons: [
+          { label: '🌾 Browse Agricultural Land', type: 'search_agri' },
+          { label: '🏡 Browse Residential Plots', type: 'search_res' },
+          { label: '📅 Schedule Site Visit', type: 'schedule' }
+        ]
+      };
     }
-    if (q.includes('owner') || q.includes('seller') || q.includes('who owns')) {
-      return "LandLens connects you directly with verified landowners! Every property listing undergoes official government land registry cross-checks to ensure 100% verified title ownership.";
+
+    // Default fallback with top properties
+    const list = properties.slice(0, 3);
+    return {
+      content: `I am here to assist you with property searches, legal verification, market pricing, and scheduling site visits! 😊\n\nHere are top recommended verified properties:`,
+      actionButtons: [
+        { label: '📅 Schedule Site Visit', type: 'schedule' },
+        { label: '📍 View on Map', type: 'map' }
+      ],
+      matchedProperties: list
+    };
+  };
+
+  const handleAiActionButtonClick = (btn: any, msg: AiMessage) => {
+    if (btn.type === 'call') {
+      window.open(`tel:${btn.value || '+919848012345'}`);
+    } else if (btn.type === 'email') {
+      window.open(`mailto:${btn.value || 'seller@landlens.com'}`);
+    } else if (btn.type === 'map') {
+      setIsChatOpen(false);
+      setViewTab('map');
+    } else if (btn.type === 'schedule') {
+      setMessages(prev => prev.map(m => m.id === msg.id ? { ...m, isScheduleForm: true } : m));
+    } else if (btn.type === 'search_agri') {
+      setChatInput('list all available agricultural properties');
+    } else if (btn.type === 'search_res') {
+      setChatInput('list all available residential properties');
     }
-    if (q.includes('contact') || q.includes('phone') || q.includes('email') || q.includes('number') || q.includes('call')) {
-      return "You can view contact details and connect directly with verified sellers by visiting any property details page or requesting a site visit under **My Schedule**!";
+  };
+
+  const handleConfirmAiScheduleVisit = async (msgId: string) => {
+    if (!aiVisitDate || !aiVisitTime) return;
+    setAiVisitLoading(true);
+    try {
+      const targetProp = properties[0];
+      if (targetProp) {
+        await propertyService.scheduleVisit(targetProp.id, { visitDate: aiVisitDate, visitTime: aiVisitTime + ':00' });
+      }
+      const confirmMsg: AiMessage = {
+        id: `ai-confirm-${Date.now()}`,
+        conversationId: selectedConvoId || 'main',
+        senderRole: 'AI',
+        content: `🎉 **Site Visit Successfully Scheduled!**\n\n• 📅 **Date**: ${aiVisitDate}\n• ⏰ **Time**: ${aiVisitTime}\n• 📍 **Status**: Confirmed & Sent to Seller\n\nSeller contact details are unlocked below! Feel free to call or email the landowner directly.`,
+        timestamp: new Date().toISOString(),
+        isActive: true,
+        actionButtons: [
+          { label: '📞 Call Seller', type: 'call', value: '+91 98480 12345' },
+          { label: '✉️ Email Seller', type: 'email', value: 'seller@landlens.com' }
+        ]
+      };
+      setMessages(prev => [...prev.map(m => m.id === msgId ? { ...m, isScheduleForm: false } : m), confirmMsg]);
+    } catch (e) {
+      console.error("Schedule visit error:", e);
+    } finally {
+      setAiVisitLoading(false);
     }
-    if (q.includes('price') || q.includes('cost') || q.includes('rate') || q.includes('market')) {
-      return "Property prices are estimated based on official land registry data, market valuations, and verified area acreage. Check individual property cards for exact pricing details!";
-    }
-    if (q.includes('visit') || q.includes('schedule') || q.includes('book')) {
-      return "To schedule a site visit, click on any property card and press the **Schedule Visit** button to request your preferred date and time with the seller!";
-    }
-    if (q.includes('doc') || q.includes('patta') || q.includes('deed') || q.includes('dispute') || q.includes('legal')) {
-      return "LandLens verifies Patta, Encumbrance Certificates (EC), and Sale Deeds directly against government records to calculate a 100% reliable Trust Score with clear title verification.";
-    }
-    return "I am here to assist you with your property search and land verification! Feel free to ask about market pricing, legal verification, seller contacts, or site visits. 😊";
   };
 
   const sendMessage = async () => {
@@ -390,15 +670,24 @@ export const BuyerDashboard = () => {
     setMessages(prev => [...prev, opt]);
     setIsAiThinking(true);
 
+    const smartData = getLocalSmartResponse(text);
+    const chatHistoryPayload = messages.slice(-10).map(m => ({
+      role: (m.senderRole === 'USER' ? 'user' : 'assistant') as 'user' | 'assistant',
+      content: m.content
+    }));
+
     try { 
-      const responseText = await aiService.generateResponse(text);
+      const responseText = await aiService.generateResponse(text, undefined, chatHistoryPayload, convoId);
       const reply: AiMessage = {
         id: `ai-${Date.now()}`,
         conversationId: convoId,
         senderRole: 'AI',
-        content: responseText,
+        content: responseText || smartData.content,
         timestamp: new Date().toISOString(),
-        isActive: true
+        isActive: true,
+        actionButtons: smartData.actionButtons,
+        matchedProperties: smartData.matchedProperties,
+        isScheduleForm: smartData.isScheduleForm
       };
       setMessages(prev => [...prev, reply]);
     } catch (e) {
@@ -407,9 +696,12 @@ export const BuyerDashboard = () => {
         id: `ai-smart-${Date.now()}`,
         conversationId: convoId,
         senderRole: 'AI',
-        content: getLocalSmartResponse(text),
+        content: smartData.content,
         timestamp: new Date().toISOString(),
-        isActive: true
+        isActive: true,
+        actionButtons: smartData.actionButtons,
+        matchedProperties: smartData.matchedProperties,
+        isScheduleForm: smartData.isScheduleForm
       };
       setMessages(prev => [...prev, smartReply]);
     } finally {
@@ -499,42 +791,38 @@ export const BuyerDashboard = () => {
               
               {/* Hero Slider Section */}
               <div className="px-4 pt-6 pb-2 bg-gray-50 relative overflow-hidden">
-                
-                {/* Carousel Area */}
-                <div className="relative h-[200px] w-full rounded-2xl overflow-hidden border border-gray-200 shadow-sm bg-white">
-                  <AnimatePresence mode="wait">
-                    <motion.div
-                      key={heroSlideIndex}
-                      initial={{ opacity: 0, x: 20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: -20 }}
-                      transition={{ duration: 0.4 }}
-                      className="absolute inset-0 flex items-center justify-between"
-                    >
-                       {/* Background image with top and bottom white edge blending */}
-                       <div className="absolute inset-0 z-0 flex items-center justify-center overflow-hidden pointer-events-none">
-                         <img src={heroSlides[heroSlideIndex].image} alt="Hero Illustration" className="w-full h-full object-contain object-right" />
-                         {/* Top white blend gradient */}
-                         <div className="absolute top-0 left-0 right-0 h-10 bg-gradient-to-b from-white via-white/80 to-transparent z-10 pointer-events-none" />
-                         {/* Bottom white blend gradient */}
-                         <div className="absolute bottom-0 left-0 right-0 h-10 bg-gradient-to-t from-white via-white/80 to-transparent z-10 pointer-events-none" />
-                         {/* Left white fade gradient for text readability */}
-                         <div className="absolute top-0 bottom-0 left-0 w-1/2 bg-gradient-to-r from-white via-white/90 to-transparent z-10 pointer-events-none" />
-                       </div>
-                       
-                       {/* Overlay text over the full width */}
-                       <div className="w-full h-full flex flex-col justify-center relative z-10 p-5 pointer-events-none">
-                          <h1 className="text-xl font-bold text-slate-900 mb-2 leading-tight max-w-[60%]">{heroSlides[heroSlideIndex].title}</h1>
-                          <p className="text-emerald-600 text-[10.5px] mb-4 max-w-[55%] font-bold leading-relaxed">{heroSlides[heroSlideIndex].subtitle}</p>
-                          <button className="pointer-events-auto group relative overflow-hidden bg-blue-900 text-blue-50 text-[11px] font-bold px-5 py-2.5 rounded-xl w-max transition-all duration-300 hover:bg-blue-800 active:scale-95 flex items-center gap-2 shadow-sm shadow-blue-900/20">
-                            <span className="relative z-10">{heroSlides[heroSlideIndex].cta}</span>
-                            <ChevronRight className="w-3.5 h-3.5 relative z-10 transition-transform duration-300 group-hover:translate-x-1" />
-                          </button>
-                       </div>
-                    </motion.div>
-                  </AnimatePresence>
-                </div>
-                
+                {loading ? (
+                  <HeroSkeleton />
+                ) : (
+                  <div className="relative h-[200px] w-full rounded-2xl overflow-hidden border border-gray-200 shadow-sm bg-white">
+                    <AnimatePresence mode="wait">
+                      <motion.div
+                        key={heroSlideIndex}
+                        initial={{ opacity: 0, x: 20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: -20 }}
+                        transition={{ duration: 0.4 }}
+                        className="absolute inset-0 flex items-center justify-between"
+                      >
+                         <div className="absolute inset-0 z-0 flex items-center justify-center overflow-hidden pointer-events-none">
+                           <img src={heroSlides[heroSlideIndex].image} alt="Hero Illustration" className="w-full h-full object-contain object-right" />
+                           <div className="absolute top-0 left-0 right-0 h-10 bg-gradient-to-b from-white via-white/80 to-transparent z-10 pointer-events-none" />
+                           <div className="absolute bottom-0 left-0 right-0 h-10 bg-gradient-to-t from-white via-white/80 to-transparent z-10 pointer-events-none" />
+                           <div className="absolute top-0 bottom-0 left-0 w-1/2 bg-gradient-to-r from-white via-white/90 to-transparent z-10 pointer-events-none" />
+                         </div>
+                         
+                         <div className="w-full h-full flex flex-col justify-center relative z-10 p-5 pointer-events-none">
+                            <h1 className="text-xl font-bold text-slate-900 mb-2 leading-tight max-w-[60%]">{heroSlides[heroSlideIndex].title}</h1>
+                            <p className="text-emerald-600 text-[10.5px] mb-4 max-w-[55%] font-bold leading-relaxed">{heroSlides[heroSlideIndex].subtitle}</p>
+                            <button className="pointer-events-auto group relative overflow-hidden bg-blue-900 text-blue-50 text-[11px] font-bold px-5 py-2.5 rounded-xl w-max transition-all duration-300 hover:bg-blue-800 active:scale-95 flex items-center gap-2 shadow-sm shadow-blue-900/20">
+                              <span className="relative z-10">{heroSlides[heroSlideIndex].cta}</span>
+                              <ChevronRight className="w-3.5 h-3.5 relative z-10 transition-transform duration-300 group-hover:translate-x-1" />
+                            </button>
+                         </div>
+                      </motion.div>
+                    </AnimatePresence>
+                  </div>
+                )}
               </div>
 
               {/* Categories */}
@@ -542,29 +830,33 @@ export const BuyerDashboard = () => {
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-sm font-bold text-gray-900">Categories</h2>
                 </div>
-                <div className="grid grid-cols-4 gap-2">
-                  {[
-                    { id: 'AGRICULTURAL', label: 'Agricultural', image: 'https://i.ibb.co/60v5FYDV/AGRI.png' },
-                    { id: 'RESIDENTIAL', label: 'Residential', image: 'https://i.ibb.co/PsHG0SXN/HOME.png' },
-                    { id: 'COMMERCIAL', label: 'Commercial', image: 'https://i.ibb.co/5WJXZKxf/comersial.png' },
-                    { id: 'INDUSTRIAL', label: 'Industrial', image: 'https://i.ibb.co/jkmhLV7J/INDUSTRY.png' },
-                  ].map(cat => {
-                    const isActive = filters.category === cat.id;
-                    return (
-                      <button key={cat.id} onClick={() => handleCategoryClick(cat.id)} className="flex flex-col items-center gap-3 w-full">
-                        <div className={`flex items-center justify-center transition-all duration-300 active:scale-95 mx-auto ${isActive ? 'scale-110 drop-shadow-[0_0_4px_rgba(0,0,0,1)]' : 'opacity-80'}`}>
-                           <img 
-                             src={cat.image} 
-                             alt={cat.label} 
-                             onError={(e) => { e.currentTarget.src = 'https://i.ibb.co/PsHG0SXN/HOME.png'; }}
-                             className="w-[68px] h-[68px] object-contain transition-transform" 
-                           />
-                        </div>
-                        <span className={`text-[10.5px] font-bold text-center leading-tight break-words w-full transition-colors ${isActive ? 'text-black' : 'text-gray-500'}`}>{cat.label}</span>
-                      </button>
-                    );
-                  })}
-                </div>
+                {loading ? (
+                  <CategorySkeleton />
+                ) : (
+                  <div className="grid grid-cols-4 gap-2">
+                    {[
+                      { id: 'AGRICULTURAL', label: 'Agricultural', image: 'https://i.ibb.co/60v5FYDV/AGRI.png' },
+                      { id: 'RESIDENTIAL', label: 'Residential', image: 'https://i.ibb.co/PsHG0SXN/HOME.png' },
+                      { id: 'COMMERCIAL', label: 'Commercial', image: 'https://i.ibb.co/5WJXZKxf/comersial.png' },
+                      { id: 'INDUSTRIAL', label: 'Industrial', image: 'https://i.ibb.co/jkmhLV7J/INDUSTRY.png' },
+                    ].map(cat => {
+                      const isActive = filters.category === cat.id;
+                      return (
+                        <button key={cat.id} onClick={() => handleCategoryClick(cat.id)} className="flex flex-col items-center gap-3 w-full">
+                          <div className={`flex items-center justify-center transition-all duration-300 active:scale-95 mx-auto ${isActive ? 'scale-110 drop-shadow-[0_0_4px_rgba(0,0,0,1)]' : 'opacity-80'}`}>
+                             <img 
+                               src={cat.image} 
+                               alt={cat.label} 
+                               onError={(e) => { e.currentTarget.src = 'https://i.ibb.co/PsHG0SXN/HOME.png'; }}
+                               className="w-[68px] h-[68px] object-contain transition-transform" 
+                             />
+                          </div>
+                          <span className={`text-[10.5px] font-bold text-center leading-tight break-words w-full transition-colors ${isActive ? 'text-black' : 'text-gray-500'}`}>{cat.label}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
 
               {/* Latest Added Properties */}
@@ -575,7 +867,7 @@ export const BuyerDashboard = () => {
                 </div>
                 {loading ? (
                   <div className="flex gap-4 overflow-x-auto px-4 pb-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-                    {[0,1,2].map(i => <div key={i} className="w-64 shrink-0"><SkeletonCard /></div>)}
+                    {[0,1,2].map(i => <HorizontalCardSkeleton key={i} />)}
                   </div>
                 ) : (
                   <div className="flex gap-4 overflow-x-auto px-4 pb-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
@@ -593,7 +885,16 @@ export const BuyerDashboard = () => {
               </div>
 
               {/* Top Rated Properties */}
-              {filteredProperties.length > 0 && (
+              {loading ? (
+                <div className="mb-4">
+                  <div className="px-4 flex items-center justify-between mb-4">
+                    <h2 className="text-sm font-bold text-gray-900 flex items-center gap-1.5"><Star className="w-4 h-4 text-amber-500 fill-amber-500"/> Top Verified</h2>
+                  </div>
+                  <div className="px-4 flex flex-col gap-4">
+                    {[0,1,2].map(i => <VerticalCardSkeleton key={i} />)}
+                  </div>
+                </div>
+              ) : filteredProperties.length > 0 && (
                 <div className="mb-4">
                   <div className="px-4 flex items-center justify-between mb-4">
                     <h2 className="text-sm font-bold text-gray-900 flex items-center gap-1.5"><Star className="w-4 h-4 text-amber-500 fill-amber-500"/> Top Verified</h2>
@@ -607,15 +908,58 @@ export const BuyerDashboard = () => {
                 </div>
               )}
 
+              {/* 50px bottom gap below Home Page content */}
+              <div className="h-[50px] w-full shrink-0" />
             </div>
 
           {/* ── MAP TAB ── */}
-          <div className={viewTab === 'map' ? 'block h-full' : 'hidden'}>
-            <div className="h-[calc(100vh-140px)] w-full relative">
-              <Map mode="view" properties={properties} onLocationSelected={() => {}} className="!rounded-none !border-none" />
-              <div className="absolute top-[84px] left-4 bg-white rounded-full border border-gray-200 px-4 py-3 flex items-center gap-3 shadow-md w-[80vw] max-w-[350px]">
+          <div className={viewTab === 'map' ? 'block h-full w-full absolute inset-0' : 'hidden'}>
+            <div className="h-full w-full relative">
+              <Map mode="view" properties={properties} onLocationSelected={() => {}} className="!rounded-none !border-none w-full h-full" />
+              
+              {/* Search overlay */}
+              <div className="absolute top-[84px] left-4 bg-white rounded-full border border-gray-200 px-4 py-3 flex items-center gap-3 shadow-md w-[80vw] max-w-[350px] z-30">
                 <Search className="w-5 h-5 text-gray-400" />
-                <input type="text" placeholder="Search location..." className="bg-transparent text-sm text-gray-900 w-full outline-none" />
+                <input 
+                  type="text" 
+                  value={mapSearchQuery}
+                  onChange={e => setMapSearchQuery(e.target.value)}
+                  placeholder="Search location or survey..." 
+                  className="bg-transparent text-sm text-gray-900 w-full outline-none font-medium" 
+                />
+              </div>
+
+              {/* Property Overlay Cards Slider above Bottom Navigation Bar */}
+              <div className="absolute bottom-[80px] left-0 right-0 z-40 px-4 overflow-x-auto flex gap-3 scrollbar-none pb-2">
+                {properties
+                  .filter(p => !mapSearchQuery.trim() || p.title?.toLowerCase().includes(mapSearchQuery.toLowerCase()) || p.district?.toLowerCase().includes(mapSearchQuery.toLowerCase()) || p.village?.toLowerCase().includes(mapSearchQuery.toLowerCase()))
+                  .map(p => (
+                    <div key={`map-card-${p.id}`} className="w-[280px] shrink-0 bg-white/95 backdrop-blur-md border border-gray-200 rounded-2xl p-3.5 shadow-xl transition-all">
+                      <div className="flex items-start justify-between gap-2 mb-1">
+                        <div className="min-w-0">
+                          <h4 className="font-bold text-xs text-gray-900 truncate">{p.title}</h4>
+                          <p className="text-[10px] text-gray-500 truncate flex items-center gap-1 mt-0.5 font-medium">
+                            <MapPin className="w-2.5 h-2.5 shrink-0 text-gray-400" />
+                            {p.village}, {p.district}
+                          </p>
+                        </div>
+                        <span className="text-xs font-black text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-lg border border-emerald-100 shrink-0">
+                          ₹{p.price?.toLocaleString('en-IN')}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center justify-between mt-2.5 pt-2.5 border-t border-gray-100">
+                        <span className="text-[10px] font-bold text-gray-500">{p.area} acres • {p.category}</span>
+                        <button
+                          onClick={() => { setSchedulingProperty(p); setScheduleDate(''); setScheduleTime('10:00'); }}
+                          className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-[10px] flex items-center gap-1.5 shadow-xs transition-all active:scale-95"
+                        >
+                          <Calendar className="w-3 h-3" />
+                          Schedule Visit
+                        </button>
+                      </div>
+                    </div>
+                  ))}
               </div>
             </div>
           </div>
@@ -639,10 +983,14 @@ export const BuyerDashboard = () => {
           {/* ── SCHEDULE TAB (Visits) ── */}
           <div className={viewTab === 'schedule' ? 'block p-4 space-y-4' : 'hidden'}>
             <h1 className="text-xl font-bold text-gray-900 mb-2">My Schedule</h1>
-              {visits.length > 0 ? (
+              {visitsLoading ? (
+                <div className="flex flex-col gap-4">
+                  {[0, 1, 2, 3].map(i => <VisitSkeletonCard key={i} />)}
+                </div>
+              ) : visits.length > 0 ? (
                 <div className="flex flex-col gap-4">
                   {visits.map(v => {
-                    const isApproved = v.status === 'CONFIRMED' || v.status === 'APPROVED';
+                    const isApproved = v.status === 'CONFIRMED';
                     const isDeclined = v.status === 'CANCELLED' || v.status === 'REJECTED';
 
                     return (
@@ -776,56 +1124,62 @@ export const BuyerDashboard = () => {
               </div>
 
               {/* Multi-Size Dynamic Layout Grid with Gaps */}
-              <div className="columns-2 gap-4 space-y-4">
-                {exploreProperties.map((p, index) => {
-                  const heightStyles = ['h-[280px]', 'h-[195px]', 'h-[330px]', 'h-[220px]', 'h-[290px]', 'h-[210px]'];
-                  const cardHeight = heightStyles[index % heightStyles.length];
+              {loading ? (
+                <div className="columns-2 gap-4 space-y-4">
+                  {[0, 1, 2, 3, 4, 5].map(i => <ExploreCardSkeleton key={i} />)}
+                </div>
+              ) : (
+                <div className="columns-2 gap-4 space-y-4">
+                  {exploreProperties.map((p, index) => {
+                    const heightStyles = ['h-[280px]', 'h-[195px]', 'h-[330px]', 'h-[220px]', 'h-[290px]', 'h-[210px]'];
+                    const cardHeight = heightStyles[index % heightStyles.length];
 
-                  return (
-                    <div 
-                      key={p.id} 
-                      onClick={() => navigate(`/properties/${p.id}`)}
-                      className={`break-inside-avoid relative ${cardHeight} w-full rounded-2xl overflow-hidden shadow-md border border-gray-200 bg-gray-900 cursor-pointer group transition-all duration-300 hover:shadow-xl hover:-translate-y-1 mb-4`}
-                    >
-                      {/* Thumbnail: individual lazy iframe or photo */}
-                      {isDirectImage(p.threeSixtyImageUrl) ? (
-                        <img
-                          src={p.threeSixtyImageUrl}
-                          alt={p.title}
-                          onError={(e) => { e.currentTarget.src = 'https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=400&q=80'; }}
-                          className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                        />
-                      ) : isValidIframeUrl(p.threeSixtyImageUrl) ? (
-                        <LazyIframe
-                          src={getCleanIframeUrl(p.threeSixtyImageUrl)}
-                          fallbackImageSrc={p.images?.[0]?.url}
-                          alt={p.title}
-                          label="360° LIVE"
-                        />
-                      ) : (
-                        <img
-                          src={p.images?.[0]?.url || 'https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=400&q=80'}
-                          alt={p.title}
-                          onError={(e) => { e.currentTarget.src = 'https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=400&q=80'; }}
-                          className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                        />
-                      )}
-                      
-                      {/* Price Badge */}
-                      <div className="absolute top-2.5 right-2.5 bg-emerald-600 text-gray-900 text-[10px] font-extrabold px-2.5 py-1 rounded-full z-10 shadow-md">
-                        ₹{(p.price / 100000).toFixed(1)}L
-                      </div>
+                    return (
+                      <div 
+                        key={p.id} 
+                        onClick={() => navigate(`/properties/${p.id}`)}
+                        className={`break-inside-avoid relative ${cardHeight} w-full rounded-2xl overflow-hidden shadow-md border border-gray-200 bg-gray-900 cursor-pointer group transition-all duration-300 hover:shadow-xl hover:-translate-y-1 mb-4`}
+                      >
+                        {/* Thumbnail: individual lazy iframe or photo */}
+                        {isDirectImage(p.threeSixtyImageUrl) ? (
+                          <img
+                            src={p.threeSixtyImageUrl}
+                            alt={p.title}
+                            onError={(e) => { e.currentTarget.src = 'https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=400&q=80'; }}
+                            className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                          />
+                        ) : isValidIframeUrl(p.threeSixtyImageUrl) ? (
+                          <LazyIframe
+                            src={getCleanIframeUrl(p.threeSixtyImageUrl)}
+                            fallbackImageSrc={p.images?.[0]?.imageUrl || p.images?.[0]?.url}
+                            alt={p.title}
+                            label="360° LIVE"
+                          />
+                        ) : (
+                          <img
+                            src={p.images?.[0]?.imageUrl || p.images?.[0]?.url || 'https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=400&q=80'}
+                            alt={p.title}
+                            onError={(e) => { e.currentTarget.src = 'https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=400&q=80'; }}
+                            className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                          />
+                        )}
+                        
+                        {/* Price Badge */}
+                        <div className="absolute top-2.5 right-2.5 bg-emerald-600 text-gray-900 text-[10px] font-extrabold px-2.5 py-1 rounded-full z-10 shadow-md">
+                          ₹{(p.price / 100000).toFixed(1)}L
+                        </div>
 
-                      {/* Bottom Gradient Card Info Overlay */}
-                      <div className="absolute bottom-0 left-0 right-0 h-[55%] bg-gradient-to-t from-white via-white/95 to-transparent flex flex-col justify-end p-3.5 pointer-events-none z-10">
-                        <span className="text-[9px] font-extrabold uppercase tracking-wider text-blue-600 mb-0.5">{p.category}</span>
-                        <p className="text-gray-900 text-xs font-extrabold line-clamp-2 leading-snug">{p.title}</p>
-                        <p className="text-gray-500 text-[10px] font-semibold mt-1 flex items-center gap-1">📍 {p.village || p.district}, {p.area}ac</p>
+                        {/* Bottom Gradient Card Info Overlay */}
+                        <div className="absolute bottom-0 left-0 right-0 h-[55%] bg-gradient-to-t from-white via-white/95 to-transparent flex flex-col justify-end p-3.5 pointer-events-none z-10">
+                          <span className="text-[9px] font-extrabold uppercase tracking-wider text-blue-600 mb-0.5">{p.category}</span>
+                          <p className="text-gray-900 text-xs font-extrabold line-clamp-2 leading-snug">{p.title}</p>
+                          <p className="text-gray-500 text-[10px] font-semibold mt-1 flex items-center gap-1">📍 {p.village || p.district}, {p.area}ac</p>
+                        </div>
                       </div>
-                    </div>
-                  );
-                })}
-              </div>
+                    );
+                  })}
+                </div>
+              )}
 
           </div>
 
@@ -850,7 +1204,7 @@ export const BuyerDashboard = () => {
                   <div key={notif.id} className={`p-4 rounded-xl border ${notif.isRead ? 'bg-gray-50 border-gray-100' : 'bg-primary-50 border-primary-100'}`}>
                     <h3 className="text-sm font-bold text-gray-900">{notif.title}</h3>
                     <p className="text-xs text-gray-500 mt-1">{notif.message}</p>
-                    <span className="text-[10px] text-gray-400 mt-2 block">{new Date(notif.createdAt).toLocaleDateString()}</span>
+                    <span className="text-[10px] text-gray-400 mt-2 block">{new Date(notif.createdTime).toLocaleDateString()}</span>
                   </div>
                 )) : (
                   <div className="text-center text-gray-500 py-8 text-sm">No new notifications</div>
@@ -918,9 +1272,106 @@ export const BuyerDashboard = () => {
                ) : (
                  <>
                    {messages.map(msg => (
-                     <div key={msg.id} className={`flex ${msg.senderRole === 'USER' ? 'justify-end' : 'justify-start'}`}>
-                        <div className={`max-w-[85%] p-3.5 rounded-2xl text-sm ${msg.senderRole === 'USER' ? '!bg-blue-600 !text-gray-900 rounded-tr-sm shadow-md border border-blue-700 [&_*]:!text-gray-900 [&_p]:!text-gray-900 [&_p]:font-semibold [&_strong]:font-extrabold [&_strong]:!text-gray-900' : 'bg-white text-gray-900 rounded-tl-sm border border-gray-200 shadow-sm [&_p]:text-gray-900 [&_strong]:font-extrabold [&_strong]:text-gray-900 font-normal'}`}>
+                     <div key={msg.id} className={`flex flex-col ${msg.senderRole === 'USER' ? 'items-end' : 'items-start'} mb-3`}>
+                        <div className={`max-w-[88%] sm:max-w-[80%] p-4 rounded-2xl text-sm ${
+                          msg.senderRole === 'USER' 
+                            ? '!bg-blue-600 !text-white rounded-tr-xs shadow-md border border-blue-700 [&_*]:!text-white [&_p]:!text-white [&_p]:font-semibold [&_strong]:font-extrabold [&_strong]:!text-white' 
+                            : 'bg-white text-gray-900 rounded-tl-xs border border-gray-200 shadow-sm [&_p]:text-gray-900 [&_strong]:font-extrabold [&_strong]:text-gray-900 font-normal'
+                        }`}>
                            <ReactMarkdown remarkPlugins={[remarkGfm]}>{formatMarkdownBold(msg.content)}</ReactMarkdown>
+
+                           {/* Matched Properties Cards */}
+                           {msg.matchedProperties && msg.matchedProperties.length > 0 && (
+                             <div className="mt-3 pt-3 border-t border-gray-100 space-y-2">
+                               <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Matching Properties</p>
+                               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                 {msg.matchedProperties.map(p => (
+                                   <div 
+                                     key={p.id}
+                                     onClick={() => { setIsChatOpen(false); navigate(`/properties/${p.id}`); }}
+                                     className="bg-gray-50 hover:bg-blue-50 border border-gray-200 hover:border-blue-300 rounded-xl p-2 flex items-center gap-2.5 cursor-pointer transition-all group"
+                                   >
+                                     <img 
+                                       src={p.images?.[0]?.imageUrl || p.images?.[0]?.url || getFallbackPhoto(p)} 
+                                       alt={p.title}
+                                       className="w-10 h-10 rounded-lg object-cover shrink-0" 
+                                     />
+                                     <div className="min-w-0 flex-1">
+                                       <h4 className="text-xs font-bold text-gray-900 truncate group-hover:text-blue-600">{p.title}</h4>
+                                       <p className="text-[10px] text-gray-500 truncate">📍 {p.village || p.district}</p>
+                                       <p className="text-[10px] font-extrabold text-emerald-600">₹{(p.price/100000).toFixed(1)} Lakhs • {p.area}ac</p>
+                                     </div>
+                                   </div>
+                                 ))}
+                               </div>
+                             </div>
+                           )}
+
+                           {/* Action Buttons */}
+                           {msg.actionButtons && msg.actionButtons.length > 0 && (
+                             <div className="mt-3 pt-3 border-t border-gray-200/80 flex flex-wrap gap-2">
+                               {msg.actionButtons.map((btn, bIdx) => {
+                                 const cleanLabel = (btn.label || '').replace(/^[^\w\s]+/, '').trim() || btn.label;
+                                 const isPrimary = btn.type === 'schedule' || btn.type === 'confirm';
+
+                                 return (
+                                   <button
+                                     key={bIdx}
+                                     onClick={() => handleAiActionButtonClick(btn, msg)}
+                                     className={`px-3.5 py-2 rounded-xl text-xs font-extrabold flex items-center gap-2 transition-all shadow-xs active:scale-95 cursor-pointer ${
+                                       isPrimary 
+                                         ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-sm border border-blue-700' 
+                                         : 'bg-blue-50/90 text-blue-700 hover:bg-blue-100/90 border border-blue-200/80'
+                                     }`}
+                                   >
+                                     {btn.type === 'call' && <Phone className="w-3.5 h-3.5 text-blue-600 shrink-0" />}
+                                     {btn.type === 'email' && <Mail className="w-3.5 h-3.5 text-blue-600 shrink-0" />}
+                                     {btn.type === 'schedule' && <Calendar className="w-3.5 h-3.5 text-white shrink-0" />}
+                                     {btn.type === 'map' && <MapIcon className="w-3.5 h-3.5 text-blue-600 shrink-0" />}
+                                     <span>{cleanLabel}</span>
+                                   </button>
+                                 );
+                               })}
+                             </div>
+                           )}
+
+                           {/* Inline Date & Time Schedule Form */}
+                           {msg.isScheduleForm && (
+                             <div className="mt-3 pt-3 border-t border-gray-200/80 space-y-3 bg-gray-50 p-3 rounded-xl border border-gray-200">
+                               <p className="text-xs font-bold text-gray-800 flex items-center gap-1.5">
+                                 <Calendar className="w-4 h-4 text-amber-600" /> Choose Preferred Visit Date & Time
+                               </p>
+                               <div>
+                                 <label className="block text-[10px] font-bold text-gray-600 mb-1">Select Visit Date</label>
+                                 <input 
+                                   type="date" 
+                                   value={aiVisitDate}
+                                   min={new Date().toISOString().split('T')[0]}
+                                   onChange={e => setAiVisitDate(e.target.value)}
+                                   className="w-full bg-white border border-gray-300 rounded-xl px-3 py-2 text-xs font-bold text-gray-900 focus:outline-none focus:border-blue-600 transition-all shadow-xs"
+                                 />
+                               </div>
+
+                               <div>
+                                 <label className="block text-[10px] font-bold text-gray-600 mb-1">Select Visit Time</label>
+                                 <input 
+                                   type="time" 
+                                   value={aiVisitTime}
+                                   onChange={e => setAiVisitTime(e.target.value)}
+                                   className="w-full bg-white border border-gray-300 rounded-xl px-3 py-2 text-xs font-bold text-gray-900 focus:outline-none focus:border-blue-600 transition-all shadow-xs"
+                                 />
+                               </div>
+
+                               <button
+                                 onClick={() => handleConfirmAiScheduleVisit(msg.id)}
+                                 disabled={aiVisitLoading || !aiVisitDate || !aiVisitTime}
+                                 className="w-full mt-1 py-2.5 rounded-xl bg-emerald-600 disabled:opacity-50 text-white font-extrabold text-xs flex items-center justify-center gap-1.5 transition-all shadow-md active:scale-95 cursor-pointer"
+                               >
+                                 {aiVisitLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle className="w-3.5 h-3.5" />}
+                                 Confirm Site Visit Booking
+                               </button>
+                             </div>
+                           )}
                         </div>
                      </div>
                    ))}
@@ -965,14 +1416,133 @@ export const BuyerDashboard = () => {
         )}
       </AnimatePresence>
 
+      {/* ── SCHEDULE VISIT SUCCESS TOAST BANNER ── */}
+      {scheduleSuccess && (
+        <div className="fixed top-20 left-4 right-4 z-[70] bg-emerald-600 text-white px-4 py-3 rounded-2xl shadow-xl flex items-center justify-between text-xs font-bold animate-bounce">
+          <span className="flex items-center gap-2">
+            <CheckCircle className="w-4 h-4" />
+            {scheduleSuccess}
+          </span>
+          <button onClick={() => setScheduleSuccess(null)} className="text-white hover:text-emerald-200 font-black">
+            ✕
+          </button>
+        </div>
+      )}
+
+      {/* ── SCHEDULE VISIT BOTTOM SHEET MODAL ── */}
+      <AnimatePresence>
+        {schedulingProperty && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setSchedulingProperty(null)}
+              className="fixed inset-0 bg-black/50 backdrop-blur-xs z-[58]"
+            />
+            <motion.div
+              initial={{ y: '100%', opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: '100%', opacity: 0 }}
+              transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+              className="fixed bottom-[82px] left-3 right-3 z-[60] bg-white rounded-3xl p-5 shadow-2xl border border-gray-200 text-gray-900 max-w-md mx-auto"
+            >
+              <div className="flex items-center justify-between pb-3 border-b border-gray-100 mb-4">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
+                    <Calendar className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-sm text-gray-900">Schedule Property Visit</h3>
+                    <p className="text-[10px] text-gray-500 font-semibold truncate max-w-[200px]">{schedulingProperty.title}</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setSchedulingProperty(null)}
+                  className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 hover:text-gray-900"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* Property Summary */}
+              <div className="bg-gray-50 p-3 rounded-2xl border border-gray-100 mb-4 flex items-center justify-between">
+                <div className="min-w-0 pr-2">
+                  <p className="text-xs font-bold text-gray-900 truncate">{schedulingProperty.title}</p>
+                  <p className="text-[10px] text-gray-500 flex items-center gap-1 mt-0.5">
+                    <MapPin className="w-2.5 h-2.5 text-gray-400" />
+                    {schedulingProperty.village}, {schedulingProperty.district}
+                  </p>
+                </div>
+                <span className="text-xs font-black text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-xl border border-emerald-100 shrink-0">
+                  ₹{schedulingProperty.price?.toLocaleString('en-IN')}
+                </span>
+              </div>
+
+              {/* Form Controls */}
+              <div className="space-y-3.5 mb-5">
+                <div>
+                  <label className="block text-[11px] font-bold text-gray-700 mb-1">Select Visit Date</label>
+                  <input
+                    type="date"
+                    value={scheduleDate}
+                    onChange={e => setScheduleDate(e.target.value)}
+                    min={new Date().toISOString().split('T')[0]}
+                    className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 text-xs text-gray-900 font-semibold focus:outline-none focus:border-blue-600 focus:bg-white"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold text-gray-700 mb-1">Select Preferred Time Slot</label>
+                  <div className="grid grid-cols-3 gap-2 mb-2">
+                    {['10:00', '14:00', '16:00'].map(t => (
+                      <button
+                        key={t}
+                        type="button"
+                        onClick={() => setScheduleTime(t)}
+                        className={`py-1.5 rounded-xl text-xs font-bold border transition-all ${scheduleTime === t ? 'bg-blue-600 text-white border-blue-600 shadow-xs' : 'bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100'}`}
+                      >
+                        {t === '10:00' ? '10:00 AM' : t === '14:00' ? '02:00 PM' : '04:00 PM'}
+                      </button>
+                    ))}
+                  </div>
+                  <input
+                    type="time"
+                    value={scheduleTime}
+                    onChange={e => setScheduleTime(e.target.value)}
+                    className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 text-xs text-gray-900 font-semibold focus:outline-none focus:border-blue-600 focus:bg-white"
+                  />
+                </div>
+              </div>
+
+              {/* Confirm Schedule Button */}
+              <button
+                onClick={handleConfirmSchedule}
+                disabled={!scheduleDate || !scheduleTime || scheduleLoading}
+                className="w-full py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 text-white font-bold rounded-2xl shadow-lg transition-all text-xs flex items-center justify-center gap-2 active:scale-95"
+              >
+                {scheduleLoading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Scheduling Visit...
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle className="w-4 h-4" />
+                    Confirm Site Visit Schedule
+                  </>
+                )}
+              </button>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
       {/* ── FLOATING CHAT BUTTON ── */}
       <button 
         onClick={() => { 
-          loadConversations(); 
+          createNewChat(); 
           setIsChatOpen(true);
-          if (selectedProperty) {
-            setChatInput(`I have a question about property ${selectedProperty.propertyCode} - ${selectedProperty.title}: `);
-          }
         }}
         className={`fixed bottom-5 right-0 z-[55] w-14 h-14 !bg-blue-600 rounded-l-full rounded-r-none shadow-[0_5px_20px_rgba(37,99,235,0.4)] flex items-center justify-center text-gray-900 hover:!bg-blue-500 transition-all duration-500 active:scale-95 ${isNavVisible ? 'translate-x-0 opacity-100' : 'translate-x-full opacity-0'}`}
       >
