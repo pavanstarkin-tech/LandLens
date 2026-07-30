@@ -112,9 +112,6 @@ public class AiChatService {
             if (aiResponseText == null || aiResponseText.trim().isEmpty()) {
                 aiResponseText = generateSmartFallback(content);
             }
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            aiResponseText = generateSmartFallback(content);
         } catch (Exception e) {
             aiResponseText = generateSmartFallback(content);
         }
