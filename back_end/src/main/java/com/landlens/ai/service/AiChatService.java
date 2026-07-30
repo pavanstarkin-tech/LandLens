@@ -107,33 +107,14 @@ public class AiChatService {
                 msgNode.set(CONTENT_KEY, msgNode.textNode(msg.getContent()));
             }
 
-            try {
-                HttpClient client = HttpClient.newBuilder()
-                        .connectTimeout(Duration.ofSeconds(2))
-                        .build();
-
-                HttpRequest request = HttpRequest.newBuilder()
-                        .uri(URI.create("https://integrate.api.nvidia.com/v1/chat/completions"))
-                        .header("Authorization", "Bearer " + openAiApiKey)
-                        .header("Content-Type", "application/json")
-                        .header("Accept", "application/json")
-                        .timeout(Duration.ofSeconds(2))
-                        .POST(HttpRequest.BodyPublishers.ofString(requestBody.toString()))
-                        .build();
-
-                HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-
-                if (response.statusCode() == 200) {
-                    JsonNode root = objectMapper.readTree(response.body());
-                    aiResponseText = root.path("choices").path(0).path("message").path(CONTENT_KEY).asText();
-                }
-            } catch (Exception e) {
-                // Fall back to local smart engine if API encounters high latency
-            }
+            aiResponseText = callNvidiaApi(requestBody);
 
             if (aiResponseText == null || aiResponseText.trim().isEmpty()) {
                 aiResponseText = generateSmartFallback(content);
             }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            aiResponseText = generateSmartFallback(content);
         } catch (Exception e) {
             aiResponseText = generateSmartFallback(content);
         }
@@ -146,6 +127,35 @@ public class AiChatService {
         aiMsg.setIsActive(true);
         
         return messageRepository.save(aiMsg);
+    }
+
+    private String callNvidiaApi(ObjectNode requestBody) {
+        try {
+            HttpClient client = HttpClient.newBuilder()
+                    .connectTimeout(Duration.ofSeconds(2))
+                    .build();
+
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create("https://integrate.api.nvidia.com/v1/chat/completions"))
+                    .header("Authorization", "Bearer " + openAiApiKey)
+                    .header("Content-Type", "application/json")
+                    .header("Accept", "application/json")
+                    .timeout(Duration.ofSeconds(2))
+                    .POST(HttpRequest.BodyPublishers.ofString(requestBody.toString()))
+                    .build();
+
+            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+
+            if (response.statusCode() == 200) {
+                JsonNode root = objectMapper.readTree(response.body());
+                return root.path("choices").path(0).path("message").path(CONTENT_KEY).asText();
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        } catch (Exception e) {
+            // Fall back to local smart engine if API encounters high latency
+        }
+        return null;
     }
 
     private String generateSmartFallback(String query) {

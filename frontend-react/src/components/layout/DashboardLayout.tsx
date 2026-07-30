@@ -26,6 +26,8 @@ interface DashboardLayoutProps {
 
   // Mobile bottom nav
   mobileNavItems?: NavItem[];
+  theme?: 'dark' | 'light';
+  hideTopbarOnDesktop?: boolean;
 }
 
 export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
@@ -39,6 +41,8 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   unreadCount: _propUnreadCount = 0,
   topbarRight,
   mobileNavItems,
+  theme = role === 'GOVERNMENT_OFFICER' ? 'light' : 'dark',
+  hideTopbarOnDesktop = role === 'GOVERNMENT_OFFICER',
 }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
@@ -106,19 +110,23 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
     item.id === 'notifications' ? { ...item, badge: unreadCount } : item
   );
 
+  const isLight = theme === 'light';
+
   return (
-    <div className="h-screen flex flex-col overflow-hidden bg-mesh">
+    <div className={`h-screen flex flex-col overflow-hidden ${isLight ? 'bg-slate-100 text-slate-900' : 'bg-mesh'}`}>
       {/* Topbar */}
-      <Topbar
-        title={title}
-        subtitle={subtitle}
-        role={role}
-        unreadCount={unreadCount}
-        mobileMenuOpen={mobileMenuOpen}
-        onMobileMenuToggle={() => setMobileMenuOpen(v => !v)}
-        onNotificationsToggle={() => setNotificationsOpen(true)}
-        rightExtra={topbarRight}
-      />
+      <div className={hideTopbarOnDesktop ? 'lg:hidden' : ''}>
+        <Topbar
+          title={title}
+          subtitle={subtitle}
+          role={role}
+          unreadCount={unreadCount}
+          mobileMenuOpen={mobileMenuOpen}
+          onMobileMenuToggle={() => setMobileMenuOpen(v => !v)}
+          onNotificationsToggle={() => setNotificationsOpen(true)}
+          rightExtra={topbarRight}
+        />
+      </div>
 
       {/* Body: Sidebar + Content */}
       <div className="flex flex-1 overflow-hidden relative">
@@ -147,6 +155,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                   navItems={syncedNavItems}
                   role={role}
                   unreadCount={unreadCount}
+                  theme={theme}
                 />
               </motion.div>
             </>
@@ -160,6 +169,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
           navItems={syncedNavItems}
           role={role}
           unreadCount={unreadCount}
+          theme={theme}
           className="hidden md:flex"
         />
 
@@ -170,7 +180,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, ease: 'easeOut' }}
-            className="px-4 sm:px-6 lg:px-8 py-6 space-y-6 min-h-full"
+            className={isLight ? "p-4 sm:p-6 space-y-5 min-h-full" : "px-4 sm:px-6 lg:px-8 py-6 space-y-6 min-h-full"}
           >
             {children}
           </motion.div>

@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   Search, Bookmark, Calendar, MessageSquare, Bell,
   Home, Plus, AlertOctagon, BarChart3, Key, LogOut,
-  Shield, Eye, CheckCircle
+  Shield, Eye, CheckCircle, Book, Activity, RefreshCw, ChevronDown, FileText
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { authService } from '../../services/auth.service';
@@ -24,6 +24,7 @@ interface SidebarProps {
   role: RoleType;
   unreadCount?: number;
   className?: string;
+  theme?: 'dark' | 'light';
 }
 
 const roleConfig: Record<RoleType, { label: string; color: string; badge: string }> = {
@@ -33,9 +34,9 @@ const roleConfig: Record<RoleType, { label: string; color: string; badge: string
     badge: 'bg-danger-500/15 border-danger-500/30 text-danger-400',
   },
   GOVERNMENT_OFFICER: {
-    label: 'Govt Portal',
-    color: 'text-primary-400',
-    badge: 'bg-primary-500/15 border-primary-500/30 text-primary-400',
+    label: 'Govt. Admin',
+    color: 'text-blue-600',
+    badge: 'bg-blue-50 border-blue-200 text-blue-700',
   },
   PROVIDER: {
     label: 'Provider Portal',
@@ -55,10 +56,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
   navItems,
   role,
   className = '',
+  theme = role === 'GOVERNMENT_OFFICER' ? 'light' : 'dark',
 }) => {
   const navigate = useNavigate();
   const currentUser = authService.currentUser();
   const cfg = roleConfig[role];
+  const isLight = theme === 'light';
 
   const handleLogout = () => {
     authService.logout();
@@ -66,35 +69,31 @@ export const Sidebar: React.FC<SidebarProps> = ({
   };
 
   return (
-    <aside className={`flex flex-col w-[260px] shrink-0 h-full glass-nav overflow-hidden ${className}`}>
+    <aside className={`flex flex-col w-[240px] shrink-0 h-full overflow-hidden transition-colors ${
+      isLight ? 'bg-white border-r border-gray-200 text-slate-800' : 'glass-nav text-white'
+    } ${className}`}>
       {/* Logo */}
-      <div className="px-5 pt-6 pb-5 border-b border-white/[0.06]">
-        <div className="flex items-center gap-3">
-          {/* Logo Mark */}
-          <div className="relative w-9 h-9 shrink-0">
-            <div className="absolute inset-0 bg-gradient-to-br from-primary-500 to-cyan-500 rounded-xl opacity-20 blur-sm" />
-            <div className="relative w-9 h-9 rounded-xl bg-gradient-to-br from-primary-600 to-cyan-600 flex items-center justify-center shadow-lg">
-              <span className="text-white font-black text-sm">LL</span>
-            </div>
+      <div className={`px-5 pt-5 pb-4 ${isLight ? 'border-b border-gray-100' : 'border-b border-white/[0.06]'}`}>
+        <div className="flex items-center gap-2.5">
+          {/* Logo Pin Mark */}
+          <div className="relative w-8 h-8 shrink-0 flex items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-blue-600 shadow-sm text-white">
+            <Shield className="w-4 h-4 fill-white text-emerald-500" />
           </div>
           <div>
-            <span className="text-white font-bold text-lg tracking-tight">
-              Land<span className="gradient-text">Lens</span>
-            </span>
+            <div className="flex items-baseline gap-0.5">
+              <span className={`font-black text-lg tracking-tight ${isLight ? 'text-blue-950' : 'text-white'}`}>
+                Land<span className="text-blue-600">Lens</span>
+              </span>
+            </div>
+            <p className={`text-[8px] font-bold tracking-widest uppercase -mt-1 ${isLight ? 'text-gray-400' : 'text-gray-400'}`}>
+              VERIFY. TRUST. OWN.
+            </p>
           </div>
-        </div>
-
-        {/* Role badge */}
-        <div className="mt-3">
-          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[10px] font-bold uppercase tracking-wider ${cfg.badge}`}>
-            <Shield className="w-2.5 h-2.5" />
-            {cfg.label}
-          </span>
         </div>
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto scrollbar-premium">
+      <nav className="flex-1 px-3 py-3 space-y-1 overflow-y-auto scrollbar-premium">
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = activeTab === item.id;
@@ -104,30 +103,34 @@ export const Sidebar: React.FC<SidebarProps> = ({
               key={item.id}
               onClick={() => onTabChange(item.id)}
               className={`
-                w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium
-                transition-all duration-200 text-left group relative
-                ${isActive
-                  ? 'sidebar-item-active'
-                  : 'text-dark-400 hover:text-white hover:bg-white/[0.05]'
-                }
+                w-full flex items-center gap-3 px-3.5 py-2 rounded-xl text-xs font-semibold
+                transition-all duration-150 text-left group relative
+                ${isLight ? (
+                  isActive
+                    ? 'bg-blue-50 text-blue-600 shadow-xs'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                ) : (
+                  isActive
+                    ? 'sidebar-item-active text-white'
+                    : 'text-dark-400 hover:text-white hover:bg-white/[0.05]'
+                )}
               `}
             >
-              <Icon className={`w-4 h-4 shrink-0 transition-colors ${isActive ? 'text-primary-400' : 'text-dark-500 group-hover:text-dark-300'}`} />
+              <Icon className={`w-4 h-4 shrink-0 transition-colors ${
+                isActive
+                  ? (isLight ? 'text-blue-600' : 'text-primary-400')
+                  : (isLight ? 'text-slate-400 group-hover:text-slate-600' : 'text-dark-500 group-hover:text-dark-300')
+              }`} />
               <span className="flex-1">{item.label}</span>
               {item.badge !== undefined && item.badge > 0 && (
                 <span className={`
                   px-1.5 py-0.5 rounded-full text-[9px] font-bold min-w-[18px] text-center
-                  ${isActive ? 'bg-primary-500/30 text-primary-300' : 'bg-danger-500/80 text-white'}
+                  ${isLight
+                    ? 'bg-rose-500 text-white'
+                    : (isActive ? 'bg-primary-500/30 text-primary-300' : 'bg-danger-500/80 text-white')}
                 `}>
                   {item.badge}
                 </span>
-              )}
-              {isActive && (
-                <motion.div
-                  layoutId="sidebar-active"
-                  className="absolute right-2 w-1 h-5 bg-primary-500 rounded-full"
-                  transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-                />
               )}
             </button>
           );
@@ -135,25 +138,30 @@ export const Sidebar: React.FC<SidebarProps> = ({
       </nav>
 
       {/* User Profile at Bottom */}
-      <div className="px-3 py-4 border-t border-white/[0.06]">
-        <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-white/[0.03] border border-white/[0.06] mb-2">
-          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary-500 to-cyan-500 flex items-center justify-center shrink-0">
-            <span className="text-white text-xs font-bold">
-              {(currentUser?.firstName?.[0] || 'U').toUpperCase()}
-            </span>
+      <div className={`px-3 py-3 ${isLight ? 'border-t border-gray-100 bg-gray-50/50' : 'border-t border-white/[0.06]'}`}>
+        <div className={`flex items-center gap-2.5 px-3 py-2 rounded-xl border mb-2 cursor-pointer ${
+          isLight ? 'bg-white border-gray-200 shadow-xs hover:border-gray-300' : 'bg-white/[0.03] border-white/[0.06]'
+        }`}>
+          <div className="w-8 h-8 rounded-full bg-emerald-500 text-white flex items-center justify-center shrink-0 font-bold text-xs shadow-xs">
+            {role === 'GOVERNMENT_OFFICER' ? 'GV' : (currentUser?.firstName?.[0] || 'U').toUpperCase()}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-white text-xs font-semibold truncate">
-              {currentUser?.firstName} {currentUser?.lastName}
+            <p className={`text-xs font-bold truncate ${isLight ? 'text-slate-800' : 'text-white'}`}>
+              {role === 'GOVERNMENT_OFFICER' ? 'Govt. Admin' : `${currentUser?.firstName || ''} ${currentUser?.lastName || ''}`}
             </p>
-            <p className="text-dark-500 text-[10px] truncate">{currentUser?.email}</p>
+            <p className={`text-[10px] truncate ${isLight ? 'text-slate-400' : 'text-dark-500'}`}>
+              {role === 'GOVERNMENT_OFFICER' ? 'Super Administrator' : (currentUser?.email || '')}
+            </p>
           </div>
+          <ChevronDown className={`w-3.5 h-3.5 ${isLight ? 'text-slate-400' : 'text-dark-500'}`} />
         </div>
         <button
           onClick={handleLogout}
-          className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-dark-500 hover:text-danger-400 hover:bg-danger-500/10 transition-all duration-200 text-sm font-medium"
+          className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold transition-all duration-150 ${
+            isLight ? 'text-slate-500 hover:text-rose-600 hover:bg-rose-50' : 'text-dark-500 hover:text-danger-400 hover:bg-danger-500/10'
+          }`}
         >
-          <LogOut className="w-4 h-4 shrink-0" />
+          <LogOut className="w-3.5 h-3.5 shrink-0" />
           Sign Out
         </button>
       </div>
@@ -176,13 +184,14 @@ export const providerNavItems = (pendingVisits: number, unreadCount: number): Na
   { id: 'notifications', label: 'Notifications', icon: Bell, badge: unreadCount },
 ];
 
-export const govtNavItems = (fraudCount: number, unreadCount: number): NavItem[] => [
+export const govtNavItems = (fraudCount: number, _unreadCount: number): NavItem[] => [
+  { id: 'dashboard', label: 'Dashboard', icon: Home },
   { id: 'analytics', label: 'Analytics', icon: BarChart3 },
-  { id: 'queue', label: 'Pending Verification', icon: Eye },
-  { id: 'disputes', label: 'Community Disputes', icon: AlertOctagon, badge: fraudCount },
-  { id: 'approved', label: 'Live Properties', icon: CheckCircle },
-  { id: 'api', label: 'API Integration', icon: Key },
-  { id: 'notifications', label: 'Notifications', icon: Bell, badge: unreadCount },
+  { id: 'queue', label: 'Verifications', icon: CheckCircle, badge: 25 },
+  { id: 'approved', label: 'Properties', icon: Eye },
+  { id: 'disputes', label: 'Disputes', icon: AlertOctagon, badge: fraudCount > 0 ? fraudCount : 3 },
+  { id: 'api', label: 'Developer API', icon: Key },
+  { id: 'health', label: 'System Health', icon: Activity },
 ];
 
 export const adminNavItems = (unreadCount: number): NavItem[] => [

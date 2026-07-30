@@ -915,7 +915,17 @@ export const BuyerDashboard = () => {
           {/* ── MAP TAB ── */}
           <div className={viewTab === 'map' ? 'block h-full w-full absolute inset-0' : 'hidden'}>
             <div className="h-full w-full relative">
-              <Map mode="view" properties={properties} onLocationSelected={() => {}} className="!rounded-none !border-none w-full h-full" />
+              <Map 
+                mode="view" 
+                properties={properties.filter(p => !mapSearchQuery.trim() || p.title?.toLowerCase().includes(mapSearchQuery.toLowerCase()) || p.district?.toLowerCase().includes(mapSearchQuery.toLowerCase()) || p.village?.toLowerCase().includes(mapSearchQuery.toLowerCase()))} 
+                onLocationSelected={() => {}} 
+                onScheduleVisit={(p) => {
+                  setSchedulingProperty(p);
+                  setScheduleDate('');
+                  setScheduleTime('10:00');
+                }}
+                className="!rounded-none !border-none w-full h-full" 
+              />
               
               {/* Search overlay */}
               <div className="absolute top-[84px] left-4 bg-white rounded-full border border-gray-200 px-4 py-3 flex items-center gap-3 shadow-md w-[80vw] max-w-[350px] z-30">
@@ -927,39 +937,6 @@ export const BuyerDashboard = () => {
                   placeholder="Search location or survey..." 
                   className="bg-transparent text-sm text-gray-900 w-full outline-none font-medium" 
                 />
-              </div>
-
-              {/* Property Overlay Cards Slider above Bottom Navigation Bar */}
-              <div className="absolute bottom-[80px] left-0 right-0 z-40 px-4 overflow-x-auto flex gap-3 scrollbar-none pb-2">
-                {properties
-                  .filter(p => !mapSearchQuery.trim() || p.title?.toLowerCase().includes(mapSearchQuery.toLowerCase()) || p.district?.toLowerCase().includes(mapSearchQuery.toLowerCase()) || p.village?.toLowerCase().includes(mapSearchQuery.toLowerCase()))
-                  .map(p => (
-                    <div key={`map-card-${p.id}`} className="w-[280px] shrink-0 bg-white/95 backdrop-blur-md border border-gray-200 rounded-2xl p-3.5 shadow-xl transition-all">
-                      <div className="flex items-start justify-between gap-2 mb-1">
-                        <div className="min-w-0">
-                          <h4 className="font-bold text-xs text-gray-900 truncate">{p.title}</h4>
-                          <p className="text-[10px] text-gray-500 truncate flex items-center gap-1 mt-0.5 font-medium">
-                            <MapPin className="w-2.5 h-2.5 shrink-0 text-gray-400" />
-                            {p.village}, {p.district}
-                          </p>
-                        </div>
-                        <span className="text-xs font-black text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-lg border border-emerald-100 shrink-0">
-                          ₹{p.price?.toLocaleString('en-IN')}
-                        </span>
-                      </div>
-
-                      <div className="flex items-center justify-between mt-2.5 pt-2.5 border-t border-gray-100">
-                        <span className="text-[10px] font-bold text-gray-500">{p.area} acres • {p.category}</span>
-                        <button
-                          onClick={() => { setSchedulingProperty(p); setScheduleDate(''); setScheduleTime('10:00'); }}
-                          className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-[10px] flex items-center gap-1.5 shadow-xs transition-all active:scale-95"
-                        >
-                          <Calendar className="w-3 h-3" />
-                          Schedule Visit
-                        </button>
-                      </div>
-                    </div>
-                  ))}
               </div>
             </div>
           </div>

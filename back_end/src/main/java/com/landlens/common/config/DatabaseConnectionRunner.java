@@ -16,6 +16,7 @@ import java.sql.Connection;
 public class DatabaseConnectionRunner implements CommandLineRunner {
 
     private static final Logger log = LoggerFactory.getLogger(DatabaseConnectionRunner.class);
+    private static final String SEPARATOR = "========================================================================";
 
     @Autowired
     private DataSource dataSource;
@@ -27,16 +28,16 @@ public class DatabaseConnectionRunner implements CommandLineRunner {
             String catalog = connection.getCatalog();
             String url = connection.getMetaData().getURL();
             String username = connection.getMetaData().getUserName();
-            log.info("========================================================================");
+            log.info(SEPARATOR);
             log.info("DATABASE CONNECTION SUCCESSFUL!");
             log.info("Connected JDBC URL: {}", url);
             log.info("Active Database Catalog: {}", catalog);
             log.info("Active DB User: {}", username);
-            log.info("========================================================================");
+            log.info(SEPARATOR);
         } catch (Exception e) {
-            log.error("========================================================================");
+            log.error(SEPARATOR);
             log.error("DATABASE CONNECTION FAILED! Please check host, port, credentials and network permissions.", e);
-            log.error("========================================================================");
+            log.error(SEPARATOR);
         }
     }
 }

@@ -124,18 +124,75 @@ export const mapboxService = {
     }
   },
 
-  addPropertyMarker: (mapInstance: mapboxgl.Map, property: Property, onClick?: (p: Property) => void): mapboxgl.Marker => {
+  addPropertyMarker: (
+    mapInstance: mapboxgl.Map,
+    property: Property,
+    onClick?: (p: Property) => void,
+    onScheduleVisit?: (p: Property) => void
+  ): mapboxgl.Marker => {
     const color = mapboxService.getMarkerColor(property.status);
 
-    const popupHtml = `
-      <div style="font-family: sans-serif; padding: 5px;">
-        <h4 style="margin: 0 0 5px 0; color: #1e293b; font-size: 14px; font-weight: 600;">${property.title}</h4>
-        <p style="margin: 0 0 5px 0; color: #64748b; font-size: 12px;">₹${property.price.toLocaleString('en-IN')} • ${property.area} acres</p>
-        <span style="display: inline-block; padding: 2px 6px; font-size: 10px; font-weight: bold; border-radius: 4px; color: white; background-color: ${color};">${property.status}</span>
-      </div>
-    `;
+    const container = document.createElement('div');
+    container.style.fontFamily = 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+    container.style.padding = '4px 2px';
+    container.style.minWidth = '190px';
 
-    const popup = new mapboxgl.Popup({ offset: 25 }).setHTML(popupHtml);
+    const titleEl = document.createElement('h4');
+    titleEl.style.margin = '0 0 4px 0';
+    titleEl.style.color = '#0f172a';
+    titleEl.style.fontSize = '13px';
+    titleEl.style.fontWeight = '700';
+    titleEl.style.lineHeight = '1.3';
+    titleEl.textContent = property.title || 'Untitled Property';
+
+    const detailsEl = document.createElement('p');
+    detailsEl.style.margin = '0 0 10px 0';
+    detailsEl.style.color = '#475569';
+    detailsEl.style.fontSize = '11.5px';
+    detailsEl.style.fontWeight = '600';
+    const formattedPrice = property.price ? `₹${property.price.toLocaleString('en-IN')}` : 'Price N/A';
+    const areaText = property.area ? `${property.area} acres` : '';
+    detailsEl.textContent = [formattedPrice, areaText].filter(Boolean).join(' • ');
+
+    container.appendChild(titleEl);
+    container.appendChild(detailsEl);
+
+    if (onScheduleVisit) {
+      const scheduleBtn = document.createElement('button');
+      scheduleBtn.type = 'button';
+      scheduleBtn.style.width = '100%';
+      scheduleBtn.style.padding = '7.5px 12px';
+      scheduleBtn.style.backgroundColor = '#2563eb';
+      scheduleBtn.style.color = '#ffffff';
+      scheduleBtn.style.border = 'none';
+      scheduleBtn.style.borderRadius = '10px';
+      scheduleBtn.style.fontSize = '11.5px';
+      scheduleBtn.style.fontWeight = '700';
+      scheduleBtn.style.cursor = 'pointer';
+      scheduleBtn.style.display = 'flex';
+      scheduleBtn.style.alignItems = 'center';
+      scheduleBtn.style.justifyContent = 'center';
+      scheduleBtn.style.gap = '6px';
+      scheduleBtn.style.boxShadow = '0 2px 5px rgba(37,99,235,0.25)';
+      scheduleBtn.style.transition = 'all 0.15s ease';
+
+      scheduleBtn.innerHTML = `
+        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
+        <span>Schedule Visit</span>
+      `;
+
+      scheduleBtn.onmouseover = () => { scheduleBtn.style.backgroundColor = '#1d4ed8'; };
+      scheduleBtn.onmouseout = () => { scheduleBtn.style.backgroundColor = '#2563eb'; };
+
+      scheduleBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        onScheduleVisit(property);
+      });
+
+      container.appendChild(scheduleBtn);
+    }
+
+    const popup = new mapboxgl.Popup({ offset: 25, closeButton: true, maxWidth: '250px' }).setDOMContent(container);
 
     const marker = new mapboxgl.Marker({ color })
       .setLngLat([property.longitude, property.latitude])
@@ -151,3 +208,4 @@ export const mapboxService = {
     return marker;
   }
 };
+
