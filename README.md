@@ -25,6 +25,14 @@
 ### Live Production Web Portal: [https://d2l0wwhwiyg7if.cloudfront.net](https://d2l0wwhwiyg7if.cloudfront.net)
 * **Direct High-Speed S3 Endpoint:** [http://landlens-portal-067103977319.s3-website.ap-south-1.amazonaws.com](http://landlens-portal-067103977319.s3-website.ap-south-1.amazonaws.com)
 
+#### Ready-to-Use Demo Credentials (Email as Password):
+```text
+Admin: admin@gmail.com / admin@gmail.com
+Government Officer: govt@gmail.com / govt@gmail.com
+Land Provider: seller@gmail.com / seller@gmail.com
+Citizen / Buyer: buyer@gmail.com / buyer@gmail.com
+```
+
 ---
 
 ## IBM Hackathon Track and Positioning Overview
@@ -354,6 +362,14 @@ Production servers are live on AWS:
 * **Health Check & Actuator**: `https://ite6dpt3o6.execute-api.ap-south-1.amazonaws.com/actuator/health`
 * **Primary AI Inference Engine**: NVIDIA Cloud API (`openai/gpt-oss-120b`)
 * **Production Database (Hostinger)**: `srv1117.hstgr.io:3306` (Schema: `u833088220_Priya_teamlead`)
+
+### Ready-to-Use Demo Login Credentials:
+```text
+Admin: admin@gmail.com / admin@gmail.com
+Government Officer: govt@gmail.com / govt@gmail.com
+Land Provider: seller@gmail.com / seller@gmail.com
+Citizen / Buyer: buyer@gmail.com / buyer@gmail.com
+```
 
 ---
 
