@@ -20,7 +20,7 @@ export const propertyService = {
       Object.entries(filters).filter(([_, v]) => v !== '' && v !== null && v !== undefined)
     );
     const response = await api.get<Models.Property[]>('/api/properties', { params: cleanedFilters });
-    return response.data;
+    return Array.isArray(response.data) ? response.data : [];
   },
 
   getPropertyById: async (id: string): Promise<Models.Property> => {
@@ -45,7 +45,7 @@ export const propertyService = {
 
   getImages: async (propertyId: string): Promise<Models.PropertyImage[]> => {
     const response = await api.get<Models.PropertyImage[]>(`/api/properties/${propertyId}/images`);
-    return response.data;
+    return Array.isArray(response.data) ? response.data : [];
   },
 
   uploadVideo: async (propertyId: string, video: { videoUrl: string; duration: number; thumbnailUrl: string }): Promise<Models.PropertyVideo> => {
@@ -55,7 +55,7 @@ export const propertyService = {
 
   getVideos: async (propertyId: string): Promise<Models.PropertyVideo[]> => {
     const response = await api.get<Models.PropertyVideo[]>(`/api/properties/${propertyId}/videos`);
-    return response.data;
+    return Array.isArray(response.data) ? response.data : [];
   },
 
   uploadDocument: async (propertyId: string, doc: { documentType: Models.DocumentType; fileUrl: string }): Promise<Models.PropertyDocument> => {
@@ -65,7 +65,7 @@ export const propertyService = {
 
   getDocuments: async (propertyId: string): Promise<Models.PropertyDocument[]> => {
     const response = await api.get<Models.PropertyDocument[]>(`/api/properties/${propertyId}/documents`);
-    return response.data;
+    return Array.isArray(response.data) ? response.data : [];
   },
 
   runOcr: async (documentId: string): Promise<any> => {
@@ -124,7 +124,7 @@ export const propertyService = {
 
   getTimeline: async (propertyId: string): Promise<Models.VerificationTimeline[]> => {
     const response = await api.get<Models.VerificationTimeline[]>(`/api/properties/${propertyId}/timeline`);
-    return response.data;
+    return Array.isArray(response.data) ? response.data : [];
   },
 
   saveProperty: async (propertyId: string): Promise<any> => {
@@ -134,7 +134,7 @@ export const propertyService = {
 
   getSavedProperties: async (): Promise<Models.Property[]> => {
     const response = await api.get<Models.Property[]>('/api/properties/saved');
-    return response.data;
+    return Array.isArray(response.data) ? response.data : [];
   },
 
   unsaveProperty: async (propertyId: string): Promise<any> => {
@@ -149,7 +149,7 @@ export const propertyService = {
 
   getVisits: async (): Promise<Models.PropertyVisit[]> => {
     const response = await api.get<Models.PropertyVisit[]>('/api/properties/visits');
-    return response.data;
+    return Array.isArray(response.data) ? response.data : [];
   },
 
   updateVisitStatus: async (visitId: string, status: 'CONFIRMED' | 'REJECTED'): Promise<Models.PropertyVisit> => {
@@ -164,12 +164,12 @@ export const propertyService = {
 
   getAllFraudReports: async (): Promise<Models.FraudReport[]> => {
     const response = await api.get<Models.FraudReport[]>('/api/fraud-reports');
-    return response.data;
+    return Array.isArray(response.data) ? response.data : [];
   },
 
   getFraudReportsForProperty: async (propertyId: string): Promise<Models.FraudReport[]> => {
     const response = await api.get<Models.FraudReport[]>(`/api/properties/${propertyId}/fraud-reports`);
-    return response.data;
+    return Array.isArray(response.data) ? response.data : [];
   },
 
   assignFraudReport: async (fraudId: string, officerId: string): Promise<Models.FraudReport> => {
@@ -184,7 +184,7 @@ export const propertyService = {
 
   getNotifications: async (): Promise<Models.Notification[]> => {
     const response = await api.get<Models.Notification[]>('/api/notifications');
-    return response.data;
+    return Array.isArray(response.data) ? response.data : [];
   },
 
   markNotificationRead: async (id: string): Promise<any> => {
@@ -199,7 +199,7 @@ export const propertyService = {
 
   getAiConversations: async (): Promise<Models.AiConversation[]> => {
     const response = await api.get<Models.AiConversation[]>('/api/ai/conversations');
-    return response.data;
+    return Array.isArray(response.data) ? response.data : [];
   },
 
   sendAiMessage: async (conversationId: string, message: string): Promise<Models.AiMessage> => {
@@ -211,7 +211,7 @@ export const propertyService = {
 
   getAiMessages: async (conversationId: string): Promise<Models.AiMessage[]> => {
     const response = await api.get<Models.AiMessage[]>(`/api/ai/conversations/${conversationId}/messages`);
-    return response.data;
+    return Array.isArray(response.data) ? response.data : [];
   },
 
   createDeveloperKey: async (name: string, accessScope: string = 'READ_WRITE', rateLimitRpm: number = 300, allowedIps: string = '0.0.0.0/0'): Promise<Models.DeveloperKey> => {
@@ -220,9 +220,9 @@ export const propertyService = {
     
     const enriched: Models.DeveloperKey = {
       ...key,
-      accessScope: (key as any).accessScope || (accessScope as any),
-      rateLimitRpm: (key as any).rateLimitRpm || rateLimitRpm,
-      allowedIps: (key as any).allowedIps || allowedIps
+      accessScope: (key as any)?.accessScope || (accessScope as any),
+      rateLimitRpm: (key as any)?.rateLimitRpm || rateLimitRpm,
+      allowedIps: (key as any)?.allowedIps || allowedIps
     };
     
     const localOverrides = JSON.parse(localStorage.getItem('dev_key_configs') || '{}');
@@ -235,7 +235,7 @@ export const propertyService = {
 
   getDeveloperKeys: async (): Promise<Models.DeveloperKey[]> => {
     const response = await api.get<Models.DeveloperKey[]>('/api/developer/keys');
-    const keys = response.data;
+    const keys = Array.isArray(response.data) ? response.data : [];
     
     const localOverrides = JSON.parse(localStorage.getItem('dev_key_configs') || '{}');
     return keys.map(k => {
@@ -252,7 +252,7 @@ export const propertyService = {
 
   getDeveloperKeyLogs: async (keyId: string): Promise<Models.DeveloperKeyLog[]> => {
     const response = await api.get<Models.DeveloperKeyLog[]>(`/api/developer/keys/${keyId}/logs`);
-    return response.data;
+    return Array.isArray(response.data) ? response.data : [];
   },
 
   deleteDeveloperKey: async (keyId: string): Promise<any> => {
@@ -269,7 +269,7 @@ export const propertyService = {
 
   getAdminAnalytics: async (): Promise<Models.AnalyticsDashboard> => {
     const response = await api.get<Models.AnalyticsDashboard>('/api/analytics/dashboard');
-    return response.data;
+    return response.data || ({} as any);
   },
 
   deconflictCoordinates: async (): Promise<string> => {
