@@ -17,12 +17,13 @@
 </p>
 
 <p align="center">
-  <a href="https://dpyyh7torlown.cloudfront.net">
-    <img src="https://img.shields.io/badge/Live_Production-https%3A%2F%2Fdpyyh7torlown.cloudfront.net-brightgreen?style=for-the-badge&logo=amazonaws" alt="Live Production URL"/>
+  <a href="https://d2l0wwhwiyg7if.cloudfront.net">
+    <img src="https://img.shields.io/badge/Live_Production-https%3A%2F%2Fd2l0wwhwiyg7if.cloudfront.net-brightgreen?style=for-the-badge&logo=amazonaws" alt="Live Production URL"/>
   </a>
 </p>
 
-### Live Production Web Portal: [https://dpyyh7torlown.cloudfront.net](https://dpyyh7torlown.cloudfront.net)
+### Live Production Web Portal: [https://d2l0wwhwiyg7if.cloudfront.net](https://d2l0wwhwiyg7if.cloudfront.net)
+* **Direct High-Speed S3 Endpoint:** [http://landlens-portal-067103977319.s3-website.ap-south-1.amazonaws.com](http://landlens-portal-067103977319.s3-website.ap-south-1.amazonaws.com)
 
 ---
 
@@ -347,12 +348,12 @@ graph TD
 
 Production servers are live in the AWS Mumbai (`ap-south-1`) region:
 
-* **Live Web Portal**: `https://dpyyh7torlown.cloudfront.net`
-* **Backend Load Balancer Base URL**: `http://landlens-production-alb-1919392235.ap-south-1.elb.amazonaws.com`
-* **Health Check (Actuator)**: `http://landlens-production-alb-1919392235.ap-south-1.elb.amazonaws.com/actuator/health`
-* **Swagger Documentation**: `http://landlens-production-alb-1919392235.ap-south-1.elb.amazonaws.com/swagger-ui/index.html` *(Dev profile)*
+* **Live Web Portal (CloudFront CDN)**: `https://d2l0wwhwiyg7if.cloudfront.net`
+* **Direct Web Endpoint (AWS S3)**: `http://landlens-portal-067103977319.s3-website.ap-south-1.amazonaws.com`
+* **Serverless Backend (AWS Lambda)**: `https://2ear34cavmuqrb7rh22d46tlxi0aiapz.lambda-url.ap-south-1.on.aws/`
+* **Backend RDS Database**: `landlens-india-db.cpuyqeqqsw4d.ap-south-1.rds.amazonaws.com`
 * **Production Database (Hostinger)**: `srv1117.hstgr.io:3306` (Schema: `u833088220_Priya_teamlead`)
-* **NAT Gateway Public Egress IP**: `13.207.227.126` (Whitelisted in Hostinger Remote MySQL settings)
+* **EC2 Compute Instance**: `i-07905708960f5aa1b` (`ap-south-1`)
 
 ---
 
