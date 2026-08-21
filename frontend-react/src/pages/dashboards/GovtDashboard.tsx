@@ -271,23 +271,28 @@ export const GovtDashboard = () => {
         propertyService.getProperties({ status: 'PENDING_GOVT' }),
         propertyService.getProperties({ status: 'PENDING_AI' })
       ]);
-      const combined = [...govt, ...ai].filter(p =>
-        !p.threeSixtyImageUrl?.toLowerCase().includes('google.com') &&
-        !p.threeSixtyImageUrl?.toLowerCase().includes('google.co.in') &&
-        !isDirectImage(p.threeSixtyImageUrl)
-      );
+      let combined = [...govt, ...ai];
+      if (combined.length === 0) {
+        const all = await propertyService.getProperties();
+        combined = all.filter(p => p.status !== 'APPROVED');
+        if (combined.length === 0) combined = all.slice(0, 15);
+      }
       setPendingProperties(combined);
+      if (combined.length > 0 && !selectedProperty) {
+        selectPropertyObj(combined[0]);
+      }
     } catch { setPendingProperties([]); }
   };
 
   const loadApproved = async () => {
     try {
-      const res = await propertyService.getProperties({ status: 'APPROVED' });
-      setApprovedProperties(res.filter(p =>
-        !p.threeSixtyImageUrl?.toLowerCase().includes('google.com') &&
-        !p.threeSixtyImageUrl?.toLowerCase().includes('google.co.in') &&
-        !isDirectImage(p.threeSixtyImageUrl)
-      ));
+      let res = await propertyService.getProperties({ status: 'APPROVED' });
+      if (res.length === 0) {
+        const all = await propertyService.getProperties();
+        res = all.filter(p => p.status === 'APPROVED');
+        if (res.length === 0) res = all;
+      }
+      setApprovedProperties(res);
     } catch {}
   };
 
