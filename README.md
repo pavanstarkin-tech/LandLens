@@ -256,10 +256,10 @@ Below is an interactive visual walkthrough of the live LandLens platform structu
 
 ---
 
-### 4. Scheduled Inspection Visits and User Account
-| Scheduled Visit Bookings | User Profile & Settings | System Dashboard Overview |
+### 4. Government Officer Dashboard, Scheduled Visits & Account
+| Government Officer Dashboard | Scheduled Inspection Visits | User Profile & Settings |
 | :---: | :---: | :---: |
-| ![Scheduled Visits](./dashscreenshots/userschedules.png) | ![User Account](./dashscreenshots/useracct.png) | ![User Dashboard](./dashscreenshots/userdash.png) |
+| ![Government Officer Dashboard](./dashscreenshots/govdash.png) | ![Scheduled Visits](./dashscreenshots/userschedules.png) | ![User Account](./dashscreenshots/useracct.png) |
 
 ---
 
