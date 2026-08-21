@@ -348,9 +348,9 @@ graph TD
 
 Production servers are live in the AWS Mumbai (`ap-south-1`) region:
 
-* **Live Web Portal (CloudFront CDN)**: `https://d2l0wwhwiyg7if.cloudfront.net`
+* **Live Web Portal (CloudFront SSL)**: `https://d2l0wwhwiyg7if.cloudfront.net`
 * **Direct Web Endpoint (AWS S3)**: `http://landlens-portal-067103977319.s3-website.ap-south-1.amazonaws.com`
-* **Serverless Backend (AWS Lambda)**: `https://2ear34cavmuqrb7rh22d46tlxi0aiapz.lambda-url.ap-south-1.on.aws/`
+* **Serverless Backend (AWS Lambda + API Gateway)**: `https://ite6dpt3o6.execute-api.ap-south-1.amazonaws.com`
 * **Backend RDS Database**: `landlens-india-db.cpuyqeqqsw4d.ap-south-1.rds.amazonaws.com`
 * **Production Database (Hostinger)**: `srv1117.hstgr.io:3306` (Schema: `u833088220_Priya_teamlead`)
 * **EC2 Compute Instance**: `i-07905708960f5aa1b` (`ap-south-1`)
