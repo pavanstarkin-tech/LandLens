@@ -280,12 +280,12 @@ In an intensive **1-week engineering sprint**, the team achieved major milestone
 
 | Frontend Tier (`/frontend-react`) | Backend & DB Tier (`/back_end`) | Cloud & DevOps Tier (AWS / Ops) |
 | :--- | :--- | :--- |
-| **React 18** — Component Architecture | **Spring Boot 3.4.0** — Java 21 Framework | **AWS CloudFront** — Global Edge CDN |
-| **Vite 5** — Fast HMR Bundler & Compiler | **Spring Security** — JWT Token Auth | **AWS S3** — Static Asset & Media Bucket |
-| **TypeScript 5.0** — Type-Safe Application | **Spring Data JPA** — Hibernate ORM | **AWS ECS Fargate** — Serverless Containers |
-| **Tailwind CSS** — Glassmorphism Design | **HikariCP** — Database Connection Pool | **AWS ALB** — Application Load Balancer |
-| **Mapbox GL JS** — GIS Interactive Mapping | **MySQL 8.0** — 3NF Relational Database | **AWS NAT Gateway** — Static Egress IP |
-| **Pannellum VR** — 360° Panorama Viewer | **BCrypt** — Secure Password Hashing | **Jenkins & GitHub Actions** — CI/CD Pipelines |
+| **React 18** — Component Architecture | **Spring Boot 3.4.0** — Java 21 Framework | **AWS CloudFront** — Global Edge CDN (SSL) |
+| **Vite 5** — Fast HMR Bundler & Compiler | **Spring Security** — JWT Token Auth | **AWS S3** — Static Web Hosting Bucket |
+| **TypeScript 5.0** — Type-Safe Application | **Spring Data JPA** — Hibernate ORM | **AWS Lambda & API Gateway** — Serverless Tier |
+| **Tailwind CSS** — Glassmorphism Design | **NVIDIA NIM API** — openai/gpt-oss-120b | **Amazon Bedrock** — AI Foundation Models |
+| **Mapbox GL JS** — GIS Interactive Mapping | **HikariCP** — Database Connection Pool | **AWS NAT Gateway** — Static Egress IP |
+| **Pannellum VR** — 360° Panorama Viewer | **MySQL 8.0** — 3NF Relational Database | **Jenkins & GitHub Actions** — CI/CD Pipelines |
 | **Axios** — Auth Bearer Interceptors | **Jackson & OpenAPI** — JSON & Swagger | **SonarQube** — Static Code Analysis |
 
 ### Architectural Tier Interactions
@@ -333,27 +333,27 @@ graph TD
 | :--- | :--- | :--- |
 | **Edge CDN** | **Amazon CloudFront** | Global SSL termination, HTTPS caching, `/api/*` request proxying. |
 | **Object Storage** | **Amazon S3** | Hosting compiled static React frontend assets and user land documents. |
+| **Serverless Compute** | **AWS Lambda & API Gateway** | High-speed serverless REST API tier with sub-second response times. |
 | **Compute Containers**| **AWS ECS Fargate** | Serverless Docker container execution running Spring Boot tasks. |
 | **Load Balancing** | **AWS Application Load Balancer (ALB)** | Routing HTTP 8080 traffic to active container target groups with health checks. |
-| **Network Egress** | **AWS NAT Gateway** | Providing static Egress IP (`13.207.227.126`) for remote MySQL database access. |
-| **Container Registry**| **Amazon ECR** | Storing immutable Docker container image tags. |
-| **Database Server** | **Hostinger / AWS RDS MySQL 8.0** | 3NF relational data store with spatial coordinates and audit trails. |
-| **CI/CD Automation** | **GitHub Actions & Jenkins** | Automated build verification, unit testing, S3 sync, and ECS deployment. |
+| **AI Inference** | **NVIDIA NIM Cloud API** | Real-time `openai/gpt-oss-120b` multi-lingual chat, OCR, and reasoning engine. |
+| **Foundation Models** | **Amazon Bedrock** | Enterprise foundation models (Amazon Nova Micro/Lite & Titan Text). |
+| **Database Server** | **Hostinger MySQL 8.0** | 3NF relational data store with spatial coordinates and audit trails. |
+| **CI/CD Automation** | **GitHub Actions & Jenkins** | Automated build verification, unit testing, S3 sync, and deployment. |
 | **Code Quality** | **SonarQube & Python Runner** | Static code analysis, vulnerability scanning, and code smell remediation. |
-| **Reverse Proxy** | **Nginx** | Optional local gateway routing and SSL termination in staging environments. |
 
 ---
 
 ## 12. Live Deployment and Production Endpoints
 
-Production servers are live in the AWS Mumbai (`ap-south-1`) region:
+Production servers are live on AWS:
 
-* **Live Web Portal (CloudFront SSL)**: `https://d2l0wwhwiyg7if.cloudfront.net`
+* **Live Web Portal (CloudFront CDN SSL)**: `https://d2l0wwhwiyg7if.cloudfront.net`
 * **Direct Web Endpoint (AWS S3)**: `http://landlens-portal-067103977319.s3-website.ap-south-1.amazonaws.com`
 * **Serverless Backend (AWS Lambda + API Gateway)**: `https://ite6dpt3o6.execute-api.ap-south-1.amazonaws.com`
-* **Backend RDS Database**: `landlens-india-db.cpuyqeqqsw4d.ap-south-1.rds.amazonaws.com`
+* **Health Check & Actuator**: `https://ite6dpt3o6.execute-api.ap-south-1.amazonaws.com/actuator/health`
+* **Primary AI Inference Engine**: NVIDIA Cloud API (`openai/gpt-oss-120b`)
 * **Production Database (Hostinger)**: `srv1117.hstgr.io:3306` (Schema: `u833088220_Priya_teamlead`)
-* **EC2 Compute Instance**: `i-07905708960f5aa1b` (`ap-south-1`)
 
 ---
 
