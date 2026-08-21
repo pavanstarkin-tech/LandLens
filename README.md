@@ -33,6 +33,7 @@
 | **Project Title** | **LandLens – AI-Powered Government Land Verification and Citizen Fraud Prevention Platform** |
 | **Primary Track** | **AI for Impact – Governance and Citizen Services** |
 | **Core Value** | AI-assisted citizen and government service that simplifies land verification, improves public-service accessibility, and prevents property fraud. |
+| **AI Technology** | **IBM Bob AI Platform** (Conversational Citizen Assistant, Multilingual Engine, Officer Copilot, Explainable Trust Scoring, & Accelerated Full-Stack Engineering). |
 | **Responsible AI** | **AI Analyzes + AI Explains + AI Flags Risks + AI Assists Officers + Humans Make the Final Decision.** |
 | **Multilingual AI** | Native conversational support in English and regional Indian languages (**Telugu, Hindi, Tamil, Kannada, Marathi, Bengali**). |
 
@@ -144,34 +145,49 @@ flowchart TD
 
 ---
 
-## 4. IBM AI Integration and Key Features
+## 4. IBM AI Integration and Key Features (Powered by IBM Bob)
+
+LandLens leverages the **IBM Bob AI Platform** across both user-facing citizen intelligence and public administrative workflows:
 
 ### 1. IBM Bob AI Citizen Assistant
-Citizens can ask everyday questions in plain language:
-- *"What does this land document mean?"*
-- *"What is my survey number?"*
-- *"What area is mentioned in the document?"*
-- *"What information appears inconsistent?"*
-- *"What does my verification score mean?"*
-- *"What documents are required for verification?"*
-- *"What should I do next?"*
+IBM Bob powers an interactive conversational assistant that translates complex land records and revenue jargon into everyday, citizen-friendly explanations:
+- *"What does this land document mean?"* — Explains Patta passbooks, 1B records, and Encumbrance Certificates in plain terms.
+- *"What is my survey number?"* — Clarifies cadastral survey subdivisions and revenue village demarcations.
+- *"What area is mentioned in the document?"* — Standardizes acreage, gunthas, cents, and square meters into easily readable units.
+- *"What information appears inconsistent?"* — Identifies discrepancies between uploaded seller claims and state revenue records.
+- *"What does my verification score mean?"* — Breaks down the composite trust score into transparent factors.
+- *"What documents are required for verification?"* — Outlines the state documentation checklist for rural and urban land titles.
+- *"What should I do next?"* — Guides the citizen through the 5-step government service roadmap.
 
-### 2. Multilingual Support (Digital Inclusion)
-Full accessibility in Indian regional languages:
-- **English:** *"Your document requires additional verification."*
-- **Telugu (తెలుగు):** *"మీ పత్రానికి అదనపు ధృవీకరణ అవసరం."*
-- **Hindi (हिन्दी):** *"आपके दस्तावेज़ के लिए अतिरिक्त सत्यापन आवश्यक है।"*
+### 2. Multilingual Support and Digital Inclusion via IBM Bob
+To ensure rural accessibility and digital inclusion, IBM Bob provides native conversational fluency across 7 Indian regional languages:
+- **English:** *"Your document requires additional verification from the Mandal Revenue Officer."*
+- **Telugu (తెలుగు):** *"మీ భూమి పత్రానికి మండల రెవెన్యూ అధికారి నుండి అదనపు ధృవీకరణ అవసరం."*
+- **Hindi (हिन्दी):** *"आपके भूमि दस्तावेज़ के लिए मंडल राजस्व अधिकारी से अतिरिक्त सत्यापन आवश्यक है।"*
+- **Tamil (தமிழ்):** *"உங்கள் நில ஆவணத்திற்கு வருவாய் ஆய்வாளரின் கூடுதல் சரிபார்ப்பு தேவைப்படுகிறது."*
+- **Kannada (ಕನ್ನಡ):** *"ನಿಮ್ಮ ಜಮೀನು ದಾಖಲೆಗೆ ಕಂದಾಯ ಅಧಿಕಾರಿಯಿಂದ ಹೆಚ್ಚುವರಿ ಪರಿಶೀಲನೆ ಅಗತ್ಯವಿದೆ."*
+- **Marathi (मराठी):** *"आपल्या जमिनीच्या दस्तऐवजासाठी महसूल अधिकाऱ्याकडून अतिरिक्त पडताळणी आवश्यक आहे."*
+- **Bengali (বাংলা):** *"আপনার জমির দলিলের জন্য রাজস্ব পরিদর্শকের কাছ থেকে অতিরিক্ত যাচাইকরণ প্রয়োজন।"*
 
-### 3. AI Explanation Layer
-Never displays an unexplained raw number. Breaks down:
+### 3. IBM Bob Explainable AI (XAI) Layer
+Rather than presenting an uninterpretable numerical score, IBM Bob generates transparent factor explanations:
 * **Trust Score:** `88/100`
-* **Why:** Extracted survey number matches state ledger (95%), 0.0% GIS boundary overlap detected, awaiting final Revenue Inspector field sign-off.
+* **Factor Rationale:** Survey number `342/A` matches state ledger records (95%), 0.0% GIS boundary overlap detected against adjacent registered plots, awaiting final Revenue Inspector ground verification sign-off.
 
-### 4. Government Officer AI Copilot
-Summarizes property dossiers, OCR results, spatial conflicts, dispute history, and drafts one-click recommendation notes for the officer.
+### 4. IBM Bob Government Officer AI Copilot
+IBM Bob assists public land officers during inspection workflows:
+* **Executive Case Synthesis:** Automatically reviews multi-page documents, OCR extractions, dispute histories, and GIS overlap coordinates in seconds.
+* **One-Click Decision Support:** Formulates draft verification remarks and flags potential risks for the officer's review (e.g. Standard Certification vs. Physical Ground Survey Recommended).
 
-### 5. Responsible AI Disclaimers
-*AI analyzes, explains, and flags risks; authorized Government Officers make the final legal certification.*
+### 5. IBM Bob Accelerated Development Workflow
+The engineering team utilized IBM Bob throughout the hackathon sprint for:
+* Rapid scaffolding of Spring Boot 3.4 REST endpoints and security filters.
+* Composing responsive React 18 UI components, glassmorphism layouts, and Mapbox GIS polygon interactions.
+* Structuring 3NF relational database entity schemas and optimizing transactional JPA queries.
+* Designing reliable fallback reasoning logic for resilient offline and live testing.
+
+### 6. Responsible AI Governance Framework
+*AI Analyzes + AI Explains + AI Flags Risks + AI Assists Officers + Humans Make the Final Legal Decision.* LandLens never replaces legal government authority; it empowers officers and protects citizens with AI assistance.
 
 ---
 
