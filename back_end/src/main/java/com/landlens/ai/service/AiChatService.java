@@ -86,7 +86,7 @@ public class AiChatService {
             List<AiMessage> history = messageRepository.findByConversationIdAndIsActiveTrueOrderByTimestampAsc(conversationId);
             
             ObjectNode requestBody = objectMapper.createObjectNode();
-            requestBody.put("model", "meta/llama-3.1-70b-instruct");
+            requestBody.put("model", "openai/gpt-oss-120b");
             requestBody.put("temperature", 0.6);
             requestBody.put("max_tokens", 512);
             
