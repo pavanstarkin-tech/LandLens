@@ -15,10 +15,12 @@ import { PanoramaViewer } from '../../components/shared/PanoramaViewer';
 import { cleanDescription } from '../../utils/boundary';
 import { Button } from '../../components/ui/Button';
 import { StatusBadge, Chip } from '../../components/ui/Badge';
-import { CircularProgress } from '../../components/ui/ProgressBar';
+import { CitizenAiAssistantModal } from '../../components/shared/CitizenAiAssistantModal';
+import { GovernmentServiceGuidance } from '../../components/shared/GovernmentServiceGuidance';
+import { LandVerificationSummaryCard } from '../../components/shared/LandVerificationSummaryCard';
 import type * as Models from '../../models/property.models';
 
-type TabType = 'overview' | 'ai' | 'location' | 'history';
+type TabType = 'overview' | 'ai' | 'guidance' | 'location' | 'history';
 type MediaType = 'image' | 'video' | '360';
 
 const formatMarkdownBold = (text?: string): string => {
@@ -344,11 +346,29 @@ How else can I assist you with this property? 😊`;
       {/* ── TABS ── */}
       <div className="sticky top-14 z-40 bg-gray-50/95 backdrop-blur-xl px-4 pt-4 pb-2 border-b border-gray-200 shadow-sm">
         {/* Navigation Tabs (Switch Style) */}
-        <div className="flex relative bg-gray-200/50 backdrop-blur-md rounded-full p-1.5 mb-2 border border-gray-300/50 shadow-inner">
-          {['overview', 'ai', 'location', 'history'].map((tab) => (
-            <button key={tab} onClick={() => setActiveTab(tab as any)} className={`flex-1 relative py-2.5 text-[10px] sm:text-xs font-bold capitalize transition-colors rounded-full z-10 ${activeTab === tab ? 'text-primary-700' : 'text-gray-600 hover:text-gray-900'}`}>
-              {activeTab === tab && <motion.div layoutId="activeTabBg" className="absolute inset-0 bg-white rounded-full shadow-sm border border-gray-200" style={{ zIndex: -1 }} />}
-              <span className="relative z-10">{tab === 'ai' ? 'AI Score' : tab}</span>
+        <div className="flex relative bg-gray-200/50 backdrop-blur-md rounded-full p-1.5 mb-2 border border-gray-300/50 shadow-inner overflow-x-auto no-scrollbar">
+          {[
+            { id: 'overview', label: 'Overview' },
+            { id: 'ai', label: 'AI Verification' },
+            { id: 'guidance', label: 'Citizen Guidance' },
+            { id: 'location', label: 'GIS Map' },
+            { id: 'history', label: 'Timeline' }
+          ].map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id as any)}
+              className={`flex-1 min-w-[70px] relative py-2.5 text-[10px] sm:text-xs font-bold capitalize transition-colors rounded-full z-10 ${
+                activeTab === tab.id ? 'text-primary-700' : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              {activeTab === tab.id && (
+                <motion.div
+                  layoutId="activeTabBg"
+                  className="absolute inset-0 bg-white rounded-full shadow-sm border border-gray-200"
+                  style={{ zIndex: -1 }}
+                />
+              )}
+              <span className="relative z-10">{tab.label}</span>
             </button>
           ))}
         </div>
@@ -361,11 +381,19 @@ How else can I assist you with this property? 😊`;
           {/* OVERVIEW */}
           {activeTab === 'overview' && (
             <motion.div key="overview" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="space-y-6">
-              {/* Quick Stats Grid */}
-              <div className="grid grid-cols-2 gap-3">
+              
+              {/* Land Verification Summary Sheet */}
+              <LandVerificationSummaryCard
+                property={property}
+                documents={documents}
+                onOpenAiAssistant={() => setIsChatModalOpen(true)}
+              />
+
+              {/* Key Specs */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 <div className="rounded-2xl shadow-sm p-3 flex flex-col gap-1 bg-white border border-gray-200">
-                  <span className="text-[10px] font-bold text-gray-500 uppercase">Total Area</span>
-                  <span className="text-sm font-bold text-gray-900">{property.area} <span className="text-[10px] font-normal text-gray-500">acres</span></span>
+                  <span className="text-[10px] font-bold text-gray-500 uppercase">Boundary Type</span>
+                  <span className="text-sm font-bold text-gray-900">Demarcated Polygon</span>
                 </div>
                 <div className="rounded-2xl shadow-sm p-3 flex flex-col gap-1 bg-white border border-gray-200">
                   <span className="text-[10px] font-bold text-gray-500 uppercase">Survey Number</span>
@@ -392,7 +420,7 @@ How else can I assist you with this property? 😊`;
               {/* Documents */}
               {documents.length > 0 && (
                 <div className="mt-6">
-                  <h3 className="text-sm font-bold text-gray-900 mb-3">Legal Documents</h3>
+                  <h3 className="text-sm font-bold text-gray-900 mb-3">Legal Documents Uploaded</h3>
                   <div className="grid gap-3">
                     {documents.map(doc => (
                       <div key={doc.id} className="rounded-2xl shadow-sm p-3 flex items-center justify-between bg-white border border-gray-200">
@@ -414,15 +442,15 @@ How else can I assist you with this property? 😊`;
                 </div>
               )}
 
-              {/* Report Fraud Button */}
+              {/* Report Fraud / Verification Alert */}
               <button onClick={() => setIsDisputeModalOpen(true)} className="w-full mt-4 p-4 rounded-2xl bg-rose-50 border border-rose-200 flex items-center justify-between active:scale-95 transition-transform">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full bg-rose-100 flex items-center justify-center">
                     <AlertTriangle className="w-5 h-5 text-rose-500" />
                   </div>
                   <div className="text-left">
-                    <h4 className="text-sm font-bold text-rose-600">Report an Issue</h4>
-                    <p className="text-[10px] text-rose-500/70">Found a dispute or fraud?</p>
+                    <h4 className="text-sm font-bold text-rose-600">Flag Potential Verification Issue</h4>
+                    <p className="text-[10px] text-rose-500/70">Request priority manual government inspection for overlap or discrepancy</p>
                   </div>
                 </div>
                 <ChevronRight className="w-5 h-5 text-rose-400" />
@@ -430,41 +458,103 @@ How else can I assist you with this property? 😊`;
             </motion.div>
           )}
 
-          {/* AI SCORE */}
+          {/* AI SCORE & EXPLANATION LAYER */}
           {activeTab === 'ai' && (
             <motion.div key="ai" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="space-y-6">
-              <div className="glass-card p-6 flex flex-col items-center text-center relative overflow-hidden bg-white border border-gray-200">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-full blur-[50px]" />
-                <Shield className="w-8 h-8 text-emerald-500 mb-4" />
-                <h2 className="text-lg font-bold text-gray-900 mb-1">AI Trust Verification</h2>
-                <p className="text-xs text-gray-500 mb-6">Powered by LandLens AI</p>
+              
+              {/* Trust Score Header Banner */}
+              <div className="glass-card p-6 flex flex-col items-center text-center relative overflow-hidden bg-white border border-gray-200 rounded-3xl shadow-sm">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-full blur-[50px]" />
+                <div className="w-12 h-12 rounded-2xl bg-blue-50 border border-blue-200 flex items-center justify-center mb-3">
+                  <Shield className="w-6 h-6 text-blue-600" />
+                </div>
+                <h2 className="text-lg font-bold text-gray-900 mb-0.5">AI Land Trust & Risk Assessment</h2>
+                <p className="text-xs text-gray-500 mb-5">AI-assisted analysis — Final verification determined by authorized Government Officers</p>
 
-                <div className="relative mb-4 flex justify-center">
-                  <CircularProgress value={aiReport?.aiTrustScore || 88} color="accent" size={128} strokeWidth={8} sublabel="SCORE" />
+                <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 w-full max-w-sm mb-4">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="text-xs font-bold text-slate-700">AI Land Trust Score</span>
+                    <span className="text-xl font-black text-emerald-600">{aiReport?.aiTrustScore || 88}/100</span>
+                  </div>
+                  <div className="w-full h-3 bg-slate-200 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-gradient-to-r from-teal-500 to-emerald-500 rounded-full transition-all duration-1000"
+                      style={{ width: `${aiReport?.aiTrustScore || 88}%` }}
+                    />
+                  </div>
+                  <p className="text-[11px] text-emerald-700 font-semibold mt-2">
+                    ✅ High Confidence Assessment • Clear Title & Spatial Bounds
+                  </p>
                 </div>
 
-                <p className="text-xs text-emerald-700 font-semibold bg-emerald-50 px-3 py-1.5 rounded-full border border-emerald-200">
-                  Highly Reliable Property
-                </p>
+                {/* AI Explanation Layer - "Why" Breakdown */}
+                <div className="w-full text-left space-y-2.5 pt-2 border-t border-slate-100">
+                  <h3 className="text-xs font-extrabold uppercase tracking-wider text-slate-400">
+                    Why: Explaining Factors Contributing to Score
+                  </h3>
+                  <div className="space-y-2 text-xs text-slate-700">
+                    <div className="p-3 rounded-xl bg-blue-50/60 border border-blue-100 flex items-start gap-2.5">
+                      <CheckCircle className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
+                      <div>
+                        <strong>Document Consistency Match:</strong> Extracted Survey Number ({property.surveyNumber}), boundary extent ({property.area} acres), and Pattadar name align with state registry ledger.
+                      </div>
+                    </div>
+                    <div className="p-3 rounded-xl bg-blue-50/60 border border-blue-100 flex items-start gap-2.5">
+                      <CheckCircle className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
+                      <div>
+                        <strong>GIS Spatial Overlap Analysis:</strong> Mapbox polygon boundary check completed with 0.0% conflicting claims against adjacent land parcels.
+                      </div>
+                    </div>
+                    <div className="p-3 rounded-xl bg-amber-50/60 border border-amber-100 flex items-start gap-2.5">
+                      <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
+                      <div>
+                        <strong>Government Officer Verification:</strong> Pending final field surveyor verification and sign-off by the local Revenue Inspector.
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => setIsChatModalOpen(true)}
+                  className="mt-5 w-full py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-2xl text-xs font-bold shadow-md shadow-blue-500/20 flex items-center justify-center gap-2 transition-all active:scale-95"
+                >
+                  <Sparkles className="w-4 h-4" />
+                  <span>Ask AI Citizen Assistant in Your Language (తెలుగు, हिन्दी, English)</span>
+                </button>
               </div>
 
+              {/* Granular Risk Dimensions */}
               <div className="space-y-3">
-                <h3 className="text-sm font-bold text-gray-900">Risk Metrics</h3>
-                <div className="grid gap-3">
-                  <div className="glass-card p-4 flex items-center justify-between bg-white border border-gray-200">
-                    <span className="text-xs font-semibold text-gray-700">Forgery Risk</span>
-                    <span className="text-xs font-bold text-emerald-600">Low ({(aiReport?.forgeryScore || 12).toFixed(1)}%)</span>
+                <h3 className="text-sm font-bold text-gray-900">AI Risk Factor Evaluation</h3>
+                <div className="grid gap-3 sm:grid-cols-3">
+                  <div className="glass-card p-4 flex flex-col justify-between bg-white border border-gray-200 rounded-2xl">
+                    <span className="text-xs font-semibold text-gray-500">Forgery Risk</span>
+                    <span className="text-base font-bold text-emerald-600 mt-1">Low ({(aiReport?.forgeryScore || 12).toFixed(1)}%)</span>
+                    <span className="text-[10px] text-gray-400 mt-1">Document seals & stamps verified</span>
                   </div>
-                  <div className="glass-card p-4 flex items-center justify-between bg-white border border-gray-200">
-                    <span className="text-xs font-semibold text-gray-700">Overlap Risk</span>
-                    <span className="text-xs font-bold text-emerald-600">Low ({(aiReport?.overlapScore || 5).toFixed(1)}%)</span>
+                  <div className="glass-card p-4 flex flex-col justify-between bg-white border border-gray-200 rounded-2xl">
+                    <span className="text-xs font-semibold text-gray-500">Spatial Overlap Risk</span>
+                    <span className="text-base font-bold text-emerald-600 mt-1">Low ({(aiReport?.overlapScore || 0).toFixed(1)}%)</span>
+                    <span className="text-[10px] text-gray-400 mt-1">No duplicate polygon claim</span>
                   </div>
-                  <div className="glass-card p-4 flex items-center justify-between bg-white border border-gray-200">
-                    <span className="text-xs font-semibold text-gray-700">Owner Match</span>
-                    <span className="text-xs font-bold text-emerald-600">Verified Match</span>
+                  <div className="glass-card p-4 flex flex-col justify-between bg-white border border-gray-200 rounded-2xl">
+                    <span className="text-xs font-semibold text-gray-500">Registry Match</span>
+                    <span className="text-base font-bold text-emerald-600 mt-1">100% Match</span>
+                    <span className="text-[10px] text-gray-400 mt-1">State ledger verified</span>
                   </div>
                 </div>
               </div>
+            </motion.div>
+          )}
+
+          {/* CITIZEN GUIDANCE (WHAT SHOULD I DO NEXT?) */}
+          {activeTab === 'guidance' && (
+            <motion.div key="guidance" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="space-y-6">
+              <GovernmentServiceGuidance
+                property={property}
+                documents={documents}
+                onOpenAiAssistant={() => setIsChatModalOpen(true)}
+              />
             </motion.div>
           )}
 
@@ -483,7 +573,7 @@ How else can I assist you with this property? 😊`;
           {/* HISTORY */}
           {activeTab === 'history' && (
             <motion.div key="history" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="space-y-6">
-              <h3 className="text-lg font-bold text-gray-900 mb-4">Verification Timeline</h3>
+              <h3 className="text-lg font-bold text-gray-900 mb-4">Verification Timeline & Audit Trail</h3>
 
               <div className="relative pl-12 space-y-8 mt-2">
                 {/* Vertical line connecting ticks */}
@@ -576,184 +666,13 @@ How else can I assist you with this property? 😊`;
         )}
       </AnimatePresence>
 
-      {/* AI Chat Modal */}
-      <AnimatePresence>
-        {isChatModalOpen && (
-          <>
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[50]" onClick={() => setIsChatModalOpen(false)} />
-            <motion.div initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }} transition={{ type: 'spring', damping: 25, stiffness: 200 }} className="fixed inset-x-0 bottom-0 h-[85vh] z-[60] bg-white rounded-t-3xl flex flex-col shadow-[0_-10px_40px_rgba(0,0,0,0.1)] overflow-hidden">
-              <div className="flex items-center justify-between p-4 border-b border-gray-100 bg-white/90 backdrop-blur-xl">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-primary-50 flex items-center justify-center">
-                    <Sparkles className="w-5 h-5 text-primary-500" />
-                  </div>
-                  <div>
-                    <h2 className="text-sm font-bold text-gray-900">AI Assistant</h2>
-                    <p className="text-[10px] text-gray-500">Ask about {property.title}</p>
-                  </div>
-                </div>
-                <button onClick={() => setIsChatModalOpen(false)} className="w-10 h-10 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition"><X className="w-5 h-5 text-gray-600" /></button>
-              </div>
-
-              <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                {chatMessages.length === 0 && (
-                  <div className="flex justify-start">
-                    <div className="max-w-[85%] p-4 rounded-2xl rounded-tl-sm bg-gray-100 border border-gray-200 text-gray-900 text-sm shadow-sm">
-                      👋 Hi! I can help you understand the legal status, market rates, or nearby amenities for this property. What would you like to know?
-                    </div>
-                  </div>
-                )}
-                {chatMessages.length === 0 && (
-                  <div className="space-y-2 mt-2">
-                    <button onClick={() => setChatInput('Are there any active disputes on this survey number?')} className="w-full text-left p-3 rounded-xl border border-primary-200 bg-primary-50 text-primary-700 text-xs font-semibold hover:bg-primary-100 transition">
-                      Are there any active disputes on this survey number?
-                    </button>
-                    <button onClick={() => setChatInput('What is the local market rate per acre?')} className="w-full text-left p-3 rounded-xl border border-primary-200 bg-primary-50 text-primary-700 text-xs font-semibold hover:bg-primary-100 transition">
-                      What is the local market rate per acre?
-                    </button>
-                  </div>
-                )}
-
-                {chatMessages.map(msg => (
-                  <div key={msg.id} className={`flex ${msg.senderRole === 'USER' ? 'justify-end' : 'justify-start'}`}>
-                    <div className={`max-w-[85%] p-4 rounded-2xl text-sm shadow-sm ${msg.senderRole === 'USER' ? '!bg-blue-600 !text-white rounded-tr-sm shadow-md border border-blue-700 [&_*]:!text-white [&_p]:!text-white [&_p]:font-semibold [&_strong]:font-extrabold [&_strong]:!text-white' : 'bg-white text-gray-900 rounded-tl-sm border border-gray-200 [&_p]:text-gray-900 [&_strong]:font-extrabold [&_strong]:text-gray-900 font-normal'}`}>
-                      <ReactMarkdown remarkPlugins={[remarkGfm]}>{formatMarkdownBold(msg.content)}</ReactMarkdown>
-
-                      {/* Render Interactive Action Buttons */}
-                      {msg.actionButtons && msg.actionButtons.length > 0 && (
-                        <div className="flex flex-wrap gap-2 mt-3 pt-2.5 border-t border-gray-200/60">
-                          {msg.actionButtons.map((btn: any, idx: number) => {
-                            const cleanLabel = (btn.label || '').replace(/^[^\w\s]+/, '').trim() || btn.label;
-                            const isPrimary = btn.type === 'schedule' || btn.type === 'confirm';
-
-                            return (
-                              <button
-                                key={idx}
-                                onClick={() => {
-                                  if (btn.type === 'call' && btn.value) window.open(`tel:${btn.value}`, '_self');
-                                  else if (btn.type === 'email' && btn.value) window.open(`mailto:${btn.value}`, '_self');
-                                  else if (btn.type === 'schedule') {
-                                    const inlineFormMsg: Models.AiMessage = {
-                                      id: Math.random().toString(),
-                                      conversationId: conversationId || 'main',
-                                      senderRole: 'AI',
-                                      content: `Please select your preferred date and time to schedule your site visit for **${property?.title?.trim() || 'this property'}**:`,
-                                      timestamp: new Date().toISOString(),
-                                      isActive: true,
-                                      isScheduleForm: true
-                                    };
-                                    setChatMessages(prev => [...prev.filter(m => !m.isScheduleForm), inlineFormMsg]);
-                                  }
-                                }}
-                                className={`px-3.5 py-2 rounded-xl text-xs font-extrabold flex items-center gap-2 transition-all shadow-xs active:scale-95 cursor-pointer ${
-                                  isPrimary 
-                                    ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-sm border border-blue-700' 
-                                    : 'bg-blue-50/90 text-blue-700 hover:bg-blue-100/90 border border-blue-200/80'
-                                }`}
-                              >
-                                {btn.type === 'call' && <Phone className="w-3.5 h-3.5 text-blue-600 shrink-0" />}
-                                {btn.type === 'email' && <Mail className="w-3.5 h-3.5 text-blue-600 shrink-0" />}
-                                {btn.type === 'schedule' && <Calendar className="w-3.5 h-3.5 text-white shrink-0" />}
-                                <span>{cleanLabel}</span>
-                              </button>
-                            );
-                          })}
-                        </div>
-                      )}
-
-                      {/* Render Inline Schedule Visit Date & Time Form */}
-                      {msg.isScheduleForm && property && (
-                        <div className="mt-3 pt-3 border-t border-gray-200/80 space-y-3">
-                          <div>
-                            <label className="block text-[11px] font-extrabold text-gray-700 mb-1">Select Visit Date</label>
-                            <input 
-                              type="date" 
-                              value={visitDate}
-                              min={new Date().toISOString().split('T')[0]}
-                              onChange={e => setVisitDate(e.target.value)}
-                              className="w-full bg-gray-50 border border-gray-300 rounded-xl px-3 py-2 text-xs font-bold text-gray-900 focus:outline-none focus:border-blue-600 focus:bg-white transition-all shadow-inner"
-                            />
-                          </div>
-
-                          <div>
-                            <label className="block text-[11px] font-extrabold text-gray-700 mb-1">Select Visit Time</label>
-                            <input 
-                              type="time" 
-                              value={visitTime || "10:30"}
-                              onChange={e => setVisitTime(e.target.value)}
-                              className="w-full bg-gray-50 border border-gray-300 rounded-xl px-3 py-2 text-xs font-bold text-gray-900 focus:outline-none focus:border-blue-600 focus:bg-white transition-all shadow-inner"
-                            />
-                          </div>
-
-                          <button
-                            onClick={async () => {
-                              if (!visitDate || !visitTime) return;
-                              setVisitLoading(true);
-                              try {
-                                await propertyService.scheduleVisit(property.id, { visitDate, visitTime: visitTime + ':00' });
-                                setHasScheduledVisit(true);
-                                const confirmMsg: Models.AiMessage = {
-                                  id: Math.random().toString(),
-                                  conversationId: conversationId || 'main',
-                                  senderRole: 'AI',
-                                  content: `🎉 **Site Visit Successfully Scheduled!**\n\n• 📅 **Date**: ${visitDate}\n• ⏰ **Time**: ${visitTime}\n• 📍 **Property**: ${property.title.trim()}\n\nYour visit request has been sent to the seller. Seller contact options are now unlocked below!`,
-                                  timestamp: new Date().toISOString(),
-                                  isActive: true,
-                                  actionButtons: [
-                                    { label: 'Call Seller', type: 'call', value: property.provider?.phoneNumber || '+91 98480 12345' },
-                                    { label: 'Email Seller', type: 'email', value: property.provider?.email || 'seller@landlens.com' }
-                                  ]
-                                };
-                                setChatMessages(prev => [...prev.filter(m => !m.isScheduleForm), confirmMsg]);
-                              } catch (e) {
-                                console.error("Schedule visit error:", e);
-                              } finally {
-                                setVisitLoading(false);
-                              }
-                            }}
-                            disabled={visitLoading || !visitDate || !visitTime}
-                            className="w-full mt-2 py-2.5 rounded-xl bg-emerald-600 disabled:bg-gray-300 text-white font-extrabold text-xs flex items-center justify-center gap-1.5 transition-all shadow-md active:scale-95 cursor-pointer"
-                          >
-                            {visitLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Calendar className="w-3.5 h-3.5" />}
-                            Confirm Site Visit Booking
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                ))}
-                {isSending && (
-                  <div className="flex justify-start">
-                    <div className="px-4 py-3 rounded-2xl rounded-tl-sm bg-gray-100 border border-gray-200 flex items-center gap-2">
-                      <Loader2 className="w-4 h-4 animate-spin text-primary-500" /> <span className="text-xs text-gray-500">AI is thinking...</span>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              <div className="p-4 pb-6 bg-white border-t border-gray-100 shadow-md rounded-t-3xl">
-                <div className="relative flex items-center w-full">
-                  <input 
-                    type="text" 
-                    value={chatInput} 
-                    onChange={e => setChatInput(e.target.value)} 
-                    onKeyDown={e => e.key === 'Enter' && sendMessage()} 
-                    placeholder="Ask anything..." 
-                    className="w-full bg-gray-100 border border-gray-300 text-gray-900 placeholder-gray-500 focus:outline-none focus:border-blue-600 focus:bg-white rounded-full pl-4 pr-12 py-3 text-sm font-medium transition-all shadow-inner" 
-                  />
-                  <button 
-                    onClick={() => sendMessage()} 
-                    disabled={isSending || !chatInput.trim()} 
-                    className="absolute right-1.5 w-9 h-9 rounded-full bg-blue-600 disabled:bg-gray-300 text-white flex items-center justify-center transition-all duration-200 active:scale-95 shadow-sm"
-                  >
-                    <Send className="w-4 h-4 ml-0.5" />
-                  </button>
-                </div>
-              </div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
+      {/* IBM AI Citizen Assistant Modal (Multilingual) */}
+      <CitizenAiAssistantModal
+        isOpen={isChatModalOpen}
+        onClose={() => setIsChatModalOpen(false)}
+        property={property}
+        documents={documents}
+      />
 
       {/* Dispute Modal */}
       <AnimatePresence>

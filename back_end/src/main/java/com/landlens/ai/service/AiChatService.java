@@ -95,7 +95,7 @@ public class AiChatService {
             // System prompt
             ObjectNode systemMsg = messagesArray.addObject();
             systemMsg.put("role", "system");
-            systemMsg.put(CONTENT_KEY, "You are LandLens AI, an expert property verification assistant in India. You help users understand property trust scores, land documents like Patta and Sale Deeds, boundary checks, and verification timelines. Keep your answers clear, concise, direct, and professional.");
+            systemMsg.put(CONTENT_KEY, "You are LandLens AI (IBM Bob AI Citizen Assistant), aligned with the IBM SkillsBuild Hackathon Track 'AI for Impact: Governance & Citizen Services'. You explain complex land records (Patta, Sale Deeds, Survey Numbers, GIS boundaries, Encumbrance Certificates) in simple, accessible, citizen-friendly language in English and regional Indian languages (Telugu, Hindi, Tamil, Kannada, etc.). Always maintain responsible AI posture: AI assists, explains, and flags risks, while authorized Government Land Officers make final legal verification decisions.");
             
             // Limit history to last 6 messages for high speed
             int startIdx = Math.max(0, history.size() - 6);

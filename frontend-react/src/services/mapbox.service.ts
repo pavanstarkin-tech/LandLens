@@ -39,7 +39,17 @@ class ThreeDControl {
     this._btn.onclick = () => {
       if (!this._map) return;
       const is3D = this._map.getPitch() > 0;
-      this._map.easeTo({ pitch: is3D ? 0 : 60, bearing: is3D ? 0 : -17.6, duration: 1000 });
+      if (!is3D) {
+        mapboxService.add3DBuildings(this._map);
+      }
+      const currentZoom = this._map.getZoom();
+      const targetZoom = !is3D && currentZoom < 14.5 ? 15.5 : currentZoom;
+      this._map.easeTo({
+        pitch: is3D ? 0 : 60,
+        bearing: is3D ? 0 : -17.6,
+        zoom: targetZoom,
+        duration: 1000
+      });
     };
 
     this._container.appendChild(this._btn);
@@ -74,7 +84,65 @@ export const mapboxService = {
     mapInstance.addControl(new mapboxgl.NavigationControl(), 'top-right');
     mapInstance.addControl(new ThreeDControl(), 'top-right');
 
+    mapInstance.on('style.load', () => {
+      mapboxService.add3DBuildings(mapInstance);
+    });
+
     return mapInstance;
+  },
+
+  add3DBuildings: (map: mapboxgl.Map) => {
+    if (!map) return;
+    if (map.getLayer('3d-buildings')) return;
+
+    const layers = map.getStyle()?.layers;
+    let labelLayerId: string | undefined;
+    if (layers) {
+      for (let i = 0; i < layers.length; i++) {
+        if (layers[i].type === 'symbol' && (layers[i].layout as any)?.['text-field']) {
+          labelLayerId = layers[i].id;
+          break;
+        }
+      }
+    }
+
+    try {
+      map.addLayer(
+        {
+          id: '3d-buildings',
+          source: 'composite',
+          'source-layer': 'building',
+          filter: ['==', 'extrude', 'true'],
+          type: 'fill-extrusion',
+          minzoom: 14,
+          paint: {
+            'fill-extrusion-color': '#cbd5e1',
+            'fill-extrusion-height': [
+              'interpolate',
+              ['linear'],
+              ['zoom'],
+              15,
+              0,
+              15.05,
+              ['get', 'height']
+            ],
+            'fill-extrusion-base': [
+              'interpolate',
+              ['linear'],
+              ['zoom'],
+              15,
+              0,
+              15.05,
+              ['get', 'min_height']
+            ],
+            'fill-extrusion-opacity': 0.75
+          }
+        },
+        labelLayerId
+      );
+    } catch (e) {
+      console.warn('Could not add 3D buildings layer:', e);
+    }
   },
 
   geocode: async (address: string): Promise<[number, number] | null> => {

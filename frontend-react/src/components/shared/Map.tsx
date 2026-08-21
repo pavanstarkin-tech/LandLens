@@ -3,7 +3,24 @@ import mapboxgl from 'mapbox-gl';
 import { mapboxService } from '../../services/mapbox.service';
 import type { Property } from '../../models/property.models';
 import { parseBoundaryFromDescription } from '../../utils/boundary';
-import { MapPin, Layers, RefreshCw, Trash2 } from 'lucide-react';
+import { MapPin, Layers, RefreshCw, Trash2, Check, ChevronDown } from 'lucide-react';
+
+export type MapStyleKey = 'streets' | 'satellite' | 'outdoors' | 'light' | 'dark';
+
+export interface MapStyleOption {
+  key: MapStyleKey;
+  label: string;
+  url: string;
+  icon: string;
+}
+
+export const MAP_STYLES: MapStyleOption[] = [
+  { key: 'satellite', label: 'Satellite (Site Lite)', url: 'mapbox://styles/mapbox/satellite-streets-v12', icon: '🛰️' },
+  { key: 'streets', label: 'Streets', url: 'mapbox://styles/mapbox/streets-v12', icon: '🗺️' },
+  { key: 'outdoors', label: 'Terrain', url: 'mapbox://styles/mapbox/outdoors-v12', icon: '🏔️' },
+  { key: 'light', label: 'Light', url: 'mapbox://styles/mapbox/light-v11', icon: '☀️' },
+  { key: 'dark', label: 'Dark', url: 'mapbox://styles/mapbox/dark-v11', icon: '🌙' },
+];
 
 interface LocationSelectData {
   lat: number;
@@ -26,6 +43,8 @@ interface MapProps {
   properties?: Property[];
   className?: string;
   initialBoundary?: [number, number][];
+  pickerLat?: number;
+  pickerLng?: number;
 }
 
 // Calculate polygon area in acres using Shoelace formula on projected coordinates
@@ -68,7 +87,9 @@ export const Map: React.FC<MapProps> = ({
   mode = 'picker',
   properties = [],
   className = '',
-  initialBoundary
+  initialBoundary,
+  pickerLat: propPickerLat,
+  pickerLng: propPickerLng
 }) => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const mapRef = useRef<mapboxgl.Map | null>(null);
@@ -80,6 +101,14 @@ export const Map: React.FC<MapProps> = ({
   const [pointCount, setPointCount] = useState<number>(0);
   const [loading, setLoading] = useState<boolean>(true);
   const [drawMode, setDrawMode] = useState<'pin' | 'draw'>('pin');
+  const drawModeRef = useRef<'pin' | 'draw'>(drawMode);
+
+  const [mapStyleKey, setMapStyleKey] = useState<MapStyleKey>('streets');
+  const [showStylePicker, setShowStylePicker] = useState<boolean>(false);
+
+  useEffect(() => {
+    drawModeRef.current = drawMode;
+  }, [drawMode]);
 
   const onLocationSelectedRef = useRef(onLocationSelected);
   const onScheduleVisitRef = useRef(onScheduleVisit);
@@ -89,8 +118,17 @@ export const Map: React.FC<MapProps> = ({
     onScheduleVisitRef.current = onScheduleVisit;
   }, [onLocationSelected, onScheduleVisit]);
 
-  const pickerLng = center[0];
-  const pickerLat = center[1];
+  const pickerLng = propPickerLng ?? center[0];
+  const pickerLat = propPickerLat ?? center[1];
+
+  const handleStyleChange = useCallback((key: MapStyleKey) => {
+    const selected = MAP_STYLES.find(s => s.key === key);
+    if (!selected || !mapRef.current) return;
+    setMapStyleKey(key);
+    setShowStylePicker(false);
+    setLoading(true);
+    mapRef.current.setStyle(selected.url);
+  }, []);
 
   const drawPolygon = useCallback(() => {
     const map = mapRef.current;
@@ -197,7 +235,7 @@ export const Map: React.FC<MapProps> = ({
     if (!map) return;
 
     const el = document.createElement('div');
-    el.className = 'w-3.5 h-3.5 bg-accent-500 border-2 border-white rounded-full shadow-lg cursor-pointer';
+    el.className = 'w-4 h-4 bg-emerald-500 border-2 border-white rounded-full shadow-lg cursor-pointer hover:scale-125 transition-transform z-10';
     el.addEventListener('click', (e) => e.stopPropagation());
 
     const marker = new mapboxgl.Marker({ element: el, draggable: true })
@@ -344,6 +382,7 @@ export const Map: React.FC<MapProps> = ({
     map.on('style.load', () => {
       setLoading(false);
       map.resize();
+      mapboxService.add3DBuildings(map);
 
       if (mode === 'picker') {
         pickerMarkerRef.current = new mapboxgl.Marker({ color: '#10b981', draggable: true })
@@ -509,29 +548,10 @@ export const Map: React.FC<MapProps> = ({
         </div>
       )}
 
-      {mode === 'picker' && (
-        <React.Fragment>
-          {properties && properties.length > 0 && (
-            <div className="absolute bottom-4 right-4 z-40">
-              <button
-                type="button"
-                onClick={() => {
-                  const map = mapRef.current;
-                  if (!map || properties.length === 0) return;
-                  const bounds = new mapboxgl.LngLatBounds();
-                  properties.forEach(p => {
-                    if (p.longitude && p.latitude) bounds.extend([p.longitude, p.latitude]);
-                  });
-                  map.fitBounds(bounds, { padding: 60, maxZoom: 16, duration: 1000 });
-                }}
-                className="text-[9px] font-extrabold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full hover:bg-blue-100 transition-colors"
-              >
-                Fit All
-              </button>
-            </div>
-          )}
-
-          <div className="absolute top-4 left-4 z-40 glass-card p-3 flex flex-col gap-2 max-w-[210px] shadow-2xl border border-gray-200">
+      {/* Top-Left Control Overlay Container */}
+      <div className="absolute top-4 left-4 z-40 flex flex-col gap-2 max-w-[230px]">
+        {mode === 'picker' && (
+          <div className="glass-card p-3 flex flex-col gap-2 shadow-2xl border border-gray-200">
             <span className="text-[10px] font-bold text-gray-900 uppercase tracking-wider">Boundary Drawing Tool</span>
             <div className="flex bg-gray-100/50 p-0.5 rounded-lg border border-gray-200">
               <button
@@ -573,7 +593,93 @@ export const Map: React.FC<MapProps> = ({
               </div>
             )}
           </div>
-        </React.Fragment>
+        )}
+
+        {/* Map Style Switcher Pills & Dropdown */}
+        <div className="relative text-left">
+          <div className="bg-white/95 backdrop-blur-md p-1 rounded-xl border border-slate-200 shadow-xl flex items-center gap-1 text-[10px] font-bold">
+            <button
+              type="button"
+              onClick={() => handleStyleChange('streets')}
+              className={`px-2.5 py-1 rounded-lg transition-all flex items-center gap-1.5 ${
+                mapStyleKey === 'streets'
+                  ? 'bg-slate-900 text-white shadow-sm font-extrabold'
+                  : 'text-slate-700 hover:bg-slate-100'
+              }`}
+            >
+              <span>🗺️</span>
+              <span>Streets</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => handleStyleChange('satellite')}
+              className={`px-2.5 py-1 rounded-lg transition-all flex items-center gap-1.5 ${
+                mapStyleKey === 'satellite'
+                  ? 'bg-emerald-600 text-white shadow-sm font-extrabold ring-2 ring-emerald-400/50'
+                  : 'text-slate-700 hover:bg-slate-100'
+              }`}
+            >
+              <span>🛰️</span>
+              <span>Satellite</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowStylePicker(prev => !prev)}
+              className={`p-1 px-1.5 rounded-lg transition-all flex items-center gap-0.5 border ${
+                showStylePicker ? 'bg-slate-200 border-slate-300' : 'bg-slate-50 border-slate-200 hover:bg-slate-100'
+              } text-slate-700`}
+              title="More Map Styles"
+            >
+              <Layers className="w-3.5 h-3.5 text-slate-600" />
+              <ChevronDown className="w-3 h-3 text-slate-500" />
+            </button>
+          </div>
+
+          {/* Full Map Style Picker Dropdown */}
+          {showStylePicker && (
+            <div className="absolute top-full left-0 mt-1.5 w-48 bg-white/95 backdrop-blur-md rounded-xl border border-slate-200 shadow-2xl p-1.5 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
+              <div className="text-[9px] font-extrabold text-slate-400 uppercase tracking-wider px-2 py-1">Select Map Style</div>
+              {MAP_STYLES.map(style => (
+                <button
+                  key={style.key}
+                  type="button"
+                  onClick={() => handleStyleChange(style.key)}
+                  className={`w-full text-left px-2.5 py-1.5 rounded-lg text-xs font-bold flex items-center justify-between transition-colors ${
+                    mapStyleKey === style.key
+                      ? 'bg-emerald-50 text-emerald-700 border border-emerald-200/60'
+                      : 'text-slate-700 hover:bg-slate-100'
+                  }`}
+                >
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm">{style.icon}</span>
+                    <span>{style.label}</span>
+                  </div>
+                  {mapStyleKey === style.key && <Check className="w-3.5 h-3.5 text-emerald-600 stroke-[3]" />}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {mode === 'picker' && properties && properties.length > 0 && (
+        <div className="absolute bottom-4 right-4 z-40">
+          <button
+            type="button"
+            onClick={() => {
+              const map = mapRef.current;
+              if (!map || properties.length === 0) return;
+              const bounds = new mapboxgl.LngLatBounds();
+              properties.forEach(p => {
+                if (p.longitude && p.latitude) bounds.extend([p.longitude, p.latitude]);
+              });
+              map.fitBounds(bounds, { padding: 60, maxZoom: 16, duration: 1000 });
+            }}
+            className="text-[9px] font-extrabold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full hover:bg-blue-100 transition-colors shadow-sm border border-blue-200/60"
+          >
+            Fit All
+          </button>
+        </div>
       )}
     </div>
   );

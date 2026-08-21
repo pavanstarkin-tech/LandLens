@@ -13,6 +13,7 @@ import { StatusBadge, Chip } from '../../components/ui/Badge';
 import { SkeletonCard } from '../../components/ui/Skeleton';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { CircularProgress } from '../../components/ui/ProgressBar';
+import { CitizenAiAssistantModal } from '../../components/shared/CitizenAiAssistantModal';
 import type { Property, PropertyVisit, AiConversation, AiMessage, Notification, PropertyImage, PropertyVideo, PropertyDocument, AiVerification } from '../../models/property.models';
 import {
   Search, Calendar, MessageSquare, Bell, Map as MapIcon,
@@ -1219,179 +1220,12 @@ export const BuyerDashboard = () => {
         )}
       </AnimatePresence>
 
-      {/* ── CHAT MODAL ── */}
-      <AnimatePresence>
-        {isChatOpen && (
-          <motion.div initial={{ opacity: 0, y: 50 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 50 }} className="fixed inset-0 z-[100] bg-gray-50 flex flex-col">
-            <div className="px-4 py-3 bg-white border-b border-gray-200 flex justify-between items-center shrink-0 pt-safe shadow-sm">
-               <div>
-                 <h2 className="text-gray-900 font-bold">AI Assistant</h2>
-                 <p className="text-[10px] text-gray-500">Ask about any property or land record.</p>
-               </div>
-               <div className="flex items-center gap-2">
-                 <Button variant="ghost" size="xs" onClick={() => createNewChat()}>New</Button>
-                 <button onClick={() => setIsChatSidebarOpen(true)} className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center border border-gray-200 hover:bg-gray-200">
-                   <Menu className="w-4 h-4 text-gray-600" />
-                 </button>
-                 <button onClick={() => setIsChatOpen(false)} className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center border border-gray-200 hover:bg-gray-200">
-                   <X className="w-4 h-4 text-gray-600" />
-                 </button>
-               </div>
-            </div>
-            
-            <div className="flex-1 overflow-y-auto p-4 space-y-4">
-               {messages.length === 0 && !isAiThinking ? (
-                  <div className="h-full flex flex-col items-center justify-center text-center">
-                    <MessageSquare className="w-12 h-12 text-gray-400 mb-3" />
-                    <p className="text-sm font-semibold text-gray-900">Start a conversation</p>
-                    <p className="text-xs text-gray-500 mt-1">Ask questions about land laws, prices, and more.</p>
-                  </div>
-               ) : (
-                 <>
-                   {messages.map(msg => (
-                     <div key={msg.id} className={`flex flex-col ${msg.senderRole === 'USER' ? 'items-end' : 'items-start'} mb-3`}>
-                        <div className={`max-w-[88%] sm:max-w-[80%] p-4 rounded-2xl text-sm ${
-                          msg.senderRole === 'USER' 
-                            ? '!bg-blue-600 !text-white rounded-tr-xs shadow-md border border-blue-700 [&_*]:!text-white [&_p]:!text-white [&_p]:font-semibold [&_strong]:font-extrabold [&_strong]:!text-white' 
-                            : 'bg-white text-gray-900 rounded-tl-xs border border-gray-200 shadow-sm [&_p]:text-gray-900 [&_strong]:font-extrabold [&_strong]:text-gray-900 font-normal'
-                        }`}>
-                           <ReactMarkdown remarkPlugins={[remarkGfm]}>{formatMarkdownBold(msg.content)}</ReactMarkdown>
-
-                           {/* Matched Properties Cards */}
-                           {msg.matchedProperties && msg.matchedProperties.length > 0 && (
-                             <div className="mt-3 pt-3 border-t border-gray-100 space-y-2">
-                               <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Matching Properties</p>
-                               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                                 {msg.matchedProperties.map(p => (
-                                   <div 
-                                     key={p.id}
-                                     onClick={() => { setIsChatOpen(false); navigate(`/properties/${p.id}`); }}
-                                     className="bg-gray-50 hover:bg-blue-50 border border-gray-200 hover:border-blue-300 rounded-xl p-2 flex items-center gap-2.5 cursor-pointer transition-all group"
-                                   >
-                                     <img 
-                                       src={p.images?.[0]?.imageUrl || p.images?.[0]?.url || getFallbackPhoto(p)} 
-                                       alt={p.title}
-                                       className="w-10 h-10 rounded-lg object-cover shrink-0" 
-                                     />
-                                     <div className="min-w-0 flex-1">
-                                       <h4 className="text-xs font-bold text-gray-900 truncate group-hover:text-blue-600">{p.title}</h4>
-                                       <p className="text-[10px] text-gray-500 truncate">📍 {p.village || p.district}</p>
-                                       <p className="text-[10px] font-extrabold text-emerald-600">₹{(p.price/100000).toFixed(1)} Lakhs • {p.area}ac</p>
-                                     </div>
-                                   </div>
-                                 ))}
-                               </div>
-                             </div>
-                           )}
-
-                           {/* Action Buttons */}
-                           {msg.actionButtons && msg.actionButtons.length > 0 && (
-                             <div className="mt-3 pt-3 border-t border-gray-200/80 flex flex-wrap gap-2">
-                               {msg.actionButtons.map((btn, bIdx) => {
-                                 const cleanLabel = (btn.label || '').replace(/^[^\w\s]+/, '').trim() || btn.label;
-                                 const isPrimary = btn.type === 'schedule' || btn.type === 'confirm';
-
-                                 return (
-                                   <button
-                                     key={bIdx}
-                                     onClick={() => handleAiActionButtonClick(btn, msg)}
-                                     className={`px-3.5 py-2 rounded-xl text-xs font-extrabold flex items-center gap-2 transition-all shadow-xs active:scale-95 cursor-pointer ${
-                                       isPrimary 
-                                         ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-sm border border-blue-700' 
-                                         : 'bg-blue-50/90 text-blue-700 hover:bg-blue-100/90 border border-blue-200/80'
-                                     }`}
-                                   >
-                                     {btn.type === 'call' && <Phone className="w-3.5 h-3.5 text-blue-600 shrink-0" />}
-                                     {btn.type === 'email' && <Mail className="w-3.5 h-3.5 text-blue-600 shrink-0" />}
-                                     {btn.type === 'schedule' && <Calendar className="w-3.5 h-3.5 text-white shrink-0" />}
-                                     {btn.type === 'map' && <MapIcon className="w-3.5 h-3.5 text-blue-600 shrink-0" />}
-                                     <span>{cleanLabel}</span>
-                                   </button>
-                                 );
-                               })}
-                             </div>
-                           )}
-
-                           {/* Inline Date & Time Schedule Form */}
-                           {msg.isScheduleForm && (
-                             <div className="mt-3 pt-3 border-t border-gray-200/80 space-y-3 bg-gray-50 p-3 rounded-xl border border-gray-200">
-                               <p className="text-xs font-bold text-gray-800 flex items-center gap-1.5">
-                                 <Calendar className="w-4 h-4 text-amber-600" /> Choose Preferred Visit Date & Time
-                               </p>
-                               <div>
-                                 <label className="block text-[10px] font-bold text-gray-600 mb-1">Select Visit Date</label>
-                                 <input 
-                                   type="date" 
-                                   value={aiVisitDate}
-                                   min={new Date().toISOString().split('T')[0]}
-                                   onChange={e => setAiVisitDate(e.target.value)}
-                                   className="w-full bg-white border border-gray-300 rounded-xl px-3 py-2 text-xs font-bold text-gray-900 focus:outline-none focus:border-blue-600 transition-all shadow-xs"
-                                 />
-                               </div>
-
-                               <div>
-                                 <label className="block text-[10px] font-bold text-gray-600 mb-1">Select Visit Time</label>
-                                 <input 
-                                   type="time" 
-                                   value={aiVisitTime}
-                                   onChange={e => setAiVisitTime(e.target.value)}
-                                   className="w-full bg-white border border-gray-300 rounded-xl px-3 py-2 text-xs font-bold text-gray-900 focus:outline-none focus:border-blue-600 transition-all shadow-xs"
-                                 />
-                               </div>
-
-                               <button
-                                 onClick={() => handleConfirmAiScheduleVisit(msg.id)}
-                                 disabled={aiVisitLoading || !aiVisitDate || !aiVisitTime}
-                                 className="w-full mt-1 py-2.5 rounded-xl bg-emerald-600 disabled:opacity-50 text-white font-extrabold text-xs flex items-center justify-center gap-1.5 transition-all shadow-md active:scale-95 cursor-pointer"
-                               >
-                                 {aiVisitLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle className="w-3.5 h-3.5" />}
-                                 Confirm Site Visit Booking
-                               </button>
-                             </div>
-                           )}
-                        </div>
-                     </div>
-                   ))}
-
-                   {isAiThinking && (
-                     <div className="flex justify-start">
-                       <div className="max-w-[85%] p-3 rounded-2xl text-sm bg-white text-gray-800 rounded-tl-sm border border-gray-200 shadow-sm flex items-center gap-2">
-                         <span className="text-xs text-gray-500 font-medium">AI is thinking</span>
-                         <span className="flex gap-1">
-                           <span className="w-1.5 h-1.5 bg-primary-500 rounded-full animate-bounce [animation-delay:-0.3s]" />
-                           <span className="w-1.5 h-1.5 bg-primary-500 rounded-full animate-bounce [animation-delay:-0.15s]" />
-                           <span className="w-1.5 h-1.5 bg-primary-500 rounded-full animate-bounce" />
-                         </span>
-                       </div>
-                     </div>
-                   )}
-                 </>
-               )}
-               <div ref={chatMessagesEndRef} />
-            </div>
-
-            <div className="p-4 pb-6 bg-white border-t border-gray-200 shrink-0 shadow-md rounded-t-3xl">
-              <div className="relative flex items-center w-full">
-                <input 
-                  type="text" 
-                  value={chatInput} 
-                  onChange={e => setChatInput(e.target.value)} 
-                  onKeyDown={e => e.key === 'Enter' && sendMessage()} 
-                  placeholder="Message AI..." 
-                  className="w-full bg-gray-100 border border-gray-300 text-gray-900 placeholder-gray-500 focus:outline-none focus:border-blue-600 focus:bg-white rounded-full pl-4 pr-12 py-3 text-sm font-medium transition-all shadow-inner" 
-                />
-                <button 
-                  onClick={sendMessage} 
-                  disabled={!chatInput.trim()}
-                  className="absolute right-1.5 w-9 h-9 rounded-full bg-blue-600 disabled:bg-gray-300 text-gray-900 flex items-center justify-center transition-all duration-200 active:scale-95 shadow-sm"
-                >
-                  <Send className="w-4 h-4 ml-0.5" />
-                </button>
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* ── IBM AI CITIZEN ASSISTANT MODAL (MULTILINGUAL) ── */}
+      <CitizenAiAssistantModal
+        isOpen={isChatOpen}
+        onClose={() => setIsChatOpen(false)}
+        property={selectedProperty}
+      />
 
       {/* ── SCHEDULE VISIT SUCCESS TOAST BANNER ── */}
       {scheduleSuccess && (
