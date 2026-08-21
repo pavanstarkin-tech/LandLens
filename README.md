@@ -35,6 +35,67 @@ Citizen / Buyer: buyer@gmail.com / buyer@gmail.com
 
 ---
 
+## 📽️ Project Presentation Deck & Pitch Slides (Interactive Slider)
+
+> 💡 **Tip:** *Swipe or scroll horizontally with your mouse / touchpad to view all pitch presentation slides.*
+
+<div style="display: flex; overflow-x: auto; gap: 20px; padding: 16px 8px; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; margin-bottom: 24px;">
+  <div style="flex: 0 0 88%; max-width: 820px; scroll-snap-align: center; background: #0f172a; padding: 12px; border-radius: 16px; border: 1px solid #334155; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);">
+    <img src="./presentation/1.png" alt="Slide 1 - Executive Overview & Vision" style="width: 100%; border-radius: 12px; display: block;" />
+    <p align="center" style="margin: 10px 0 0 0; color: #94a3b8; font-size: 13px; font-weight: bold;">📊 Slide 1: Executive Overview & Vision</p>
+  </div>
+  <div style="flex: 0 0 88%; max-width: 820px; scroll-snap-align: center; background: #0f172a; padding: 12px; border-radius: 16px; border: 1px solid #334155; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);">
+    <img src="./presentation/2.png" alt="Slide 2 - Problem Statement & Challenges" style="width: 100%; border-radius: 12px; display: block;" />
+    <p align="center" style="margin: 10px 0 0 0; color: #94a3b8; font-size: 13px; font-weight: bold;">⚠️ Slide 2: Problem Statement & Challenges</p>
+  </div>
+  <div style="flex: 0 0 88%; max-width: 820px; scroll-snap-align: center; background: #0f172a; padding: 12px; border-radius: 16px; border: 1px solid #334155; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);">
+    <img src="./presentation/3.png" alt="Slide 3 - Solution Architecture" style="width: 100%; border-radius: 12px; display: block;" />
+    <p align="center" style="margin: 10px 0 0 0; color: #94a3b8; font-size: 13px; font-weight: bold;">💡 Slide 3: LandLens AI Solution</p>
+  </div>
+  <div style="flex: 0 0 88%; max-width: 820px; scroll-snap-align: center; background: #0f172a; padding: 12px; border-radius: 16px; border: 1px solid #334155; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);">
+    <img src="./presentation/4.png" alt="Slide 4 - Key Capabilities & AI OCR" style="width: 100%; border-radius: 12px; display: block;" />
+    <p align="center" style="margin: 10px 0 0 0; color: #94a3b8; font-size: 13px; font-weight: bold;">🔍 Slide 4: Core Innovation & AI OCR Verification</p>
+  </div>
+  <div style="flex: 0 0 88%; max-width: 820px; scroll-snap-align: center; background: #0f172a; padding: 12px; border-radius: 16px; border: 1px solid #334155; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);">
+    <img src="./presentation/5.png" alt="Slide 5 - Mapbox GIS & Spatial Verification" style="width: 100%; border-radius: 12px; display: block;" />
+    <p align="center" style="margin: 10px 0 0 0; color: #94a3b8; font-size: 13px; font-weight: bold;">🗺️ Slide 5: Mapbox GIS & Spatial Boundary Analysis</p>
+  </div>
+  <div style="flex: 0 0 88%; max-width: 820px; scroll-snap-align: center; background: #0f172a; padding: 12px; border-radius: 16px; border: 1px solid #334155; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);">
+    <img src="./presentation/6.png" alt="Slide 6 - Multilingual Citizen Assistant" style="width: 100%; border-radius: 12px; display: block;" />
+    <p align="center" style="margin: 10px 0 0 0; color: #94a3b8; font-size: 13px; font-weight: bold;">🤖 Slide 6: Multilingual AI Citizen Assistant</p>
+  </div>
+  <div style="flex: 0 0 88%; max-width: 820px; scroll-snap-align: center; background: #0f172a; padding: 12px; border-radius: 16px; border: 1px solid #334155; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);">
+    <img src="./presentation/7.png" alt="Slide 7 - Government Officer Copilot" style="width: 100%; border-radius: 12px; display: block;" />
+    <p align="center" style="margin: 10px 0 0 0; color: #94a3b8; font-size: 13px; font-weight: bold;">🏛️ Slide 7: Government Officer AI Copilot</p>
+  </div>
+  <div style="flex: 0 0 88%; max-width: 820px; scroll-snap-align: center; background: #0f172a; padding: 12px; border-radius: 16px; border: 1px solid #334155; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);">
+    <img src="./presentation/8.png" alt="Slide 8 - Technical Architecture" style="width: 100%; border-radius: 12px; display: block;" />
+    <p align="center" style="margin: 10px 0 0 0; color: #94a3b8; font-size: 13px; font-weight: bold;">⚙️ Slide 8: Technical Architecture & Microservices</p>
+  </div>
+  <div style="flex: 0 0 88%; max-width: 820px; scroll-snap-align: center; background: #0f172a; padding: 12px; border-radius: 16px; border: 1px solid #334155; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);">
+    <img src="./presentation/9.png" alt="Slide 9 - Security, RBAC & Governance" style="width: 100%; border-radius: 12px; display: block;" />
+    <p align="center" style="margin: 10px 0 0 0; color: #94a3b8; font-size: 13px; font-weight: bold;">🔒 Slide 9: Security, RBAC & Governance</p>
+  </div>
+  <div style="flex: 0 0 88%; max-width: 820px; scroll-snap-align: center; background: #0f172a; padding: 12px; border-radius: 16px; border: 1px solid #334155; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);">
+    <img src="./presentation/10.png" alt="Slide 10 - AWS Production Deployment" style="width: 100%; border-radius: 12px; display: block;" />
+    <p align="center" style="margin: 10px 0 0 0; color: #94a3b8; font-size: 13px; font-weight: bold;">☁️ Slide 10: AWS Production Deployment</p>
+  </div>
+  <div style="flex: 0 0 88%; max-width: 820px; scroll-snap-align: center; background: #0f172a; padding: 12px; border-radius: 16px; border: 1px solid #334155; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);">
+    <img src="./presentation/11.png" alt="Slide 11 - Social Impact" style="width: 100%; border-radius: 12px; display: block;" />
+    <p align="center" style="margin: 10px 0 0 0; color: #94a3b8; font-size: 13px; font-weight: bold;">🌟 Slide 11: Real-World Social Impact & Inclusion</p>
+  </div>
+  <div style="flex: 0 0 88%; max-width: 820px; scroll-snap-align: center; background: #0f172a; padding: 12px; border-radius: 16px; border: 1px solid #334155; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);">
+    <img src="./presentation/12.png" alt="Slide 12 - Future Scaling" style="width: 100%; border-radius: 12px; display: block;" />
+    <p align="center" style="margin: 10px 0 0 0; color: #94a3b8; font-size: 13px; font-weight: bold;">🚀 Slide 12: Future Roadmap & State Expansion</p>
+  </div>
+  <div style="flex: 0 0 88%; max-width: 820px; scroll-snap-align: center; background: #0f172a; padding: 12px; border-radius: 16px; border: 1px solid #334155; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);">
+    <img src="./presentation/14.png" alt="Slide 13 - Team & Conclusion" style="width: 100%; border-radius: 12px; display: block;" />
+    <p align="center" style="margin: 10px 0 0 0; color: #94a3b8; font-size: 13px; font-weight: bold;">👥 Slide 13: Team & Conclusion</p>
+  </div>
+</div>
+
+---
+
 ## IBM Hackathon Track and Positioning Overview
 
 | Dimension | Details |
