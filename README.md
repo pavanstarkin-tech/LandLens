@@ -1,4 +1,4 @@
-# LandLens 🌍🔍 — AI-Powered Government Land Verification & Citizen Fraud Prevention Platform
+# LandLens — AI-Powered Government Land Verification and Citizen Fraud Prevention Platform
 
 [![IBM SkillsBuild Hackathon](https://img.shields.io/badge/IBM%20SkillsBuild-Hackathon%20Track%3A%20AI%20for%20Impact-052FAD.svg?logo=ibm)](https://skillsbuild.org/)
 [![Track](https://img.shields.io/badge/Track-Governance%20%26%20Citizen%20Services-blueviolet.svg)](#)
@@ -22,38 +22,44 @@
   </a>
 </p>
 
-### 🌐 **Live Production Web Portal:** [https://dpyyh7torlown.cloudfront.net](https://dpyyh7torlown.cloudfront.net)
+### Live Production Web Portal: [https://dpyyh7torlown.cloudfront.net](https://dpyyh7torlown.cloudfront.net)
 
 ---
 
-## 🏛️ IBM Hackathon Track & Positioning Overview
+## IBM Hackathon Track and Positioning Overview
 
 | Dimension | Details |
 | :--- | :--- |
-| **Project Title** | **LandLens – AI-Powered Government Land Verification & Citizen Fraud Prevention Platform** |
-| **Primary Track** | **AI for Impact – Governance & Citizen Services** |
+| **Project Title** | **LandLens – AI-Powered Government Land Verification and Citizen Fraud Prevention Platform** |
+| **Primary Track** | **AI for Impact – Governance and Citizen Services** |
 | **Core Value** | AI-assisted citizen and government service that simplifies land verification, improves public-service accessibility, and prevents property fraud. |
 | **Responsible AI** | **AI Analyzes + AI Explains + AI Flags Risks + AI Assists Officers + Humans Make the Final Decision.** |
-| **Multilingual AI** | Native conversational support in English and regional Indian languages (**తెలుగు, हिन्दी, தமிழ், ಕನ್ನಡ, मराठी, বাংলা**). |
+| **Multilingual AI** | Native conversational support in English and regional Indian languages (**Telugu, Hindi, Tamil, Kannada, Marathi, Bengali**). |
 
 ---
 
-## 📑 Master Table of Contents
+## Master Table of Contents
 1. [Primary Problem Statement](#1-primary-problem-statement)
-2. [Proposed IBM Hackathon Solution & Capabilities](#2-proposed-ibm-hackathon-solution--capabilities)
-3. [Citizen Service Workflow & Architecture](#3-citizen-service-workflow--architecture)
-4. [IBM AI Integration & Key Features](#4-ibm-ai-integration--key-features)
+2. [Proposed IBM Hackathon Solution and Capabilities](#2-proposed-ibm-hackathon-solution-and-capabilities)
+3. [Citizen Service Workflow and Architecture](#3-citizen-service-workflow-and-architecture)
+4. [IBM AI Integration and Key Features](#4-ibm-ai-integration-and-key-features)
 5. [End-to-End Demo Story](#5-end-to-end-demo-story)
 6. [IBM Hackathon Value Proposition](#6-ibm-hackathon-value-proposition)
-7. [Application Screenshots & UI Showcase](#7-application-screenshots--ui-showcase)
-8. [Team Members & Key Contributions](#8-team-members--key-contributions)
-9. [Complete Technology Stack by Service](#9-complete-technology-stack-by-service)
-10. [System Architecture & Sequence Diagrams](#10-system-architecture--sequence-diagrams)
-11. [Database Module Overview & ERD](#11-database-module-overview--erd)
-12. [Complete REST API Directory](#12-complete-rest-api-directory)
-13. [Local Development & Setup Guide](#13-local-development--setup-guide)
-14. [Security, Auth & Rate Limiting](#14-security-auth--rate-limiting)
-15. [Scalability, Cloud & Future Roadmap](#15-scalability-cloud--future-roadmap)
+7. [Application Screenshots and UI Showcase](#7-application-screenshots-and-ui-showcase)
+8. [Team Members and Key Contributions](#8-team-members-and-key-contributions)
+9. [One-Week Rapid Implementation Sprint and Bug Fixes](#9-one-week-rapid-implementation-sprint-and-bug-fixes)
+10. [Complete Technology Stack by Service](#10-complete-technology-stack-by-service)
+11. [Platform and Cloud Infrastructure Services](#11-platform-and-cloud-infrastructure-services)
+12. [Live Deployment and Production Endpoints](#12-live-deployment-and-production-endpoints)
+13. [Folder and Package Architecture](#13-folder-and-package-architecture)
+14. [System Architecture and Sequence Diagrams](#14-system-architecture-and-sequence-diagrams)
+15. [Database Module Overview and ERD](#15-database-module-overview-and-erd)
+16. [Complete REST API Directory](#16-complete-rest-api-directory)
+17. [Local Development and Setup Guide](#17-local-development-and-setup-guide)
+18. [Environment Variables Reference](#18-environment-variables-reference)
+19. [Security, Auth and Rate Limiting](#19-security-auth-and-rate-limiting)
+20. [Scalability, Cloud and Future Roadmap](#20-scalability-cloud-and-future-roadmap)
+21. [Contributing and License](#21-contributing-and-license)
 
 ---
 
@@ -62,84 +68,85 @@
 > *"Citizens often struggle to understand and verify land ownership documents, while government authorities face time-consuming manual processes for validating property claims, detecting duplicate land boundaries, and investigating potentially fraudulent documents. LandLens uses AI-assisted document analysis, GIS-based overlap detection, risk scoring, multilingual assistance, and government verification workflows to make land verification more accessible, transparent, and efficient for citizens and public authorities."*
 
 ### Key Challenges Addressed:
-* 📄 **Complicated Legal Documents**: Non-technical citizens and rural farmers struggle to understand complex revenue jargon in Patta deeds, 1B records, and Encumbrance Certificates.
-* ⚠️ **Forged Land Deeds & Double Selling**: Malicious actors create duplicate or altered land documents, leading to overlapping boundary conflicts and litigation.
-* ⏳ **Manual Government Bottlenecks**: Public land officers and surveyors spend weeks on manual document validation and physical site visits.
-* 🌐 **Language & Digital Inclusion Barriers**: Lack of regional-language AI assistance prevents non-English-speaking citizens from accessing public land intelligence.
+* **Complicated Legal Documents**: Non-technical citizens and rural farmers struggle to understand complex revenue jargon in Patta deeds, 1B records, and Encumbrance Certificates.
+* **Forged Land Deeds and Double Selling**: Malicious actors create duplicate or altered land documents, leading to overlapping boundary conflicts and litigation.
+* **Manual Government Bottlenecks**: Public land officers and surveyors spend weeks on manual document validation and physical site visits.
+* **Language and Digital Inclusion Barriers**: Lack of regional-language AI assistance prevents non-English-speaking citizens from accessing public land intelligence.
 
 ---
 
-## 2. Proposed IBM Hackathon Solution & Capabilities
+## 2. Proposed IBM Hackathon Solution and Capabilities
 
-**LandLens** delivers a production-grade AI-assisted government land verification ecosystem through 12 core capabilities:
+LandLens delivers a production-grade AI-assisted government land verification ecosystem through 12 core capabilities:
 
-1. 📥 **Multi-Document Ingestion**: Accepts Patta, title deeds, tax receipts, and survey certificates.
-2. 👁️ **AI/OCR Document Intelligence**: Extracts survey numbers, ownership names, demarcated boundaries, and land acreage.
-3. 🔍 **Forgery & Inconsistency Analysis**: Automatically detects altered numbers, mismatched seals, and ledger discrepancies.
-4. 🗄️ **Public Registry Cross-Referencing**: Matches submitted property claims with state revenue and sub-registrar databases.
-5. 🗺️ **GIS Spatial Overlap Detection**: Uses Mapbox GL JS polygon clustering and coordinate intersection to detect overlapping land claims.
-6. 🛡️ **AI Land Trust/Risk Scoring**: Calculates composite risk scores with detailed explanatory factors (e.g., 88/100).
-7. 🗣️ **Citizen-Friendly Plain Explanations**: Translates legal terminology into simple, non-jargon language.
-8. 👨‍💼 **Government Officer AI Copilot**: Provides officers with executive dossier summaries and pre-populated decision recommendations.
-9. 📜 **Transparent Audit Trail**: Immutable lifecycle history (`UPLOADED` ➔ `AI_ANALYSIS` ➔ `OFFICER_REVIEW` ➔ `CERTIFIED`).
-10. 🌐 **Multilingual Digital Inclusion**: Native conversational assistance in 7 Indian languages (Telugu, Hindi, Tamil, Kannada, Marathi, Bengali, English).
-11. 💬 **IBM Bob AI Conversational Assistant**: Interactive citizen chatbot answering queries like *"What does my survey number mean?"* and *"What should I do next?"*
-12. 🛣️ **Government Service Guidance Roadmap**: Clear step-by-step citizen roadmap from AI pre-screening to official government sign-off.
+1. **Multi-Document Ingestion**: Accepts Patta, title deeds, tax receipts, and survey certificates.
+2. **AI/OCR Document Intelligence**: Extracts survey numbers, ownership names, demarcated boundaries, and land acreage.
+3. **Forgery and Inconsistency Analysis**: Automatically detects altered numbers, mismatched seals, and ledger discrepancies.
+4. **Public Registry Cross-Referencing**: Matches submitted property claims with state revenue and sub-registrar databases.
+5. **GIS Spatial Overlap Detection**: Uses Mapbox GL JS polygon clustering and coordinate intersection to detect overlapping land claims.
+6. **AI Land Trust/Risk Scoring**: Calculates composite risk scores with detailed explanatory factors (e.g., 88/100).
+7. **Citizen-Friendly Plain Explanations**: Translates legal terminology into simple, non-jargon language.
+8. **Government Officer AI Copilot**: Provides officers with executive dossier summaries and pre-populated decision recommendations.
+9. **Transparent Audit Trail**: Immutable lifecycle history (`UPLOADED` -> `AI_ANALYSIS` -> `OFFICER_REVIEW` -> `CERTIFIED`).
+10. **Multilingual Digital Inclusion**: Native conversational assistance in 7 Indian languages (Telugu, Hindi, Tamil, Kannada, Marathi, Bengali, English).
+11. **IBM Bob AI Conversational Assistant**: Interactive citizen chatbot answering queries like *"What does my survey number mean?"* and *"What should I do next?"*
+12. **Government Service Guidance Roadmap**: Clear step-by-step citizen roadmap from AI pre-screening to official government sign-off.
 
 ---
 
-## 3. Citizen Service Workflow & Architecture
+## 3. Citizen Service Workflow and Architecture
 
-```text
-┌────────────────────────────────────────────────────────────────────────┐
-│                        CITIZEN SERVICE WORKFLOW                        │
-└────────────────────────────────────────────────────────────────────────┘
-                                 Citizen
-                                    │
-                                    ▼
-                         Upload Land Documents
-                   (Patta, Sale Deed, Tax Receipt)
-                                    │
-                                    ▼
-                        AI/OCR Document Processing
-                                    │
-                                    ▼
-               Extract Ownership / Survey / Area / Bounds
-                                    │
-                                    ▼
-                       AI Risk & Spatial Analysis
-                     /              │              \
-                    /               │               \
-                   ▼                ▼                ▼
-          Potential Forgery   Duplicate Claim    Consistent Title
-          / Inconsistency      / GIS Overlap        & Coordinates
-                    \               │               /
-                     \              │              /
-                      ▼             ▼             ▼
-                     Citizen-Friendly AI Explanation
-                     (Multilingual: TE, HI, EN, etc.)
-                                    │
-                                    ▼
-                        Government Officer Review
-                     (IBM Officer AI Copilot Summary)
-                                    │
-                                    ▼
-                   ┌─────────────────────────────────┐
-                   │  OFFICER FINAL DECISION:        │
-                   │  • APPROVED / CERTIFIED         │
-                   │  • REJECTED WITH REASON         │
-                   │  • PHYSICAL SURVEY REQUIRED     │
-                   └─────────────────────────────────┘
-                                    │
-                                    ▼
-                       Transparent Audit Timeline
+### A. Process Flow Diagram
+
+```mermaid
+flowchart TD
+    A[Citizen Portal] -->|Uploads Patta / Sale Deed / Tax Receipts| B[Document Ingestion Layer]
+    B -->|Image / PDF Stream| C[AI & OCR Extraction Engine]
+    C -->|Extracts Survey No, Extent, Boundaries, Ownership| D[AI Verification & Spatial Analysis]
+    
+    D -->|Check 1: Document Consistency / Forgery| E{Risk Evaluation}
+    D -->|Check 2: GIS Spatial Overlap Boundary| E
+    D -->|Check 3: Revenue Registry Ledger Match| E
+    
+    E -->|High Trust / No Overlap| F[AI Land Trust Score: 88-98%]
+    E -->|Inconsistency / Boundary Conflict| G[Potential Verification Alert / Flagged]
+    
+    F --> H[Multilingual Citizen Explanation Layer]
+    G --> H
+    
+    H -->|Citizen Inquiries in Regional Languages| I[IBM Bob AI Citizen Assistant]
+    H -->|Dossier Queued for Sign-off| J[Government Officer Dashboard]
+    
+    J -->|AI Case Synthesis & Decision Support| K[IBM Officer AI Copilot]
+    K --> L{Authorized Officer Final Decision}
+    
+    L -->|Approved| M[Official Government Certified Badge Issued]
+    L -->|Rejected| N[Declined with Formal Officer Remarks]
+    L -->|Field Check Needed| O[Physical Ground Survey Scheduled]
+    
+    M --> P[Immutable Verification Timeline & Audit Trail]
+    N --> P
+    O --> P
 ```
 
+### B. Step-by-Step Workflow Stages
+
+| Stage | Phase | Actor | Action and Output |
+| :--- | :--- | :--- | :--- |
+| **01** | Document Upload | Citizen | Uploads Patta, Sale Deed, and Tax Receipts via web or mobile. |
+| **02** | OCR & Intelligence | AI Engine | Scans, extracts survey number, acreage, coordinates, and ownership ledger. |
+| **03** | Spatial GIS Analysis | GIS Subsystem | Performs Mapbox polygon intersection to detect duplicate boundary claims. |
+| **04** | Trust Score & 'Why' | AI Explanation | Calculates trust score (e.g. 88/100) and displays non-technical reasoning. |
+| **05** | Multilingual Q&A | Citizen Assistant | Citizen interacts in Telugu, Hindi, or English to clarify document terms. |
+| **06** | Officer Case Review | Government Officer | Reviews AI Case Dossier and Copilot recommendations on the dashboard. |
+| **07** | Official Sign-off | Government Officer | Grants official state verification certification or orders field inspection. |
+| **08** | Audit Trail Log | System | Immutably records timestamps, officer notes, and verification badges. |
+
 ---
 
-## 4. IBM AI Integration & Key Features
+## 4. IBM AI Integration and Key Features
 
-### 1. 🤖 IBM Bob AI Citizen Assistant
+### 1. IBM Bob AI Citizen Assistant
 Citizens can ask everyday questions in plain language:
 - *"What does this land document mean?"*
 - *"What is my survey number?"*
@@ -149,21 +156,21 @@ Citizens can ask everyday questions in plain language:
 - *"What documents are required for verification?"*
 - *"What should I do next?"*
 
-### 2. 🌐 Multilingual Support (Digital Inclusion)
+### 2. Multilingual Support (Digital Inclusion)
 Full accessibility in Indian regional languages:
 - **English:** *"Your document requires additional verification."*
 - **Telugu (తెలుగు):** *"మీ పత్రానికి అదనపు ధృవీకరణ అవసరం."*
 - **Hindi (हिन्दी):** *"आपके दस्तावेज़ के लिए अतिरिक्त सत्यापन आवश्यक है।"*
 
-### 3. 🔍 AI Explanation Layer
+### 3. AI Explanation Layer
 Never displays an unexplained raw number. Breaks down:
 * **Trust Score:** `88/100`
 * **Why:** Extracted survey number matches state ledger (95%), 0.0% GIS boundary overlap detected, awaiting final Revenue Inspector field sign-off.
 
-### 4. 👨‍💼 Government Officer AI Copilot
+### 4. Government Officer AI Copilot
 Summarizes property dossiers, OCR results, spatial conflicts, dispute history, and drafts one-click recommendation notes for the officer.
 
-### 5. 🛡️ Responsible AI Disclaimers
+### 5. Responsible AI Disclaimers
 *AI analyzes, explains, and flags risks; authorized Government Officers make the final legal certification.*
 
 ---
@@ -193,39 +200,39 @@ Summarizes property dossiers, OCR results, spatial conflicts, dispute history, a
 
 ---
 
-## 3. Application Screenshots & UI Showcase
+## 7. Application Screenshots and UI Showcase
 
-Below is an interactive visual walkthrough of the live **LandLens** platform structured in a 3-column showcase:
+Below is an interactive visual walkthrough of the live LandLens platform structured in a 3-column showcase:
 
-### 🔐 1. Authentication, Portals & Buyer Dashboard
+### 1. Authentication, Portals and Buyer Dashboard
 | Login Portal (Desktop) | Mobile Responsive Interface | Buyer Dashboard & Overview |
 | :---: | :---: | :---: |
 | ![Login Desktop](./dashscreenshots/login-desktop.png) | ![Login Mobile](./dashscreenshots/login-mobile.png) | ![Buyer Dashboard](./dashscreenshots/userdash.png) |
 
 ---
 
-### 🗺️ 2. Property Marketplace, GIS Mapping & Location Details
+### 2. Property Marketplace, GIS Mapping and Location Details
 | Property Exploration Marketplace | Mapbox GIS Boundaries | Spatial Coordinates & Land Details |
 | :---: | :---: | :---: |
 | ![Property Marketplace](./dashscreenshots/userexplore.png) | ![Mapbox Boundaries](./dashscreenshots/usermap.png) | ![Location Details](./dashscreenshots/loacationdetaislofland.png) |
 
 ---
 
-### 🤖 3. AI Trust Analysis, Property Details & Seller Portal
+### 3. AI Trust Analysis, Property Details and Seller Portal
 | AI Document Verification Analysis | Property Overview & 360° VR | Land Provider / Seller Dashboard |
 | :---: | :---: | :---: |
 | ![AI Analysis](./dashscreenshots/aianalysis.png) | ![Property Details](./dashscreenshots/propertydetails.png) | ![Seller Dashboard](./dashscreenshots/sellerdash.png) |
 
 ---
 
-### 💼 4. Scheduled Inspection Visits & User Account
+### 4. Scheduled Inspection Visits and User Account
 | Scheduled Visit Bookings | User Profile & Settings | System Dashboard Overview |
 | :---: | :---: | :---: |
 | ![Scheduled Visits](./dashscreenshots/userschedules.png) | ![User Account](./dashscreenshots/useracct.png) | ![User Dashboard](./dashscreenshots/userdash.png) |
 
 ---
 
-## 4. Team Members & Key Contributions
+## 8. Team Members and Key Contributions
 
 | Avatar | GitHub Profile | Developer | Role & Key Contributions |
 | :---: | :--- | :--- | :--- |
@@ -234,21 +241,21 @@ Below is an interactive visual walkthrough of the live **LandLens** platform str
 
 ---
 
-## 5. 1-Week Rapid Implementation Sprint & Bug Fixes
+## 9. One-Week Rapid Implementation Sprint and Bug Fixes
 
 In an intensive **1-week engineering sprint**, the team achieved major milestones and resolved complex technical challenges:
 
-1.  **Frontend Modernization**: Completely ported legacy Angular code to a high-performance **React 18 + Vite** stack, boosting bundle build speed by **8x** and runtime responsiveness.
-2.  **HTTPS & Mixed Content Resolution**: Solved browser Mixed Content blocks (`https://...` calling insecure `http://...` ALB endpoints) by routing all API traffic through CloudFront edge origin request policies.
-3.  **Code Quality & SonarQube Automation**: Built custom Python automation (`automate_sonar.py`) to run static analysis, eliminating code smells, memory leaks, and unhandled exceptions.
-4.  **AWS Security Hardening**: Secured exposed API keys and automated secret rotation using AWS KMS and Secrets Manager.
-5.  **Multi-Role Dashboards**: Built 4 distinct role-tailored portals (Buyer, Land Provider, Government Officer, Admin) in record time.
+1. **Frontend Modernization**: Completely ported legacy Angular code to a high-performance **React 18 + Vite** stack, boosting bundle build speed by **8x** and runtime responsiveness.
+2. **HTTPS & Mixed Content Resolution**: Solved browser Mixed Content blocks (`https://...` calling insecure `http://...` ALB endpoints) by routing all API traffic through CloudFront edge origin request policies.
+3. **Code Quality & SonarQube Automation**: Built custom Python automation (`automate_sonar.py`) to run static analysis, eliminating code smells, memory leaks, and unhandled exceptions.
+4. **AWS Security Hardening**: Secured exposed API keys and automated secret rotation using AWS KMS and Secrets Manager.
+5. **Multi-Role Dashboards**: Built 4 distinct role-tailored portals (Buyer, Land Provider, Government Officer, Admin) in record time.
 
 ---
 
-## 5. Complete Technology Stack by Service
+## 10. Complete Technology Stack by Service
 
-| 🎨 Frontend Tier (`/frontend-react`) | ⚙️ Backend & DB Tier (`/back_end`) | ☁️ Cloud & DevOps Tier (AWS / Ops) |
+| Frontend Tier (`/frontend-react`) | Backend & DB Tier (`/back_end`) | Cloud & DevOps Tier (AWS / Ops) |
 | :--- | :--- | :--- |
 | **React 18** — Component Architecture | **Spring Boot 3.4.0** — Java 21 Framework | **AWS CloudFront** — Global Edge CDN |
 | **Vite 5** — Fast HMR Bundler & Compiler | **Spring Security** — JWT Token Auth | **AWS S3** — Static Asset & Media Bucket |
@@ -258,7 +265,7 @@ In an intensive **1-week engineering sprint**, the team achieved major milestone
 | **Pannellum VR** — 360° Panorama Viewer | **BCrypt** — Secure Password Hashing | **Jenkins & GitHub Actions** — CI/CD Pipelines |
 | **Axios** — Auth Bearer Interceptors | **Jackson & OpenAPI** — JSON & Swagger | **SonarQube** — Static Code Analysis |
 
-### 🔄 Architectural Tier Interactions
+### Architectural Tier Interactions
 ```mermaid
 graph TD
     subgraph ClientLayer [Client & User Layer]
@@ -297,7 +304,7 @@ graph TD
 
 ---
 
-## 6. Platform & Cloud Infrastructure Services
+## 11. Platform and Cloud Infrastructure Services
 
 | Domain | Service / Platform | Usage & Responsibility |
 | :--- | :--- | :--- |
@@ -314,20 +321,20 @@ graph TD
 
 ---
 
-## 7. Live Deployment & Production Endpoints
+## 12. Live Deployment and Production Endpoints
 
 Production servers are live in the AWS Mumbai (`ap-south-1`) region:
 
-*   🌐 **Live Web Portal**: `https://dpyyh7torlown.cloudfront.net`
-*   ⚙️ **Backend Load Balancer Base URL**: `http://landlens-production-alb-1919392235.ap-south-1.elb.amazonaws.com`
-*   💓 **Health Check (Actuator)**: `http://landlens-production-alb-1919392235.ap-south-1.elb.amazonaws.com/actuator/health`
-*   📖 **Swagger Documentation**: `http://landlens-production-alb-1919392235.ap-south-1.elb.amazonaws.com/swagger-ui/index.html` *(Dev profile)*
-*   🗄️ **Production Database (Hostinger)**: `srv1117.hstgr.io:3306` (Schema: `u833088220_Priya_teamlead`)
-*   🌐 **NAT Gateway Public Egress IP**: `13.207.227.126` (Whitelisted in Hostinger Remote MySQL settings)
+* **Live Web Portal**: `https://dpyyh7torlown.cloudfront.net`
+* **Backend Load Balancer Base URL**: `http://landlens-production-alb-1919392235.ap-south-1.elb.amazonaws.com`
+* **Health Check (Actuator)**: `http://landlens-production-alb-1919392235.ap-south-1.elb.amazonaws.com/actuator/health`
+* **Swagger Documentation**: `http://landlens-production-alb-1919392235.ap-south-1.elb.amazonaws.com/swagger-ui/index.html` *(Dev profile)*
+* **Production Database (Hostinger)**: `srv1117.hstgr.io:3306` (Schema: `u833088220_Priya_teamlead`)
+* **NAT Gateway Public Egress IP**: `13.207.227.126` (Whitelisted in Hostinger Remote MySQL settings)
 
 ---
 
-## 8. Folder & Package Architecture
+## 13. Folder and Package Architecture
 
 ### Root Directory Overview
 ```text
@@ -369,7 +376,7 @@ com.landlens
 
 ---
 
-## 9. System Architecture & Sequence Diagrams
+## 14. System Architecture and Sequence Diagrams
 
 ### A. AWS Network Topology
 ```mermaid
@@ -487,15 +494,15 @@ sequenceDiagram
 
 ---
 
-## 10. Database Module Overview & Table Directory
+## 15. Database Module Overview and Table Directory
 
 The database is normalized into **3NF (Third Normal Form)** tables. Every table includes audit attributes:
-*   `id` (`VARCHAR(36)` UUID, Primary Key)
-*   `created_at` (`TIMESTAMP`, Default `CURRENT_TIMESTAMP`)
-*   `updated_at` (`TIMESTAMP`, Default `CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP`)
-*   `created_by` (`VARCHAR(36)` UUID, Nullable)
-*   `updated_by` (`VARCHAR(36)` UUID, Nullable)
-*   `is_active` (`BOOLEAN`, Default `true` for soft-deletion)
+* `id` (`VARCHAR(36)` UUID, Primary Key)
+* `created_at` (`TIMESTAMP`, Default `CURRENT_TIMESTAMP`)
+* `updated_at` (`TIMESTAMP`, Default `CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP`)
+* `created_by` (`VARCHAR(36)` UUID, Nullable)
+* `updated_by` (`VARCHAR(36)` UUID, Nullable)
+* `is_active` (`BOOLEAN`, Default `true` for soft-deletion)
 
 | Module | Table Name | Description |
 | :--- | :--- | :--- |
@@ -522,8 +529,6 @@ The database is normalized into **3NF (Third Normal Form)** tables. Every table 
 | | `api_logs` | Trace log of developer API requests. |
 | | `api_rate_limits` | Current rate limiting windows for active keys. |
 | **Analytics** | `daily_analytics` | Pre-aggregated system metrics per day. |
-
-> 📅 **Schema Version**: 3NF Relational Database Schema — `July 2026`
 
 ---
 
@@ -733,51 +738,51 @@ erDiagram
 
 ---
 
-## 13. Complete REST API Directory
+## 16. Complete REST API Directory
 
-### 🔐 1. Authentication (`/api/auth`)
-*   `POST /api/auth/register` — Register new user account (`BUYER`, `PROVIDER`, `GOVERNMENT_OFFICER`, `ADMIN`)
-*   `POST /api/auth/login` — Authenticate credentials & generate JWT Access/Refresh tokens
-*   `POST /api/auth/refresh` — Rotate expired access token using valid refresh token
-*   `POST /api/auth/logout` — Revoke active refresh token session
-*   `GET /api/auth/me` — Fetch currently authenticated user profile
+### 1. Authentication (`/api/auth`)
+* `POST /api/auth/register` — Register new user account (`BUYER`, `PROVIDER`, `GOVERNMENT_OFFICER`, `ADMIN`)
+* `POST /api/auth/login` — Authenticate credentials & generate JWT Access/Refresh tokens
+* `POST /api/auth/refresh` — Rotate expired access token using valid refresh token
+* `POST /api/auth/logout` — Revoke active refresh token session
+* `GET /api/auth/me` — Fetch currently authenticated user profile
 
-### 🏡 2. Property Management (`/api/properties`)
-*   `GET /api/properties` — Search & list properties with filters (city, state, price range, land type)
-*   `GET /api/properties/{id}` — Fetch detailed property metadata, images, videos, and verification status
-*   `POST /api/properties` — Create a new property listing (Providers only)
-*   `PUT /api/properties/{id}` — Update existing property details
-*   `DELETE /api/properties/{id}` — Soft-delete property listing (Admin/Owner)
-*   `POST /api/properties/{id}/images` — Upload property gallery photos
-*   `POST /api/properties/{id}/video` — Upload property walk-through video
-*   `POST /api/properties/{id}/panorama` — Upload 360° virtual tour panorama image
+### 2. Property Management (`/api/properties`)
+* `GET /api/properties` — Search & list properties with filters (city, state, price range, land type)
+* `GET /api/properties/{id}` — Fetch detailed property metadata, images, videos, and verification status
+* `POST /api/properties` — Create a new property listing (Providers only)
+* `PUT /api/properties/{id}` — Update existing property details
+* `DELETE /api/properties/{id}` — Soft-delete property listing (Admin/Owner)
+* `POST /api/properties/{id}/images` — Upload property gallery photos
+* `POST /api/properties/{id}/video` — Upload property walk-through video
+* `POST /api/properties/{id}/panorama` — Upload 360° virtual tour panorama image
 
-### 📄 3. Documents & Verification (`/api/documents` & `/api/verification`)
-*   `POST /api/documents/upload` — Upload land deed, Patta, tax receipt, or survey certificate
-*   `GET /api/documents/property/{propertyId}` — Retrieve documents attached to a property
-*   `GET /api/verification/{propertyId}` — View government audit status & AI verification score
-*   `POST /api/verification/{propertyId}/approve` — Officer approval of land verification
-*   `POST /api/verification/{propertyId}/reject` — Officer rejection with audit remarks
-*   `GET /api/verification/{propertyId}/timeline` — Audit log timeline of state changes
+### 3. Documents and Verification (`/api/documents` and `/api/verification`)
+* `POST /api/documents/upload` — Upload land deed, Patta, tax receipt, or survey certificate
+* `GET /api/documents/property/{propertyId}` — Retrieve documents attached to a property
+* `GET /api/verification/{propertyId}` — View government audit status & AI verification score
+* `POST /api/verification/{propertyId}/approve` — Officer approval of land verification
+* `POST /api/verification/{propertyId}/reject` — Officer rejection with audit remarks
+* `GET /api/verification/{propertyId}/timeline` — Audit log timeline of state changes
 
-### 🤖 4. AI Engine & Valuation (`/api/ai`)
-*   `POST /api/ai/estimate-price` — Calculate AI market valuation based on survey number & coordinates
-*   `POST /api/ai/verify-documents` — Trigger OCR document text extraction & authenticity validation
-*   `POST /api/ai/chat` — Interact with LandLens AI conversational assistant
+### 4. AI Engine and Valuation (`/api/ai`)
+* `POST /api/ai/estimate-price` — Calculate AI market valuation based on survey number & coordinates
+* `POST /api/ai/verify-documents` — Trigger OCR document text extraction & authenticity validation
+* `POST /api/ai/chat` — Interact with LandLens AI conversational assistant
 
-### 🚨 5. Fraud Detection (`/api/fraud`)
-*   `POST /api/fraud/report` — Submit community land dispute or fraud report
-*   `GET /api/fraud/overlap-check` — Evaluate spatial coordinate overlaps between registered lands
-*   `GET /api/fraud/reports` — Review fraud investigation queue (Admin/Officer)
+### 5. Fraud Detection (`/api/fraud`)
+* `POST /api/fraud/report` — Submit community land dispute or fraud report
+* `GET /api/fraud/overlap-check` — Evaluate spatial coordinate overlaps between registered lands
+* `GET /api/fraud/reports` — Review fraud investigation queue (Admin/Officer)
 
-### 📈 6. Analytics & API Key Operations (`/api/analytics` & `/api/developer`)
-*   `GET /api/analytics/daily` — Daily pre-aggregated platform metrics (views, listings, verifications)
-*   `POST /api/developer/keys` — Generate developer API access key
-*   `GET /api/developer/usage` — Track API request usage and rate-limit counters
+### 6. Analytics and API Key Operations (`/api/analytics` and `/api/developer`)
+* `GET /api/analytics/daily` — Daily pre-aggregated platform metrics (views, listings, verifications)
+* `POST /api/developer/keys` — Generate developer API access key
+* `GET /api/developer/usage` — Track API request usage and rate-limit counters
 
 ---
 
-## 14. Local Development & Setup Guide
+## 17. Local Development and Setup Guide
 
 ### A. Frontend Setup (`/frontend-react`)
 ```bash
@@ -802,7 +807,7 @@ Boots MySQL 8.0 and the Spring Boot service cleanly in an isolated Docker contai
 
 ---
 
-## 15. Environment Variables Reference
+## 18. Environment Variables Reference
 
 | Variable Name | Description | Default Fallback (Development) |
 |---|---|---|
@@ -817,48 +822,34 @@ Boots MySQL 8.0 and the Spring Boot service cleanly in an isolated Docker contai
 
 ---
 
-## 16. Security, Auth & Rate Limiting
+## 19. Security, Auth and Rate Limiting
 
-*   **Credential Encryption**: Hashing using BCrypt for password fields inside `users`.
-*   **Token Authorization**: Custom `JwtAuthenticationFilter` intercepts HTTP headers to validate bearer signatures.
-*   **External API Guarding**: Interceptor (`ApiKeyInterceptor`) locks all `/api/v1/external/**` routes requiring `x-api-key`.
-*   **Rate Limits**: Automated tracker logs developer usage and blocks keys exceeding defined thresholds (`429 Rate Limit Exceeded`).
-
----
-
-## 17. Application Scalability & Performance
-
-*   📈 **Horizontal Container Scaling**: AWS ECS Fargate tasks dynamically scale horizontally (up to 30 tasks) based on CPU/RAM utilization.
-*   ⚡ **Global Edge CDN Caching**: CloudFront caches React bundle assets across 300+ global edge locations, ensuring sub-100ms page load times worldwide.
-*   🗄️ **Database Read Replicas**: MySQL Aurora Serverless v2 setup allows routing high-volume read queries (`GET /api/properties`) to read replicas, preserving master node write capacity.
-*   🚀 **Sub-Second API Response Times**: HikariCP connection pooling and MapStruct DTO mappers minimize latency.
+* **Credential Encryption**: Hashing using BCrypt for password fields inside `users`.
+* **Token Authorization**: Custom `JwtAuthenticationFilter` intercepts HTTP headers to validate bearer signatures.
+* **External API Guarding**: Interceptor (`ApiKeyInterceptor`) locks all `/api/v1/external/**` routes requiring `x-api-key`.
+* **Rate Limits**: Automated tracker logs developer usage and blocks keys exceeding defined thresholds (`429 Rate Limit Exceeded`).
 
 ---
 
-## 18. AWS Infrastructure Cost Projections
+## 20. Scalability, Cloud and Future Roadmap
 
-| User Scale | Frontend (S3 + CloudFront) | Backend API (ECS Fargate + ALB) | Database (MySQL / RDS) | Networking & Egress (NAT Gateway) | Total Estimated Monthly Cost |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| **100 Users** | **$0 - $2** *(CloudFront Free Tier)* | **$26 - $30** | **$10 - $15** *(Hostinger / Small)* | **$32 - $35** | **~$68 - $85 / mo** (~₹5.5k - ₹7k) |
-| **1,000 Users** | **$2 - $5** | **$45 - $55** | **$25 - $40** *(RDS db.t4g.small)* | **$35 - $40** | **~$110 - $140 / mo** (~₹9k - ₹11.5k) |
-| **10,000 Users** | **$100 - $150** | **$165 - $230** | **$150 - $250** *(RDS Multi-AZ)* | **$60 - $90** | **~$600 - $800 / mo** (~₹50k - ₹66k) |
-| **100,000 (1 Lakh)**| **$1,200 - $1,800** | **$950 - $1,450** | **$800 - $1,500** *(Aurora Serverless)* | **$200 - $350** | **~$3,500 - $5,000 / mo** (~₹2.9L - ₹4.1L) |
+* **Horizontal Container Scaling**: AWS ECS Fargate tasks dynamically scale horizontally (up to 30 tasks) based on CPU/RAM utilization.
+* **Global Edge CDN Caching**: CloudFront caches React bundle assets across 300+ global edge locations, ensuring sub-100ms page load times worldwide.
+* **Database Read Replicas**: MySQL Aurora Serverless v2 setup allows routing high-volume read queries (`GET /api/properties`) to read replicas, preserving master node write capacity.
+* **Sub-Second API Response Times**: HikariCP connection pooling and MapStruct DTO mappers minimize latency.
 
----
-
-## 19. Future Roadmap & Improvements
-
-*   **Test Isolation with H2**: Mock H2 in-memory profile (`application-test.properties`) so build steps execute offline cleanly.
-*   **Redis Caching Layer**: Cache wrapper for public property search endpoints to reduce DB hits.
-*   **Asynchronous Message Queue**: Transition AI processing and OCR triggers from inline threads to RabbitMQ/Kafka.
-*   **Geospatial Indexes**: Spatial datatypes using `Hibernate Spatial` + `MySQL Spatial` to support polygon land searches.
+### Planned Improvements:
+* **Test Isolation with H2**: Mock H2 in-memory profile (`application-test.properties`) so build steps execute offline cleanly.
+* **Redis Caching Layer**: Cache wrapper for public property search endpoints to reduce DB hits.
+* **Asynchronous Message Queue**: Transition AI processing and OCR triggers from inline threads to RabbitMQ/Kafka.
+* **Geospatial Indexes**: Spatial datatypes using `Hibernate Spatial` + `MySQL Spatial` to support polygon land searches.
 
 ---
 
-## 20. Contributing & License
+## 21. Contributing and License
 
-1.  Create a feature branch from `main` (`git checkout -b feature/amazing-feature`).
-2.  Commit your changes using meaningful, structured commit messages.
-3.  Submit a Pull Request targeting the `main` branch.
+1. Create a feature branch from `main` (`git checkout -b feature/amazing-feature`).
+2. Commit your changes using meaningful, structured commit messages.
+3. Submit a Pull Request targeting the `main` branch.
 
-*Architected & Lead Developed with ❤️ by **Pavan Kumar Swamy** and **Team Pixel Pirates** (Santhi Priya, Hemanth Kotipalli, Keerthi Thammisetty, Rama Sai, and Rama Vasavi).*
+*Architected & Lead Developed by **Pavan Kumar Swamy** (Team Lead) and **Naseema** (Team Mate).*
