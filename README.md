@@ -33,7 +33,8 @@
 | **Project Title** | **LandLens – AI-Powered Government Land Verification and Citizen Fraud Prevention Platform** |
 | **Primary Track** | **AI for Impact – Governance and Citizen Services** |
 | **Core Value** | AI-assisted citizen and government service that simplifies land verification, improves public-service accessibility, and prevents property fraud. |
-| **IDE & Coding Agent** | **IBM Bob** — Used as the AI-powered IDE tool and coding agent assistant to design, architect, develop, and test the frontend interface, backend microservices, database models, and verification pipelines. |
+| **IDE & Coding Agent** | **IBM Bob** — Used as the primary AI-powered IDE tool and coding agent assistant to design, architect, develop, and test the frontend interface, backend microservices, database models, and verification workflows. |
+| **Runtime AI & OCR Engine** | **NVIDIA API** — Integrated into application services to power live conversational responses, OCR document data extractions, multilingual translation, and explainable risk scoring. |
 | **Responsible AI** | **AI Analyzes + AI Explains + AI Flags Risks + AI Assists Officers + Humans Make the Final Decision.** |
 | **Multilingual AI** | Native conversational support in English and regional Indian languages (**Telugu, Hindi, Tamil, Kannada, Marathi, Bengali**). |
 
@@ -145,12 +146,17 @@ flowchart TD
 
 ---
 
-## 4. Platform AI Capabilities and Development with IBM Bob
+## 4. Platform AI Capabilities and Development Architecture
 
-LandLens was built, architected, and coded using **IBM Bob** as the primary **AI IDE tool and coding agent assistant**. The resulting platform delivers key citizen and governance capabilities:
+LandLens is built on a clear architectural division between **Development Tooling (IBM Bob)** and **Runtime AI Inference (NVIDIA API)**:
 
-### 1. AI Citizen Land Assistant
-Developed and prompt-engineered within the IBM Bob IDE environment, the conversational assistant translates complex land records and revenue jargon into everyday, citizen-friendly explanations:
+* **Development & Coding Tier (IBM Bob)**: **IBM Bob** was utilized exclusively as the **AI-powered IDE tool and coding agent assistant** to design the user interface, scaffold React 18 components, architect Spring Boot microservices, build the 3NF database schema, and implement verification logic.
+* **Runtime AI Inference & OCR Tier (NVIDIA API)**: The runtime intelligence layer integrates **NVIDIA API / NIM microservices** directly within the backend (`AiChatService`) and frontend (`ai.service.ts`) to execute real-time document OCR text extraction, conversational Q&A, multilingual responses, and trust score evaluations.
+
+---
+
+### 1. AI Citizen Land Assistant (Runtime: NVIDIA API | Coded with: IBM Bob)
+Powered by the NVIDIA API runtime engine and styled/engineered within the IBM Bob IDE environment, the conversational assistant translates complex land records and revenue jargon into everyday, citizen-friendly explanations:
 - *"What does this land document mean?"* — Explains Patta passbooks, 1B records, and Encumbrance Certificates in plain terms.
 - *"What is my survey number?"* — Clarifies cadastral survey subdivisions and revenue village demarcations.
 - *"What area is mentioned in the document?"* — Standardizes acreage, gunthas, cents, and square meters into easily readable units.
@@ -160,7 +166,7 @@ Developed and prompt-engineered within the IBM Bob IDE environment, the conversa
 - *"What should I do next?"* — Guides the citizen through the 5-step government service roadmap.
 
 ### 2. Multilingual Support and Digital Inclusion
-To ensure rural accessibility and digital inclusion, the conversational engine provides native fluency across 7 Indian regional languages:
+Using NVIDIA API inference, the conversational engine provides native fluency across 7 Indian regional languages:
 - **English:** *"Your document requires additional verification from the Mandal Revenue Officer."*
 - **Telugu (తెలుగు):** *"మీ భూమి పత్రానికి మండల రెవెన్యూ అధికారి నుండి అదనపు ధృవీకరణ అవసరం."*
 - **Hindi (हिन्दी):** *"आपके भूमि दस्तावेज़ के लिए मंडल राजस्व अधिकारी से अतिरिक्त सत्यापन आवश्यक है।"*
@@ -170,7 +176,7 @@ To ensure rural accessibility and digital inclusion, the conversational engine p
 - **Bengali (বাংলা):** *"আপনার জমির দলিলের জন্য রাজস্ব পরিদর্শকের কাছ থেকে অতিরিক্ত যাচাইকরণ প্রয়োজন।"*
 
 ### 3. Explainable AI (XAI) Trust Scoring Layer
-Rather than presenting an uninterpretable numerical score, LandLens generates transparent factor explanations:
+Using NVIDIA API contextual reasoning, LandLens generates transparent factor explanations rather than opaque numbers:
 * **Trust Score:** `88/100`
 * **Factor Rationale:** Survey number `342/A` matches state ledger records (95%), 0.0% GIS boundary overlap detected against adjacent registered plots, awaiting final Revenue Inspector ground verification sign-off.
 
@@ -180,7 +186,7 @@ Assists public land officers during inspection workflows:
 * **One-Click Decision Support:** Formulates draft verification remarks and flags potential risks for the officer's review (e.g. Standard Certification vs. Physical Ground Survey Recommended).
 
 ### 5. Role of IBM Bob as the IDE & Coding Agent Assistant
-The entire codebase was constructed using **IBM Bob** as the AI-powered IDE and pair-programming assistant:
+The complete project interface and architecture was engineered using **IBM Bob** as the AI-powered IDE tool:
 * **Interface Engineering:** Scaffolding the React 18 + Vite user interface, glassmorphism design system, responsive dashboards, and Mapbox GL JS spatial boundary viewer.
 * **Backend Architecture:** Writing Spring Boot 3.4 REST endpoints, Spring Security filters, JWT authentication, and JPA repository mappings.
 * **Database & Logic Structuring:** Designing the 3NF MySQL relational database schema, OCR extraction pipelines, and spatial intersection algorithms.
