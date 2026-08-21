@@ -104,8 +104,8 @@ LandLens delivers a production-grade AI-assisted government land verification ec
 ```mermaid
 flowchart TD
     A[Citizen Portal] -->|Uploads Patta / Sale Deed / Tax Receipts| B[Document Ingestion Layer]
-    B -->|Image / PDF Stream| C[AI & OCR Extraction Engine]
-    C -->|Extracts Survey No, Extent, Boundaries, Ownership| D[AI Verification & Spatial Analysis]
+    B -->|Image / PDF Stream| C[OCR Text Extraction Subsystem]
+    C -->|Survey No, Extent, Bounds, Ledger Data| D[NVIDIA Cloud API: openai/gpt-oss-120b]
     
     D -->|Check 1: Document Consistency / Forgery| E{Risk Evaluation}
     D -->|Check 2: GIS Spatial Overlap Boundary| E
@@ -117,10 +117,10 @@ flowchart TD
     F --> H[Multilingual Citizen Explanation Layer]
     G --> H
     
-    H -->|Citizen Inquiries in Regional Languages| I[IBM Bob AI Citizen Assistant]
-    H -->|Dossier Queued for Sign-off| J[Government Officer Dashboard]
+    H -->|Citizen Queries in Telugu, Hindi, English| I[Citizen AI Assistant<br>Powered by NVIDIA API: openai/gpt-oss-120b]
+    H -->|Dossier Queued for Review| J[Government Officer Dashboard]
     
-    J -->|AI Case Synthesis & Decision Support| K[IBM Officer AI Copilot]
+    J -->|AI Case Synthesis & Decision Support| K[Officer AI Copilot<br>Powered by NVIDIA API: openai/gpt-oss-120b]
     K --> L{Authorized Officer Final Decision}
     
     L -->|Approved| M[Official Government Certified Badge Issued]
@@ -311,7 +311,7 @@ graph TD
     subgraph PersistenceLayer [Data & Persistence Layer]
         NAT[AWS NAT Gateway Egress]
         DB[(Hostinger MySQL 8.0 Database)]
-        AI[AI Trust & OCR Engine]
+        AI[NVIDIA Cloud API: openai/gpt-oss-120b]
     end
 
     FE -->|1. Request Static Bundle| CF
@@ -322,7 +322,7 @@ graph TD
     ECS -->|6. Intercept & Validate Token| SEC
     ECS -->|7. Outbound Egress| NAT
     NAT -->|8. JDBC SQL Queries| DB
-    ECS -->|9. Async Analysis| AI
+    ECS -->|9. AI Reasoning & Inference| AI
 ```
 
 ---
@@ -424,7 +424,7 @@ graph TD
     end
 
     NAT -->|6. Egress IP: 13.207.227.126| DB[(Hostinger Remote MySQL DB)]
-    ECS -->|7. Asynchronous OCR & Trust Evaluation| AI[AI Verification Engine]
+    ECS -->|7. Live AI Chat & Document Analysis| AI[NVIDIA NIM Cloud API: openai/gpt-oss-120b]
 ```
 
 ### B. Application Request Processing Lifecycle
@@ -437,7 +437,7 @@ sequenceDiagram
     participant Service as Service Layer
     participant Repos as JPA Repository
     participant DB as Hostinger MySQL DB
-    participant AI as AI Engine & OCR
+    participant AI as NVIDIA API (openai/gpt-oss-120b)
 
     Client->>Security: Send HTTP Request (e.g., POST /api/properties)
     alt Anonymous path permitted (e.g., /actuator/health)
@@ -458,16 +458,41 @@ sequenceDiagram
     Repos-->>Service: Return Entity Model
 
     opt Needs AI Verification (Documents Uploaded)
-        Service->>AI: Trigger Asynchronous Verification Task
-        Note over AI: Process OCR (Patta/Sale Deed) & evaluate Trust Score
-        AI->>DB: Update Verification Results & Scores
+        Service->>AI: Trigger AI Inference (openai/gpt-oss-120b)
+        Note over AI: Process OCR text, evaluate Trust Score & detect forgery
+        AI-->>Service: Return structured trust analysis & summary
+        Service->>DB: Persist Verification Results & Scores
     end
 
     Service-->>Controller: Return DTO Payload
     Controller-->>Client: Return JSON Response + HTTP Status 200/201
 ```
 
-### C. Property Verification State Machine
+### C. Real-Time AI Chat Conversational Flow (NVIDIA API)
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Citizen as Citizen / User
+    participant UI as React Frontend (Citizen AI Assistant)
+    participant Gateway as AWS CloudFront / API Gateway
+    participant Backend as Backend API Service
+    participant DB as MySQL Database
+    participant NVIDIA as NVIDIA API (openai/gpt-oss-120b)
+
+    Citizen->>UI: Types query (e.g., "What is survey number 342/A?")
+    UI->>Gateway: POST /api/ai/chat
+    Gateway->>Backend: Forward prompt + active language
+    Backend->>DB: Fetch property details & verified bounds
+    DB-->>Backend: Return survey, acreage & OCR data
+    Backend->>NVIDIA: POST /v1/chat/completions (model: openai/gpt-oss-120b)
+    Note over NVIDIA: Generate structured, citizen-friendly explanation
+    NVIDIA-->>Backend: Return 200 OK + AI Response Content
+    Backend-->>Gateway: Return formatted JSON response
+    Gateway-->>UI: Deliver AI explanation
+    UI-->>Citizen: Render interactive response in selected language (TE/HI/EN)
+```
+
+### D. Property Verification State Machine
 ```mermaid
 stateDiagram-v2
     [*] --> UPLOADED : User Uploads Land Details & Deeds
