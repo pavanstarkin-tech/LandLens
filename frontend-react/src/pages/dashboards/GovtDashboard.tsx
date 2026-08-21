@@ -229,6 +229,11 @@ export const GovtDashboard = () => {
 
   const [deconflictMessage, setDeconflictMessage] = useState<string | null>(null);
 
+  // ─── Dashboard Tab Filter & Search State ─────────────────────────────
+  const [dashFilter, setDashFilter] = useState<'ALL' | 'PENDING_AI' | 'PENDING_GOVT' | 'APPROVED'>('ALL');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('ALL');
+
   // ─── Date Picker & PDF Export State ─────────────────────────────────
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
   const [datePreset, setDatePreset] = useState<'LAST_7_DAYS' | 'LAST_30_DAYS' | 'THIS_MONTH' | 'CUSTOM'>('LAST_7_DAYS');
@@ -315,6 +320,22 @@ export const GovtDashboard = () => {
     combined.forEach(p => uniqueMap.set(p.id, p));
     return Array.from(uniqueMap.values()) as Property[];
   }, [pendingProperties, approvedProperties]);
+
+  const filteredDashboardProperties = useMemo(() => {
+    return allProperties.filter(p => {
+      if (dashFilter !== 'ALL' && p.status !== dashFilter) return false;
+      if (categoryFilter !== 'ALL' && (p.category || '').toUpperCase() !== categoryFilter) return false;
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase();
+        const matchTitle = (p.title || '').toLowerCase().includes(q);
+        const matchVillage = (p.village || '').toLowerCase().includes(q);
+        const matchDistrict = (p.district || '').toLowerCase().includes(q);
+        const matchSurvey = (p.surveyNumber || '').toLowerCase().includes(q);
+        if (!matchTitle && !matchVillage && !matchDistrict && !matchSurvey) return false;
+      }
+      return true;
+    });
+  }, [allProperties, dashFilter, categoryFilter, searchQuery]);
 
   const totalPropCount = allProperties.length;
   const pendingCount = pendingProperties.length;
@@ -828,8 +849,156 @@ export const GovtDashboard = () => {
         </div>
       )}
 
-      {/* ── DASHBOARD TAB (Operational Analytics Matching Reference Design) ── */}
-      {(activeTab === 'dashboard' || activeTab === 'analytics') && (
+      {/* ── DASHBOARD TAB (Executive Overview & Live Verification Listings) ── */}
+      {activeTab === 'dashboard' && (
+        <div className="space-y-6">
+          {/* Top 4 KPI Metrics */}
+          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+            <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs flex items-center gap-3.5">
+              <div className="w-11 h-11 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0 border border-amber-200/60 font-black">
+                <CheckCircle className="w-5 h-5" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-[11px] font-bold text-slate-500 truncate">Pending Verifications</p>
+                <h4 className="text-xl font-black text-slate-900 tracking-tight leading-tight mt-0.5">{pendingCount}</h4>
+                <p className="text-[10px] text-amber-600 font-bold truncate mt-0.5">Awaiting Officer Action</p>
+              </div>
+            </div>
+
+            <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs flex items-center gap-3.5">
+              <div className="w-11 h-11 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 border border-emerald-200/60 font-black">
+                <ShieldCheck className="w-5 h-5" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-[11px] font-bold text-slate-500 truncate">Verified Registry</p>
+                <h4 className="text-xl font-black text-slate-900 tracking-tight leading-tight mt-0.5">{approvedCount}</h4>
+                <p className="text-[10px] text-emerald-600 font-bold truncate mt-0.5">Legally Certified Title</p>
+              </div>
+            </div>
+
+            <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs flex items-center gap-3.5">
+              <div className="w-11 h-11 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 border border-blue-200/60 font-black">
+                <Database className="w-5 h-5" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-[11px] font-bold text-slate-500 truncate">Total Land Parcels</p>
+                <h4 className="text-xl font-black text-slate-900 tracking-tight leading-tight mt-0.5">{totalPropCount}</h4>
+                <p className="text-[10px] text-blue-600 font-bold truncate mt-0.5">Revenue Department Records</p>
+              </div>
+            </div>
+
+            <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs flex items-center gap-3.5">
+              <div className="w-11 h-11 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center shrink-0 border border-rose-200/60 font-black">
+                <AlertOctagon className="w-5 h-5" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-[11px] font-bold text-slate-500 truncate">Active Disputes</p>
+                <h4 className="text-xl font-black text-slate-900 tracking-tight leading-tight mt-0.5">{pendingFraudCount}</h4>
+                <p className="text-[10px] text-rose-600 font-bold truncate mt-0.5">Flagged Claims</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Search, Filter Bar & Quick View Toggles */}
+          <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-3">
+            {/* Filter Pills */}
+            <div className="flex flex-wrap items-center gap-1.5">
+              <button
+                onClick={() => setDashFilter('ALL')}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${dashFilter === 'ALL' ? 'bg-blue-600 text-white shadow-xs' : 'bg-slate-50 text-slate-600 hover:bg-slate-100'}`}
+              >
+                All Listings ({allProperties.length})
+              </button>
+              <button
+                onClick={() => setDashFilter('PENDING_AI')}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${dashFilter === 'PENDING_AI' ? 'bg-amber-500 text-white shadow-xs' : 'bg-amber-50 text-amber-700 hover:bg-amber-100'}`}
+              >
+                AI Queue ({allProperties.filter(p => p.status === 'PENDING_AI').length})
+              </button>
+              <button
+                onClick={() => setDashFilter('PENDING_GOVT')}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${dashFilter === 'PENDING_GOVT' ? 'bg-indigo-600 text-white shadow-xs' : 'bg-indigo-50 text-indigo-700 hover:bg-indigo-100'}`}
+              >
+                Govt Review ({allProperties.filter(p => p.status === 'PENDING_GOVT').length})
+              </button>
+              <button
+                onClick={() => setDashFilter('APPROVED')}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${dashFilter === 'APPROVED' ? 'bg-emerald-600 text-white shadow-xs' : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'}`}
+              >
+                Approved ({approvedCount})
+              </button>
+            </div>
+
+            {/* Search and Category Select */}
+            <div className="flex items-center gap-2">
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                placeholder="Search village, survey, title..."
+                className="bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-blue-500 w-44 md:w-56"
+              />
+              <select
+                value={categoryFilter}
+                onChange={e => setCategoryFilter(e.target.value)}
+                className="bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-700 focus:outline-none focus:border-blue-500"
+              >
+                <option value="ALL">All Categories</option>
+                <option value="AGRICULTURAL">Agricultural</option>
+                <option value="COMMERCIAL">Commercial</option>
+                <option value="RESIDENTIAL">Residential</option>
+                <option value="INDUSTRIAL">Industrial</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Main Content: Split Grid & Inspection Panel */}
+          <div className="flex flex-col lg:flex-row gap-6 items-start">
+            <div className="flex-1 space-y-4 w-full">
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+                {filteredDashboardProperties.length > 0 ? (
+                  filteredDashboardProperties.map(p => (
+                    <PropertyCard
+                      key={p.id}
+                      p={p}
+                      fraudReports={fraudReports}
+                      onClick={() => selectPropertyObj(p)}
+                      isSelected={selectedProperty?.id === p.id}
+                    />
+                  ))
+                ) : (
+                  <div className="col-span-full bg-white p-12 rounded-2xl border border-slate-200 text-center space-y-2">
+                    <p className="text-slate-700 font-bold text-sm">No land parcels match the selected filter</p>
+                    <p className="text-slate-400 text-xs">Try clearing your search query or selecting "All Listings"</p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {renderDetailPanel()}
+          </div>
+
+          {/* Geographic Map Section at Bottom of Dashboard */}
+          <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs space-y-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-extrabold text-slate-900">Geographic Spatial Land Map</h3>
+                <p className="text-slate-400 text-xs mt-0.5">Interactive GIS positioning of all registered and verified parcels</p>
+              </div>
+              <div className="flex items-center gap-1.5 bg-emerald-50 border border-emerald-200 text-emerald-700 px-2.5 py-1 rounded-full text-[10px] font-bold">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                <span>{allProperties.length} Geocoded Parcels</span>
+              </div>
+            </div>
+            <div className="relative h-80 w-full rounded-xl overflow-hidden border border-slate-200 bg-slate-100">
+              <MapComponent properties={filteredDashboardProperties.length > 0 ? filteredDashboardProperties : allProperties} mode="view" center={[78.9629, 16.5000]} zoom={5.6} className="w-full h-full" />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── ANALYTICS TAB (Operational Analytics Matching Reference Design) ── */}
+      {activeTab === 'analytics' && (
         <div className="space-y-4">
           
           {/* Top Header Card */}
