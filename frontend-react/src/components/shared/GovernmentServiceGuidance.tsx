@@ -18,7 +18,9 @@ export const GovernmentServiceGuidance: React.FC<GovernmentServiceGuidanceProps>
   documents = [],
   onOpenAiAssistant
 }) => {
-  const [activeStep, setActiveStep] = useState<number>(3); // default showing in-progress review
+  const isApproved = property?.status === 'APPROVED';
+  const isRejected = property?.status === 'REJECTED';
+  const [activeStep, setActiveStep] = useState<number>(isApproved ? 5 : 3);
   const [selectedDocChecklist, setSelectedDocChecklist] = useState<Record<string, boolean>>({
     patta: true,
     ec: true,
@@ -26,68 +28,48 @@ export const GovernmentServiceGuidance: React.FC<GovernmentServiceGuidanceProps>
     survey: false
   });
 
-  const isApproved = property?.status === 'APPROVED';
-  const isPending = property?.status === 'PENDING';
-  const isRejected = property?.status === 'REJECTED';
-
   const steps = [
     {
       id: 1,
-      title: 'AI Analysis Completed',
-      subtitle: 'Automated OCR & Spatial Check',
+      shortTitle: 'AI Analysis',
+      title: 'Automated OCR & Spatial Check',
       status: 'completed',
-      date: 'Instant AI Run',
-      details: 'OCR extracted Survey Number, extent, boundary points, and cross-referenced with public land registry tables.',
-      badgeText: 'AI Completed',
-      badgeColor: 'bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-300'
+      badgeText: 'Completed',
+      details: 'OCR extracted Survey Number, extent, boundary points, and cross-referenced with public land registry tables.'
     },
     {
       id: 2,
-      title: 'Verification Assessment',
-      subtitle: 'Trust Score & Risk Evaluation',
+      shortTitle: 'Trust Score',
+      title: 'AI Trust Score (88/100)',
       status: 'completed',
-      date: 'Completed',
-      details: 'AI Land Trust Score calculated at 88/100. No major overlapping polygon claims detected within 500m radius.',
-      badgeText: 'Trust Score 88/100',
-      badgeColor: 'bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-950/60 dark:text-blue-300'
+      badgeText: '88/100',
+      details: 'AI Land Trust Score computed at 88/100. No major overlapping polygon claims detected within 500m radius.'
     },
     {
       id: 3,
-      title: 'Required Documents Submission',
-      subtitle: 'Citizen Checklist Verification',
+      shortTitle: 'Doc Checklist',
+      title: 'Citizen Document Verification',
       status: isApproved ? 'completed' : 'current',
-      date: 'Action Item',
-      details: 'Verify submitted Patta passbook, 15-year Encumbrance Certificate, mutation copy, and property tax receipt.',
       badgeText: 'Mandatory',
-      badgeColor: 'bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-950/60 dark:text-amber-300'
+      details: 'Verify submitted Patta passbook, 15-year Encumbrance Certificate (EC), mutation copy, and property tax receipt.'
     },
     {
       id: 4,
-      title: 'Government Officer Review',
-      subtitle: 'Revenue Inspector / Tehsildar',
+      shortTitle: 'Officer Review',
+      title: 'Revenue Inspector / Tehsildar',
       status: isApproved ? 'completed' : isRejected ? 'rejected' : 'current',
-      date: 'Under Officer Review',
-      details: 'Assigned Revenue Officer examines AI report, spatial coordinates, and physical boundary records for official determination.',
       badgeText: 'Officer Action',
-      badgeColor: 'bg-indigo-100 text-indigo-700 border-indigo-200 dark:bg-indigo-950/60 dark:text-indigo-300'
+      details: 'Assigned Revenue Officer examines AI report, spatial coordinates, and physical boundary records for official determination.'
     },
     {
       id: 5,
-      title: 'Final Verification Status',
-      subtitle: 'Government Certification Badge',
+      shortTitle: 'Certification',
+      title: 'Final Revenue Certification',
       status: isApproved ? 'completed' : isRejected ? 'rejected' : 'pending',
-      date: isApproved ? 'Certified & Approved' : isRejected ? 'Rejected' : 'Pending Sign-off',
-      details: isApproved
-        ? 'Government Verified badge issued. Immutable audit record stored in state land registry.'
-        : isRejected
-        ? 'Verification declined due to documented discrepancy. Citizen may appeal with supplemental records.'
-        : 'Final state certification pending officer decision.',
       badgeText: isApproved ? 'Verified' : isRejected ? 'Declined' : 'Pending',
-      badgeColor: isApproved
-        ? 'bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-300'
-        : isRejected
-        ? 'bg-rose-100 text-rose-700 border-rose-200 dark:bg-rose-950/60 dark:text-rose-300'
-        : 'bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-300'
+      details: isApproved
+        ? 'Government Verified badge issued. Immutable digital audit record stored in state registry.'
+        : 'Final state certification pending authorized officer determination.'
     }
   ];
 
@@ -95,167 +77,129 @@ export const GovernmentServiceGuidance: React.FC<GovernmentServiceGuidanceProps>
     setSelectedDocChecklist(prev => ({ ...prev, [key]: !prev[key] }));
   };
 
+  const currentStepData = steps[activeStep - 1] || steps[0];
+
   return (
-    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-5 sm:p-7 shadow-xl shadow-slate-100/50 dark:shadow-none space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-100 dark:border-slate-800">
-        <div>
+    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-4 sm:p-5 shadow-sm space-y-3.5">
+      {/* ── COMPACT HEADER ── */}
+      <div className="flex items-center justify-between gap-3 pb-3 border-b border-slate-100 dark:border-slate-800">
+        <div className="min-w-0">
           <div className="flex items-center gap-2">
-            <span className="px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wider bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300 rounded-full border border-blue-200 dark:border-blue-800/40">
-              Government Service Workflow
+            <span className="px-2 py-0.5 text-[9px] font-black uppercase tracking-wider bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300 rounded-md border border-blue-200 dark:border-blue-800 shrink-0">
+              Workflow
             </span>
-            <span className="text-xs text-slate-400">Citizen Transparency Portal</span>
+            <span className="text-[11px] text-slate-400 truncate">Citizen Verification Roadmap</span>
           </div>
-          <h3 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white mt-1">
-            What Should I Do Next? — Land Verification Roadmap
+          <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white truncate mt-0.5">
+            What Should I Do Next?
           </h3>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-            Transparent end-to-end guidance from AI pre-screening to official government sign-off.
-          </p>
         </div>
 
         {onOpenAiAssistant && (
           <button
             onClick={onOpenAiAssistant}
-            className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl text-xs font-semibold shadow-md shadow-blue-500/20 transition-all self-start sm:self-auto"
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl text-xs font-semibold shadow-xs transition-all shrink-0"
           >
-            <HelpCircle className="w-4 h-4" />
-            <span>Ask AI Citizen Assistant</span>
+            <HelpCircle className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Ask AI Guide</span>
+            <span className="sm:hidden text-[11px]">Ask AI</span>
           </button>
         )}
       </div>
 
-      {/* Stepper Visualization */}
-      <div className="relative">
-        {/* Desktop / Tablet Connecting Line */}
-        <div className="hidden md:block absolute top-7 left-8 right-8 h-0.5 bg-slate-200 dark:bg-slate-800 z-0" />
-
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-4 relative z-10">
-          {steps.map((step) => {
-            const isSelected = activeStep === step.id;
-            return (
-              <div
-                key={step.id}
-                onClick={() => setActiveStep(step.id)}
-                className={`p-4 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between ${
+      {/* ── HORIZONTAL STEPPER NAVIGATION PILLS ── */}
+      <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar">
+        {steps.map((step) => {
+          const isSelected = activeStep === step.id;
+          return (
+            <button
+              key={step.id}
+              onClick={() => setActiveStep(step.id)}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold shrink-0 transition-all border ${
+                isSelected
+                  ? 'bg-blue-600 text-white border-blue-600 shadow-xs'
+                  : step.status === 'completed'
+                  ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800/40'
+                  : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700'
+              }`}
+            >
+              <span
+                className={`w-4 h-4 rounded-full flex items-center justify-center text-[10px] ${
                   isSelected
-                    ? 'bg-blue-50/50 dark:bg-blue-950/20 border-blue-500/80 shadow-md ring-2 ring-blue-500/20'
-                    : 'bg-slate-50 dark:bg-slate-800/60 border-slate-200/80 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700'
+                    ? 'bg-white text-blue-600 font-extrabold'
+                    : step.status === 'completed'
+                    ? 'bg-emerald-500 text-white'
+                    : 'bg-slate-300 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
                 }`}
               >
-                <div>
-                  <div className="flex items-center justify-between mb-3">
-                    <div
-                      className={`w-9 h-9 rounded-xl flex items-center justify-center font-bold text-xs shadow-xs ${
-                        step.status === 'completed'
-                          ? 'bg-emerald-500 text-white'
-                          : step.status === 'rejected'
-                          ? 'bg-rose-500 text-white'
-                          : step.status === 'current'
-                          ? 'bg-blue-600 text-white ring-4 ring-blue-100 dark:ring-blue-900/40'
-                          : 'bg-slate-200 dark:bg-slate-700 text-slate-500'
-                      }`}
-                    >
-                      {step.status === 'completed' ? (
-                        <Check className="w-4 h-4 stroke-[3]" />
-                      ) : step.status === 'rejected' ? (
-                        <ShieldAlert className="w-4 h-4" />
-                      ) : (
-                        <span>{step.id}</span>
-                      )}
-                    </div>
-                    <span className={`px-2 py-0.5 text-[9px] font-bold rounded-full border ${step.badgeColor}`}>
-                      {step.badgeText}
-                    </span>
-                  </div>
+                {step.status === 'completed' && !isSelected ? '✓' : step.id}
+              </span>
+              <span>{step.shortTitle}</span>
+            </button>
+          );
+        })}
+      </div>
 
-                  <h4 className="font-bold text-xs sm:text-sm text-slate-900 dark:text-white leading-tight">
-                    {step.title}
-                  </h4>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 line-clamp-1">
-                    {step.subtitle}
-                  </p>
-                </div>
+      {/* ── COMPACT ACTIVE STEP DETAIL VIEW ── */}
+      <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/70 dark:border-slate-800">
+        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+          <div className="space-y-1 min-w-0">
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-extrabold uppercase px-1.5 py-0.5 bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300 rounded">
+                Step {activeStep}
+              </span>
+              <h4 className="font-bold text-xs sm:text-sm text-slate-900 dark:text-white truncate">
+                {currentStepData.title}
+              </h4>
+            </div>
+            <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+              {currentStepData.details}
+            </p>
+          </div>
 
-                <div className="mt-3 pt-2 border-t border-slate-200/60 dark:border-slate-700/60 flex items-center justify-between text-[10px] text-slate-400">
-                  <span>{step.date}</span>
-                  <ChevronRight className={`w-3.5 h-3.5 transition-transform ${isSelected ? 'text-blue-600 translate-x-0.5' : ''}`} />
-                </div>
+          {activeStep === 3 ? (
+            <div className="bg-white dark:bg-slate-900 p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-xs shrink-0 space-y-1.5 w-full sm:w-60">
+              <span className="font-bold text-slate-700 dark:text-slate-300 text-[10px] uppercase block">
+                Required Checklist:
+              </span>
+              <div className="grid grid-cols-1 gap-1">
+                {[
+                  { key: 'patta', label: 'Patta / Passbook' },
+                  { key: 'ec', label: '15-Year EC Copy' },
+                  { key: 'tax', label: 'Property Tax Receipt' }
+                ].map(doc => (
+                  <label
+                    key={doc.key}
+                    onClick={() => toggleDoc(doc.key)}
+                    className="flex items-center gap-1.5 text-[11px] text-slate-600 dark:text-slate-300 cursor-pointer"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={!!selectedDocChecklist[doc.key]}
+                      onChange={() => {}}
+                      className="rounded text-blue-600 w-3 h-3"
+                    />
+                    <span>{doc.label}</span>
+                  </label>
+                ))}
               </div>
-            );
-          })}
+            </div>
+          ) : (
+            <div className="px-2.5 py-1 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-300 shrink-0 self-start">
+              Status: <span className="font-bold text-blue-600 dark:text-blue-400">{currentStepData.badgeText}</span>
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Selected Step Detailed View Card */}
-      {steps[activeStep - 1] && (
-        <motion.div
-          key={activeStep}
-          initial={{ opacity: 0, y: 6 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-slate-50 dark:bg-slate-800/80 rounded-2xl p-5 border border-slate-200 dark:border-slate-700/80"
-        >
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div className="space-y-1">
-              <div className="flex items-center gap-2">
-                <span className="w-6 h-6 rounded-lg bg-blue-600 text-white font-bold text-xs flex items-center justify-center">
-                  {activeStep}
-                </span>
-                <h4 className="font-bold text-sm sm:text-base text-slate-900 dark:text-white">
-                  Step {activeStep}: {steps[activeStep - 1].title}
-                </h4>
-              </div>
-              <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed max-w-2xl">
-                {steps[activeStep - 1].details}
-              </p>
-            </div>
-
-            {activeStep === 3 ? (
-              <div className="bg-white dark:bg-slate-900 p-3 rounded-xl border border-slate-200 dark:border-slate-700 text-xs shrink-0 space-y-2 min-w-[240px]">
-                <p className="font-bold text-slate-800 dark:text-slate-200 text-[11px] uppercase tracking-wide">
-                  Citizen Document Checklist:
-                </p>
-                <div className="space-y-1.5">
-                  {[
-                    { key: 'patta', label: 'Patta / Title Passbook' },
-                    { key: 'ec', label: '15-Year Encumbrance (EC)' },
-                    { key: 'tax', label: 'Recent Property Tax Receipt' },
-                    { key: 'survey', label: 'FMB / Survey Sketch Map' }
-                  ].map(doc => (
-                    <label
-                      key={doc.key}
-                      onClick={() => toggleDoc(doc.key)}
-                      className="flex items-center gap-2 text-[11px] text-slate-700 dark:text-slate-300 cursor-pointer hover:text-blue-600 transition-colors"
-                    >
-                      <input
-                        type="checkbox"
-                        checked={!!selectedDocChecklist[doc.key]}
-                        onChange={() => {}}
-                        className="rounded text-blue-600 focus:ring-blue-500 w-3.5 h-3.5"
-                      />
-                      <span>{doc.label}</span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-            ) : (
-              <div className="flex items-center gap-2 shrink-0">
-                <div className="px-3 py-2 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 text-xs text-slate-600 dark:text-slate-300">
-                  Status: <strong className="text-slate-900 dark:text-white">{steps[activeStep - 1].badgeText}</strong>
-                </div>
-              </div>
-            )}
-          </div>
-        </motion.div>
-      )}
-
-      {/* Responsible AI Disclaimer */}
-      <div className="p-3.5 rounded-2xl bg-amber-50/70 dark:bg-amber-950/30 border border-amber-200/80 dark:border-amber-900/40 flex items-start gap-3">
-        <Info className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
-        <div className="text-[11px] text-amber-900 dark:text-amber-200 leading-normal">
-          <strong>Important Citizen Information:</strong> LandLens provides AI-assisted analysis and risk flag summaries. Official legal land verification, Patta registration, and title certification are governed by the State Revenue Department and authorized Government Officers.
-        </div>
+      {/* ── COMPACT 1-LINE CITIZEN ADVISORY ── */}
+      <div className="p-2.5 rounded-xl bg-amber-50/60 dark:bg-amber-950/30 border border-amber-200/60 dark:border-amber-900/40 flex items-center gap-2 text-[10px] text-amber-800 dark:text-amber-300">
+        <Info className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+        <span className="truncate">
+          AI pre-screens records; final Patta & title certification is sealed by the State Revenue Department.
+        </span>
       </div>
     </div>
   );
 };
+
