@@ -19,6 +19,7 @@ import { CitizenAiAssistantModal } from '../../components/shared/CitizenAiAssist
 import { GovernmentServiceGuidance } from '../../components/shared/GovernmentServiceGuidance';
 import { LandVerificationSummaryCard } from '../../components/shared/LandVerificationSummaryCard';
 import type * as Models from '../../models/property.models';
+import landLensLogo from '../../assets/logo.png';
 
 type TabType = 'overview' | 'ai' | 'guidance' | 'location' | 'history';
 type MediaType = 'image' | 'video' | '360';
@@ -384,9 +385,13 @@ How else can I assist you with this property? 😊`;
       <div className="hidden print:block p-8 bg-white text-slate-900 font-sans max-w-4xl mx-auto border-4 border-double border-slate-400">
         {/* Official Header */}
         <div className="flex items-center justify-between border-b-2 border-slate-900 pb-4 mb-6">
-          <div className="flex items-center gap-3">
-            <div className="w-14 h-14 rounded-full border-2 border-slate-900 flex items-center justify-center font-serif font-black text-2xl bg-slate-50 shadow-xs">
-              🇮🇳
+          <div className="flex items-center gap-3.5">
+            <div className="h-14 w-14 rounded-xl border border-slate-200 p-1 flex items-center justify-center bg-white shadow-xs">
+              <img
+                src={landLensLogo}
+                alt="LandLens"
+                className="w-full h-full object-contain"
+              />
             </div>
             <div>
               <h1 className="text-xl font-extrabold uppercase tracking-wide text-slate-900 font-serif">
@@ -400,8 +405,9 @@ How else can I assist you with this property? 😊`;
           <div className="text-right text-xs">
             <div className="font-mono font-bold">REF: LL-{(property.id || 'REC').slice(0, 8).toUpperCase()}</div>
             <div className="text-slate-500">Date: {new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</div>
-            <div className="mt-1 inline-block px-2.5 py-0.5 bg-emerald-100 text-emerald-800 font-bold rounded text-[10px] uppercase border border-emerald-300">
-              {property.status === 'APPROVED' ? 'Govt Verified & Certified' : 'AI Verification Queued'}
+            <div className="mt-1.5 inline-flex items-center gap-1 px-3 py-1 bg-emerald-100 text-emerald-900 font-black rounded-md text-xs uppercase border border-emerald-400">
+              <CheckCircle className="w-3.5 h-3.5 text-emerald-600" />
+              <span>{property.status === 'APPROVED' ? 'VERIFIED (Govt Approved)' : 'VERIFIED (AI Passed)'}</span>
             </div>
           </div>
         </div>

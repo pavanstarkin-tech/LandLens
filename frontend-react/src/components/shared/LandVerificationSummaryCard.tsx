@@ -6,6 +6,7 @@ import {
   Sparkles, Layers, Compass, HelpCircle, ShieldAlert
 } from 'lucide-react';
 import type { Property, PropertyDocument } from '../../models/property.models';
+import landLensLogo from '../../assets/logo.png';
 
 interface LandVerificationSummaryCardProps {
   property: Property;
@@ -71,23 +72,29 @@ Recommended Next Step: Submit Encumbrance Certificate for final officer sign-off
   return (
     <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-5 sm:p-7 shadow-xl shadow-slate-100/50 dark:shadow-none space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-100 dark:border-slate-800">
-        <div>
-          <div className="flex items-center gap-2">
-            <span className="px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wider bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 rounded-full border border-emerald-200 dark:border-emerald-800/40">
-              Official Dossier
-            </span>
-            <span className="text-xs text-slate-400">Citizen Verification Card</span>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100 dark:border-slate-800">
+        <div className="flex items-center gap-3.5">
+          <div className="w-12 h-12 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white p-1 flex items-center justify-center shrink-0 shadow-2xs">
+            <img src={landLensLogo} alt="LandLens Logo" className="w-full h-full object-contain" />
           </div>
-          <h3 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white mt-1">
-            Land Verification Summary Sheet
-          </h3>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-            Standardized AI document and GIS boundary summary for citizens & public officers.
-          </p>
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 rounded-full border border-emerald-300 dark:border-emerald-800 flex items-center gap-1">
+                <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                VERIFIED
+              </span>
+              <span className="text-xs text-slate-400">Citizen Verification Dossier</span>
+            </div>
+            <h3 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white mt-0.5">
+              Land Verification Summary Sheet
+            </h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+              Standardized AI document and GIS boundary summary for citizens & public officers.
+            </p>
+          </div>
         </div>
 
-        <div className="flex items-center gap-2 self-start sm:self-auto">
+        <div className="flex items-center gap-2 self-start sm:self-auto shrink-0">
           <button
             onClick={handleCopySummary}
             className="flex items-center gap-1.5 px-3 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-semibold border border-slate-200 dark:border-slate-700 transition-colors"
