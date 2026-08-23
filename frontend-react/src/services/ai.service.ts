@@ -1,8 +1,9 @@
+import api from './api';
 import { propertyService } from './property.service';
 
 const NVIDIA_API_KEY = "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";
 const PROXIED_NVIDIA_API_URL = "/nvidia-api/chat/completions";
-const MODEL_NAME = "openai/gpt-oss-120b";
+const MODEL_NAME = "meta/llama-3.1-8b-instruct";
 
 export interface ChatHistoryItem {
   role: 'user' | 'assistant';
@@ -16,9 +17,27 @@ export const aiService = {
     chatHistory?: ChatHistoryItem[],
     conversationId?: string | null
   ): Promise<string> => {
-    const isLocalhost = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+    // 1. Primary: Call live backend serverless AI endpoint (handles NVIDIA API securely without CORS)
+    try {
+      const response = await api.post<any>('/api/ai/chat', {
+        prompt: userPrompt,
+        content: userPrompt,
+        message: userPrompt,
+        systemContext: systemContext || "You are LandLens AI (IBM Bob AI Citizen Assistant) for government land verification. Explain documents in clear, citizen-friendly language.",
+        history: chatHistory || []
+      });
 
-    // 1. Try backend server-side AI messaging if valid conversationId is present (bypasses browser CORS)
+      if (response.data?.content && typeof response.data.content === 'string' && response.data.content.trim()) {
+        return response.data.content.trim();
+      }
+      if (response.data?.message && typeof response.data.message === 'string' && response.data.message.trim()) {
+        return response.data.message.trim();
+      }
+    } catch (err) {
+      console.warn("Primary /api/ai/chat endpoint failed, trying fallback handlers...", err);
+    }
+
+    // 2. Secondary: If valid backend conversationId exists
     if (conversationId && !conversationId.startsWith('local-')) {
       try {
         const backendMsg = await propertyService.sendAiMessage(conversationId, userPrompt);
@@ -26,26 +45,24 @@ export const aiService = {
           return backendMsg.content.trim();
         }
       } catch (err) {
-        // Backend endpoint unavailable or returned empty, proceed to fallbacks
+        // Continue to local dev proxy if available
       }
     }
 
-    // 2. Try Vite Dev Proxy on localhost
+    // 3. Tertiary: Local Vite dev proxy if running on localhost
+    const isLocalhost = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
     if (isLocalhost) {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 15000);
-
-      const systemInstruction = systemContext || 
-        "You are LandLens AI (IBM Bob AI Citizen Assistant), aligned with the IBM SkillsBuild Hackathon Track 'AI for Impact: Governance & Citizen Services'. You are a warm, supportive, multilingual land verification and citizen service assistant. You explain complex land records (Patta, Sale Deeds, Survey Numbers, GIS overlap, Encumbrance Certificates) in simple, accessible language. You provide clear next steps for citizens while emphasizing that final certifications are determined by authorized Government Officers. Maintain context and format with clean markdown.";
-
-      const recentHistory = (chatHistory || []).slice(-10);
-      const messagesPayload = [
-        { role: "system", content: systemInstruction },
-        ...recentHistory.map(h => ({ role: h.role, content: h.content })),
-        { role: "user", content: userPrompt }
-      ];
-
       try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 12000);
+
+        const recentHistory = (chatHistory || []).slice(-8);
+        const messagesPayload = [
+          { role: "system", content: systemContext || "You are LandLens AI Citizen Assistant." },
+          ...recentHistory.map(h => ({ role: h.role, content: h.content })),
+          { role: "user", content: userPrompt }
+        ];
+
         const response = await fetch(PROXIED_NVIDIA_API_URL, {
           method: "POST",
           headers: {
@@ -56,10 +73,8 @@ export const aiService = {
           body: JSON.stringify({
             model: MODEL_NAME,
             messages: messagesPayload,
-            temperature: 0.7,
-            top_p: 1,
-            max_tokens: 1024,
-            stream: false
+            temperature: 0.6,
+            max_tokens: 512
           }),
           signal: controller.signal
         });
@@ -74,13 +89,11 @@ export const aiService = {
           }
         }
       } catch (error) {
-        clearTimeout(timeoutId);
+        console.error("Localhost Vite proxy fetch error:", error);
       }
     }
 
-    // Direct browser fetch to integrate.api.nvidia.com is blocked by browser CORS policy on non-localhost origins.
-    // Throw cleanly so caller immediately activates local smart conversational engine without logging CORS network errors.
-    throw new Error("Direct browser CORS restricted; using smart response engine");
+    throw new Error("Unable to connect to live AI inference server.");
   }
 };
 
