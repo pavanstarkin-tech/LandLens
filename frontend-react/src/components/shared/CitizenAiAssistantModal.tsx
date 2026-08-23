@@ -122,57 +122,6 @@ interface ChatMessage {
   language?: SupportedLanguage;
 }
 
-// Auto-format raw responses into rich tables and clean bulleted sections
-const formatAiResponse = (content: string): string => {
-  if (!content) return '';
-  let text = content.trim();
-
-  // If response contains key parameters but NO table, convert into a rich structured table + clean bullet points
-  if (
-    (text.includes('Property Title') || text.includes('Property Name') || text.includes('Survey Number')) &&
-    !text.includes('|---') &&
-    !text.includes('| ---')
-  ) {
-    const getField = (pattern: RegExp) => {
-      const match = text.match(pattern);
-      return match ? match[1].trim() : null;
-    };
-
-    const title = getField(/(?:Property Title|Property Name)\s*:\s*([^.\n]+)/i);
-    const code = getField(/(?:Property Code)\s*:\s*([^.\n]+)/i);
-    const survey = getField(/(?:Survey Number|Survey No)\s*:\s*([^.\n]+)/i);
-    const location = getField(/(?:Location|District)\s*:\s*([^.\n]+)/i);
-    const area = getField(/(?:Area Extent|Land Area|Area)\s*:\s*([^.\n]+)/i);
-    const price = getField(/(?:Price|Valuation|Cost)\s*:\s*([^.\n]+)/i);
-
-    if (title || survey || area) {
-      let tableMd = `### 📋 Official Land Record Breakdown\n\n`;
-      tableMd += `| Land Parameter | Registered Record | Status & Meaning |\n`;
-      tableMd += `| :--- | :--- | :--- |\n`;
-      if (title) tableMd += `| **Property Name** | **${title}** | Registered Asset Title |\n`;
-      if (survey) tableMd += `| **Survey Number** | **#${survey}** | Cadastral Demarcation |\n`;
-      if (location) tableMd += `| **Location** | ${location} | State Revenue Ledger |\n`;
-      if (area) tableMd += `| **Area Extent** | **${area}** | Boundary Polygon Area |\n`;
-      if (price) {
-        const cleanPrice = price.replace(/[^\d.,]/g, '');
-        const formattedPrice = cleanPrice ? Number(cleanPrice).toLocaleString('en-IN') : price;
-        tableMd += `| **Valuation / Price** | ₹${formattedPrice} | Registered Circle Rate |\n`;
-      }
-      if (code) tableMd += `| **Property Code** | \`${code}\` | Unique Govt Asset Identifier |\n`;
-      tableMd += `| **AI Verification** | **92/100 (High Trust)** | Verified Clear Title |\n\n`;
-
-      tableMd += `### 🛡️ What This Means For You:\n- 📑 **Ownership Authenticity:** Patta passbook and 1B ROR match state registries.\n- 🗺️ **GIS Boundary Integrity:** 0.0% overlap with neighboring survey parcels.\n- ⚖️ **Clear Title:** No encumbrance or court disputes recorded.\n\n`;
-      tableMd += `📌 **Recommended Action:** Submit the official LandLens verification certificate to your local Revenue Inspector for final physical site seal.`;
-
-      return tableMd;
-    }
-  }
-
-  // Ensure double newlines before headers
-  text = text.replace(/([^\n])\s*(#{1,4}\s+[^\n]+)/g, '$1\n\n$2\n');
-  return text;
-};
-
 export const CitizenAiAssistantModal: React.FC<CitizenAiAssistantProps> = ({
   isOpen,
   onClose,
@@ -334,33 +283,18 @@ Documents Attached: ${documents.map(d => `${d.documentType || 'Doc'} (${d.fileNa
 GIS Coordinates: Latitude ${p.latitude || '17.385'}, Longitude ${p.longitude || '78.486'}`
       : `General land record inquiry for Indian Revenue jurisdiction (Patta, 1B, ROR, Survey Boundary, Sub-Registrar records).`;
 
-    const systemPrompt = `You are LandLens AI Citizen Assistant (powered by IBM Bob AI & NVIDIA LLM), aligned with the IBM SkillsBuild Hackathon Track: "AI for Impact - Governance & Citizen Services".
-Your mission is to make complicated land records, revenue terms, survey numbers, Patta deeds, encumbrance details, and government verification procedures completely understandable for everyday citizens.
+    const systemPrompt = `You are LandLens AI Citizen Assistant (powered by IBM Bob AI & NVIDIA LLM).
+Target Language: ${activeLangOption.name} (${activeLangOption.nativeName}) - If selectedLanguage is not 'en', answer in fluent, natural ${activeLangOption.name}.
 
-Target Language: ${activeLangOption.name} (${activeLangOption.nativeName}) - If selectedLanguage is not 'en', generate the entire response in fluent, natural ${activeLangOption.name}.
-
-MANDATORY FORMATTING & ORGANIZATION RULES:
-1. NEVER output a disorganized wall of unformatted text.
-2. ALWAYS start with a clear header e.g. ### 📋 Official Land Record Breakdown
-3. ALWAYS include a structured Markdown TABLE for property parameters:
-| Land Parameter | Registered Record | Status & Legal Meaning |
+CRITICAL FORMATTING & QUALITY DIRECTIVES:
+1. STRICTLY CONCISE & DIRECT: Answer ONLY what the user asked. Keep answers brief (under 120 words). DO NOT output generic introductory fluff, filler, conversational essays, or textbook definitions (never say "This is the name given to your land...").
+2. STRUCTURE WITH MARKDOWN TABLES: Whenever summarizing land details, documents, or verification records, ALWAYS format into a clean Markdown table:
+| Parameter | Details | Status |
 | :--- | :--- | :--- |
-| **Property Name** | [Title] | Registered Asset Title |
-| **Survey Number** | #[Survey Number] | Cadastral Demarcation |
-| **Location & State** | [Location] | State Revenue Ledger |
-| **Area Extent** | [Area] Acres | Demarcated Polygon Area |
-| **Valuation** | ₹[Price] | Circle Rate Valuation |
-| **Verification Status** | Verified | AI Passed & Officer Queued |
+3. BULLET POINTS: Use short bullet points (max 2-3) for key takeaways or next steps.
+4. HONESTY: If a specific detail is not in the attached dossier, state "Not available in records" rather than guessing.
 
-4. After the table, provide structured bullet points with emojis:
-- 📑 **Ownership & Title:** Explaining Patta passbook match.
-- 🗺️ **GIS Boundary:** Explaining Survey number & 0.0% overlap.
-- ⚖️ **Legal Clearance:** Explaining Encumbrance Certificate (EC).
-
-5. ALWAYS end with:
-📌 **Recommended Next Action:** [Clear 1-sentence step for citizen]
-
-Current Attached Land Record Dossier:
+Attached Land Record Dossier:
 ${propDetailsSummary}`;
 
     const chatHistoryPayload: ChatHistoryItem[] = messages.slice(-8).map(m => ({
@@ -639,36 +573,39 @@ How can I help you inspect this parcel?`,
                   }`}
                 >
                   {msg.role === 'assistant' ? (
-                    <div className="prose prose-sm dark:prose-invert max-w-none prose-headings:font-bold prose-headings:text-slate-900 dark:prose-headings:text-white prose-p:my-1.5 prose-ul:my-1.5 prose-li:my-0.5">
+                    <div className="prose prose-sm dark:prose-invert max-w-none text-xs sm:text-sm">
                       <ReactMarkdown
                         remarkPlugins={[remarkGfm]}
                         components={{
                           table: ({ node, ...props }) => (
-                            <div className="overflow-x-auto my-3 rounded-xl border border-slate-200 dark:border-slate-700 shadow-2xs">
-                              <table className="min-w-full text-xs text-left divide-y divide-slate-200 dark:divide-slate-700 bg-white dark:bg-slate-900/60" {...props} />
+                            <div className="overflow-x-auto my-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white/50 dark:bg-slate-900/50">
+                              <table className="min-w-full text-xs divide-y divide-slate-200 dark:divide-slate-700" {...props} />
                             </div>
                           ),
                           thead: ({ node, ...props }) => (
-                            <thead className="bg-slate-100 dark:bg-slate-800/80 text-slate-800 dark:text-slate-200 font-bold uppercase text-[10px]" {...props} />
+                            <thead className="bg-slate-200/80 dark:bg-slate-700/80 font-bold text-slate-900 dark:text-slate-100" {...props} />
                           ),
                           th: ({ node, ...props }) => (
-                            <th className="px-3 py-2 text-left font-bold" {...props} />
+                            <th className="px-2.5 py-1.5 text-left font-bold text-[11px] uppercase tracking-wider" {...props} />
                           ),
                           td: ({ node, ...props }) => (
-                            <td className="px-3 py-2 border-t border-slate-100 dark:border-slate-800 text-slate-700 dark:text-slate-200" {...props} />
+                            <td className="px-2.5 py-1.5 text-slate-800 dark:text-slate-200 border-t border-slate-200/60 dark:border-slate-700/60 font-medium" {...props} />
                           ),
                           ul: ({ node, ...props }) => (
-                            <ul className="my-2 space-y-1.5 list-disc pl-4" {...props} />
+                            <ul className="list-disc list-inside space-y-1 my-2 text-slate-700 dark:text-slate-300" {...props} />
                           ),
-                          li: ({ node, ...props }) => (
-                            <li className="text-xs leading-relaxed" {...props} />
+                          ol: ({ node, ...props }) => (
+                            <ol className="list-decimal list-inside space-y-1 my-2 text-slate-700 dark:text-slate-300" {...props} />
                           ),
-                          h3: ({ node, ...props }) => (
-                            <h3 className="text-sm font-bold text-slate-900 dark:text-white mt-3 mb-1.5 flex items-center gap-1.5" {...props} />
+                          p: ({ node, ...props }) => (
+                            <p className="my-1.5 leading-relaxed text-slate-800 dark:text-slate-200" {...props} />
+                          ),
+                          strong: ({ node, ...props }) => (
+                            <strong className="font-extrabold text-slate-900 dark:text-white" {...props} />
                           )
                         }}
                       >
-                        {formatAiResponse(msg.content)}
+                        {msg.content}
                       </ReactMarkdown>
                     </div>
                   ) : (
