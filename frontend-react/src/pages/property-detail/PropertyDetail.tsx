@@ -254,6 +254,12 @@ How else can I assist you with this property? 😊`;
     }
   };
 
+  const formatListedDate = (dateVal?: any) => {
+    if (!dateVal) return 'Recently';
+    const d = new Date(dateVal);
+    return isNaN(d.getTime()) ? 'Recently' : d.toLocaleDateString('en-IN', { month: 'short', year: 'numeric' });
+  };
+
   if (loading) {
     return (
       <div className="h-screen bg-gray-50 flex flex-col items-center justify-center">
@@ -269,7 +275,7 @@ How else can I assist you with this property? 😊`;
     <div className="min-h-screen bg-gray-50 text-gray-900 font-sans flex flex-col pb-32 relative overflow-x-hidden">
 
       {/* ── FIXED APP BAR ── */}
-      <div className="fixed top-0 left-0 right-0 z-50 px-4 pt-4 h-16 flex items-center justify-between pointer-events-none">
+      <div className="fixed top-0 left-0 right-0 z-50 px-4 pt-4 h-16 flex items-center justify-between pointer-events-none print:hidden">
         <button onClick={goBack} className="pointer-events-auto w-10 h-10 rounded-full bg-white/90 backdrop-blur-md flex items-center justify-center border border-gray-200 active:scale-95 transition-transform shadow-md hover:bg-white">
           <ArrowLeft className="w-5 h-5 text-gray-900" />
         </button>
@@ -301,7 +307,7 @@ How else can I assist you with this property? 😊`;
         )}
 
         {/* Media Controls Overlay */}
-        <div className="absolute bottom-4 left-4 right-4 flex items-end justify-between z-10 pointer-events-none pb-4">
+        <div className="absolute bottom-4 left-4 right-4 flex items-end justify-between z-10 pointer-events-none pb-4 print:hidden">
           <div className="flex items-center gap-2 pointer-events-auto">
             {images.length > 0 && (
               <button onClick={() => setActiveMedia('image')} className={`px-3 py-1.5 rounded-full text-[10px] font-bold backdrop-blur-md border transition-all ${activeMedia === 'image' ? 'bg-primary-500 text-black border-primary-500' : 'bg-white/90 text-gray-900 border-gray-200 hover:bg-white shadow-sm'}`}>
@@ -311,7 +317,6 @@ How else can I assist you with this property? 😊`;
           </div>
 
           <div className="flex flex-col items-end gap-2 pointer-events-auto">
-            {/* Street View / 360 Buttons removed as requested */}
             {activeMedia === 'image' && images.length > 0 && (
               <div className="px-3 py-1.5 rounded-full bg-white/90 backdrop-blur-md border border-gray-200 text-gray-900 text-[10px] font-bold shadow-sm">
                 {activeImageIndex + 1} / {images.length}
@@ -322,23 +327,23 @@ How else can I assist you with this property? 😊`;
       </div>
 
       {/* ── PROPERTY HEADER ── */}
-      <div className="p-4 bg-white border border-gray-200 rounded-2xl mx-4 -mt-8 relative z-20 shadow-sm">
+      <div className="p-4 sm:p-5 bg-white border border-gray-200 rounded-3xl mx-3 sm:mx-4 -mt-6 relative z-20 shadow-md">
         <div className="flex items-center justify-between mb-2">
-          <Chip label={property.category} color="primary" size="xs" />
-          <h2 className="text-xl font-black text-gray-900">₹{property.price?.toLocaleString('en-IN')}</h2>
+          <Chip label={property.category || 'RESIDENTIAL'} color="primary" size="xs" />
+          <h2 className="text-xl font-black text-gray-900">₹{Number(property.price || 0).toLocaleString('en-IN')}</h2>
         </div>
-        <h1 className="text-xl font-bold text-gray-900 leading-tight mb-1">{property.title}</h1>
+        <h1 className="text-xl sm:text-2xl font-bold text-gray-900 leading-tight mb-1">{property.title}</h1>
         <p className="text-gray-500 text-sm flex items-center gap-1">
-          <MapPin className="w-3.5 h-3.5" /> {property.village}, {property.district}
+          <MapPin className="w-3.5 h-3.5 text-rose-500 shrink-0" /> {property.village || 'Location'}, {property.district || 'District'}
         </p>
         <div className="flex items-center gap-4 mt-3">
-          <div className="flex items-center gap-1 text-gray-900 font-bold text-sm">
+          <div className="flex items-center gap-1.5 text-gray-900 font-bold text-sm">
             <MapIcon className="w-4 h-4 text-gray-400" />
             {property.area} acres
           </div>
-          <div className="flex items-center gap-1 text-gray-900 font-bold text-sm">
+          <div className="flex items-center gap-1.5 text-gray-700 font-semibold text-xs sm:text-sm">
             <Clock className="w-4 h-4 text-gray-400" />
-            Listed {new Date(property.createdAt!).toLocaleDateString('en-IN', { month: 'short', year: 'numeric' })}
+            Listed {formatListedDate(property.createdAt)}
           </div>
         </div>
       </div>
@@ -519,10 +524,10 @@ How else can I assist you with this property? 😊`;
 
                 <button
                   onClick={() => setIsChatModalOpen(true)}
-                  className="mt-5 w-full py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-2xl text-xs font-bold shadow-md shadow-blue-500/20 flex items-center justify-center gap-2 transition-all active:scale-95"
+                  className="mt-5 w-full p-3.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-2xl text-xs sm:text-sm font-bold shadow-md shadow-blue-500/20 flex items-center justify-center gap-2 transition-all active:scale-95 text-center leading-relaxed"
                 >
-                  <Sparkles className="w-4 h-4" />
-                  <span>Ask AI Citizen Assistant in Your Language (తెలుగు, हिन्दी, English)</span>
+                  <Sparkles className="w-4 h-4 shrink-0" />
+                  <span>Ask AI Citizen Assistant (తెలుగు / हिन्दी / English)</span>
                 </button>
               </div>
 
@@ -543,7 +548,7 @@ How else can I assist you with this property? 😊`;
                   <div className="glass-card p-4 flex flex-col justify-between bg-white border border-gray-200 rounded-2xl">
                     <span className="text-xs font-semibold text-gray-500">Registry Match</span>
                     <span className="text-base font-bold text-emerald-600 mt-1">100% Match</span>
-                    <span className="text-[10px] text-gray-400 mt-1">State ledger verified</span>
+                    <span className="text-[10px] text-gray-400 mt-1">Matches State Land Records</span>
                   </div>
                 </div>
               </div>
@@ -577,7 +582,7 @@ How else can I assist you with this property? 😊`;
       </div>
 
       {/* ── FLOATING BOTTOM BAR ── */}
-      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 w-[90%] max-w-sm">
+      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 w-[90%] max-w-sm print:hidden">
         <div className="flex gap-2 p-2 bg-white/95 backdrop-blur-xl border border-gray-200 rounded-full shadow-[0_8px_30px_rgb(0,0,0,0.12)]">
           <button onClick={() => setIsChatModalOpen(true)} className="flex-1 h-12 rounded-full bg-gray-50 hover:bg-gray-100 border border-gray-200 text-gray-900 font-bold text-sm flex items-center justify-center gap-2 active:scale-95 transition-all shadow-sm">
             <Sparkles className="w-4 h-4 text-primary-500" /> Ask AI
