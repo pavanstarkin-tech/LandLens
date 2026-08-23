@@ -351,8 +351,7 @@ How else can I assist you with this property? 😊`;
             { id: 'overview', label: 'Overview' },
             { id: 'ai', label: 'AI Verification' },
             { id: 'guidance', label: 'Citizen Guidance' },
-            { id: 'location', label: 'GIS Map' },
-            { id: 'history', label: 'Timeline' }
+            { id: 'location', label: 'GIS Map' }
           ].map((tab) => (
             <button
               key={tab.id}
@@ -429,13 +428,17 @@ How else can I assist you with this property? 😊`;
                             <FileText className="w-5 h-5 text-primary-500" />
                           </div>
                           <div>
-                            <p className="text-sm font-bold text-gray-900 line-clamp-1 capitalize">{doc.documentType.replace(/_/g, ' ').toLowerCase()}</p>
-                            <p className="text-xs text-gray-500 uppercase tracking-wider">{doc.verificationStatus}</p>
+                            <p className="text-xs font-bold text-gray-900 capitalize">{doc.documentType?.replace(/_/g, ' ') || 'Document'}</p>
+                            <span className="text-[10px] text-emerald-600 font-semibold flex items-center gap-1 mt-0.5">
+                              <CheckCircle className="w-3 h-3" /> State Certified Record
+                            </span>
                           </div>
                         </div>
-                        <a href={doc.fileUrl} target="_blank" rel="noreferrer" className="w-10 h-10 flex items-center justify-center text-primary-600 bg-primary-50 rounded-full active:scale-95 transition-transform">
-                          <ExternalLink className="w-4 h-4" />
-                        </a>
+                        {doc.fileUrl && (
+                          <a href={doc.fileUrl} target="_blank" rel="noopener noreferrer" className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-50 transition">
+                            <ExternalLink className="w-4 h-4" />
+                          </a>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -566,37 +569,6 @@ How else can I assist you with this property? 😊`;
                 <div className="absolute bottom-4 left-4 bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-lg border border-gray-200 text-[10px] font-bold text-emerald-600 flex items-center gap-1.5 shadow-sm">
                   <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" /> Exact Boundary
                 </div>
-              </div>
-            </motion.div>
-          )}
-
-          {/* HISTORY */}
-          {activeTab === 'history' && (
-            <motion.div key="history" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="space-y-6">
-              <h3 className="text-lg font-bold text-gray-900 mb-4">Verification Timeline & Audit Trail</h3>
-
-              <div className="relative pl-12 space-y-8 mt-2">
-                {/* Vertical line connecting ticks */}
-                <div className="absolute left-[11px] top-3 bottom-0 w-[2px] bg-emerald-200" />
-
-                {timeline.length > 0 ? timeline.map((t, idx) => (
-                  <div key={idx} className="relative z-10">
-                    {/* Tick mark */}
-                    <div className="absolute -left-[48px] top-0 w-6 h-6 rounded-full bg-white border-2 border-emerald-500 flex items-center justify-center shadow-sm z-10">
-                      <CheckCircle className="w-3 h-3 text-emerald-500" />
-                    </div>
-                    <h4 className="text-sm font-bold text-gray-900 leading-tight">{t.action || t.title}</h4>
-                    <p className="text-gray-500 text-[10px] font-semibold mt-1">{new Date(t.timestamp || t.date || Date.now()).toLocaleDateString()}</p>
-                    {(t.remarks || t.description) && (
-                      <p className="text-gray-600 text-xs mt-2 bg-gray-50 p-3 rounded-xl border border-gray-200">{t.remarks || t.description}</p>
-                    )}
-                  </div>
-                )) : (
-                  <div className="py-8 text-center bg-gray-50 rounded-2xl border border-gray-200">
-                    <Clock className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                    <p className="text-sm font-bold text-gray-500">No History Found</p>
-                  </div>
-                )}
               </div>
             </motion.div>
           )}
