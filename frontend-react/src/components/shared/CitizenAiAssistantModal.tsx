@@ -645,7 +645,9 @@ How can I help you inspect this parcel?`,
           </div>
         </motion.div>
       </div>
+    </AnimatePresence>
   );
 };
+
 
 
