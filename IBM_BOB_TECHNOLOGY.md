@@ -1,4 +1,4 @@
-# 🤖 Role of IBM Bob in LandLens Development
+# Role of IBM Bob in LandLens Development
 **Project Name:** LandLens — AI-Powered Government Land Verification & Citizen Transparency Portal  
 **Hackathon:** SkillUp Hackathon in collaboration with IBM SkillsBuild  
 **Track:** AI for Impact — Governance & Citizen Services  

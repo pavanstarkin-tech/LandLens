@@ -35,13 +35,13 @@ Citizen / Buyer: buyer@gmail.com / buyer@gmail.com
 
 ---
 
-## 🤖 Role of IBM Bob Technology in LandLens
+## Role of IBM Bob Technology in LandLens
 
-> 📄 **Official Hackathon Documentation:** For the full technical breakdown, read [`IBM_BOB_TECHNOLOGY.md`](./IBM_BOB_TECHNOLOGY.md).
+> **Official Hackathon Documentation:** For the full technical breakdown, read [`IBM_BOB_TECHNOLOGY.md`](./IBM_BOB_TECHNOLOGY.md).
 
 **IBM Bob** was utilized as our primary **AI Coding Assistant and Developer Co-Pilot** across the entire full-stack software lifecycle for the **SkillUp Hackathon in collaboration with IBM SkillsBuild** (*Track: AI for Impact – Governance & Citizen Services*).
 
-### 🚀 Key Development Activities Powered by IBM Bob:
+### Key Development Activities Powered by IBM Bob:
 * **Full-Stack Frontend Engineering:** Architected React 19 + TypeScript + Tailwind CSS components, including our Citizen Verification Portal, Government Inspector Dashboards, and native mobile bottom-sheet AI assistant workflows.
 * **1-Click Official Print Certificate:** Built dynamic CSS and DOM formatting to automatically generate seal-ready Government Land Verification Certificates with official logos and QR verification in PDF/print view.
 * **Backend Services & Microservices:** Generated RESTful APIs in Java Spring Boot and AWS Lambda Node.js serverless microservices connected to secure relational ledgers with JWT authentication.
