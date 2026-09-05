@@ -88,6 +88,7 @@ function App() {
         {/* Generic Protected Route */}
         <Route element={<ProtectedRoute />}>
           <Route path="/properties/:id" element={<PropertyDetail />} />
+          <Route path="/property/:id" element={<PropertyDetail />} />
         </Route>
 
         {/* Fallback */}

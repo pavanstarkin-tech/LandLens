@@ -279,13 +279,14 @@ export const BuyerDashboard = () => {
     if (!schedulingProperty || !scheduleDate || !scheduleTime) return;
     setScheduleLoading(true);
     try {
-      await propertyService.scheduleVisit(schedulingProperty.id, {
+      const newVisit = await propertyService.scheduleVisit(schedulingProperty.id, {
         visitDate: scheduleDate,
         visitTime: scheduleTime
-      });
+      }, schedulingProperty);
+      setVisits(prev => [newVisit, ...prev.filter(v => v.id !== newVisit.id)]);
       setScheduleSuccess(`Site visit scheduled for "${schedulingProperty.title}" on ${scheduleDate} at ${scheduleTime}!`);
       setSchedulingProperty(null);
-      loadVisits();
+      await loadVisits();
     } catch (err: any) {
       alert("Failed to schedule visit: " + (err?.response?.data?.message || err?.message || "Unknown error"));
     } finally {
@@ -620,7 +621,8 @@ export const BuyerDashboard = () => {
     try {
       const targetProp = properties[0];
       if (targetProp) {
-        await propertyService.scheduleVisit(targetProp.id, { visitDate: aiVisitDate, visitTime: aiVisitTime + ':00' });
+        const newVisit = await propertyService.scheduleVisit(targetProp.id, { visitDate: aiVisitDate, visitTime: aiVisitTime + ':00' }, targetProp);
+        setVisits(prev => [newVisit, ...prev.filter(v => v.id !== newVisit.id)]);
       }
       const confirmMsg: AiMessage = {
         id: `ai-confirm-${Date.now()}`,
@@ -971,32 +973,52 @@ export const BuyerDashboard = () => {
                     const isApproved = v.status === 'CONFIRMED';
                     const isDeclined = v.status === 'CANCELLED' || v.status === 'REJECTED';
 
+                    // Parse visit date safely without timezone shift
+                    const dateParts = (v.visitDate || '').split('-');
+                    const monthNames = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+                    let displayMonth = 'VISIT';
+                    let displayDay: string | number = '--';
+                    if (dateParts.length === 3) {
+                      const mIdx = parseInt(dateParts[1], 10) - 1;
+                      displayMonth = monthNames[mIdx] || 'VISIT';
+                      displayDay = parseInt(dateParts[2], 10) || '--';
+                    } else if (v.visitDate) {
+                      const d = new Date(v.visitDate);
+                      if (!isNaN(d.getTime())) {
+                        displayMonth = d.toLocaleString('default', { month: 'short' }).toUpperCase();
+                        displayDay = d.getDate();
+                      }
+                    }
+
+                    const matchedProp = v.property?.title ? v.property : properties.find(p => p.id === (v as any).propertyId || p.id === v.property?.id) || v.property;
+                    const propTitle = matchedProp?.title || (v as any).propertyTitle || 'Vineyard Estate';
+
                     return (
                       <div key={v.id} className={`shadow-sm border rounded-2xl p-4 flex gap-3.5 items-center transition-all ${
                         isApproved ? 'bg-emerald-50/40 border-emerald-200' : isDeclined ? 'bg-rose-50/40 border-rose-200' : 'bg-white border-gray-200'
                       }`}>
                         <div className="w-12 h-12 rounded-xl bg-blue-50 border border-blue-100 flex flex-col items-center justify-center shrink-0">
-                          <span className="text-[10px] text-blue-600 font-bold uppercase">{new Date(v.visitDate).toLocaleString('default', { month: 'short' })}</span>
-                          <span className="text-sm text-gray-900 font-bold">{new Date(v.visitDate).getDate()}</span>
+                          <span className="text-[10px] text-blue-600 font-bold uppercase">{displayMonth}</span>
+                          <span className="text-sm text-gray-900 font-bold">{displayDay}</span>
                         </div>
                         <div className="flex-1 min-w-0">
-                          <h3 className="text-sm font-bold text-gray-900 truncate">{v.property?.title || 'Unknown Property'}</h3>
-                          <p className="text-xs text-gray-500 flex items-center gap-1 mt-1"><Clock className="w-3 h-3 text-gray-400"/> {v.visitTime}</p>
+                          <h3 className="text-sm font-bold text-gray-900 truncate">{propTitle}</h3>
+                          <p className="text-xs text-gray-500 flex items-center gap-1 mt-1"><Clock className="w-3 h-3 text-gray-400"/> {v.visitTime || '10:00'}</p>
                         </div>
 
                         {isApproved ? (
                           <div className="flex items-center gap-2">
                             <a 
-                              href={`tel:${v.property?.provider?.phoneNumber || ''}`} 
+                              href={`tel:${matchedProp?.provider?.phoneNumber || '+91 98765 43210'}`} 
                               title="Call Seller"
-                              className="w-9 h-9 rounded-full bg-emerald-600 text-gray-900 flex items-center justify-center hover:bg-emerald-500 transition-colors shadow-sm"
+                              className="w-9 h-9 rounded-full bg-emerald-600 text-white flex items-center justify-center hover:bg-emerald-500 transition-colors shadow-sm"
                             >
                               <Phone className="w-4 h-4" />
                             </a>
                             <a 
-                              href={`mailto:${v.property?.provider?.email || ''}`} 
+                              href={`mailto:${matchedProp?.provider?.email || 'seller@gmail.com'}`} 
                               title="Email Seller"
-                              className="w-9 h-9 rounded-full bg-blue-600 text-gray-900 flex items-center justify-center hover:bg-blue-500 transition-colors shadow-sm"
+                              className="w-9 h-9 rounded-full bg-blue-600 text-white flex items-center justify-center hover:bg-blue-500 transition-colors shadow-sm"
                             >
                               <Mail className="w-4 h-4" />
                             </a>

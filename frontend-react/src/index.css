@@ -419,3 +419,17 @@
   border-radius: 2px;
   box-shadow: 0 0 8px rgba(37, 99, 235, 0.6);
 }
+
+/* ─── Print / PDF Export Optimization ───────────────────────────────── */
+@media print {
+  body {
+    background: #ffffff !important;
+    color: #0f172a !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  @page {
+    margin: 0.8cm;
+    size: auto;
+  }
+}
