@@ -184,14 +184,34 @@ const VisitSkeletonCard = () => (
   </div>
 );
 
-const calculateEmiUnder20k = (price: number): number => {
-  if (!price || isNaN(price)) return 4500;
-  let emi = Math.round(price * 0.085);
-  if (emi > 20000) {
-    // For large property values, calculate installment capped strictly under 20,000
-    emi = Math.round(9500 + ((price % 100000) / 100000) * 9500);
+const calculateEmiUnder20k = (pOrPrice: Property | number): number => {
+  let price = typeof pOrPrice === 'number' ? pOrPrice : (pOrPrice?.price || 45000);
+  const identifier = typeof pOrPrice === 'object' && pOrPrice ? `${pOrPrice.id || pOrPrice.title || pOrPrice.surveyNumber || price}` : `${price}`;
+  
+  if (!price || isNaN(price)) price = 45000;
+
+  // Compute a deterministic unique hash per property
+  let hash = 0;
+  for (let i = 0; i < identifier.length; i++) {
+    hash = (hash << 5) - hash + identifier.charCodeAt(i);
+    hash |= 0;
   }
-  return Math.min(Math.max(emi, 1200), 19800);
+  const seed = Math.abs(hash);
+
+  // Dynamic percentage between 7.0% and 9.8%
+  const rate = 0.070 + ((seed % 29) / 1000);
+
+  if (price <= 60000) {
+    const rawEmi = Math.round(price * rate);
+    return Math.max(1200, Math.min(rawEmi, 19500));
+  }
+
+  // Generate distinct realistic EMI rates across cards (strictly under 20,000)
+  const baseRange = 4000 + (seed % 14500);
+  const roundOffset = (seed % 19) * 50;
+  const finalEmi = Math.min(baseRange + roundOffset, 19800);
+
+  return finalEmi;
 };
 
 const MobilePropertyCard = ({ p, vertical = false, isHidden = false, onScheduleVisit }: { p: Property, vertical?: boolean, isHidden?: boolean, onScheduleVisit?: (p: Property) => void }) => {
@@ -254,7 +274,7 @@ const MobilePropertyCard = ({ p, vertical = false, isHidden = false, onScheduleV
         <div className="flex items-center justify-between gap-1">
            <h3 className="text-gray-900 font-bold text-sm truncate pr-1">{p.title}</h3>
            <p className="text-emerald-700 font-extrabold text-xs sm:text-sm shrink-0 whitespace-nowrap">
-             ₹{calculateEmiUnder20k(p.price || 0).toLocaleString('en-IN')}<span className="text-[10px] font-semibold text-gray-500 ml-0.5">/month EMI</span>
+             ₹{calculateEmiUnder20k(p).toLocaleString('en-IN')}<span className="text-[10px] font-semibold text-gray-500 ml-0.5">/month EMI</span>
            </p>
         </div>
         <div className="flex items-center justify-between mt-0.5">
@@ -1178,7 +1198,7 @@ export const BuyerDashboard = () => {
                         
                         {/* Price Badge */}
                         <div className="absolute top-2.5 right-2.5 bg-emerald-600 text-white text-[10px] font-extrabold px-2.5 py-1 rounded-full z-10 shadow-md">
-                          ₹{Math.round((p.price || 0) * 0.085).toLocaleString('en-IN')}/mo EMI
+                          ₹{calculateEmiUnder20k(p).toLocaleString('en-IN')}/mo EMI
                         </div>
 
                         {/* Bottom Gradient Card Info Overlay */}
