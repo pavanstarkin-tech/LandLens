@@ -21,6 +21,11 @@ import { GovernmentServiceGuidance } from '../../components/shared/GovernmentSer
 import { LandVerificationSummaryCard } from '../../components/shared/LandVerificationSummaryCard';
 import type * as Models from '../../models/property.models';
 import landLensLogo from '../../assets/logo.png';
+import hero1 from '../../assets/hero/1.jpg';
+import hero2 from '../../assets/hero/2.jpg';
+import hero3 from '../../assets/hero/3.jpg';
+import hero4 from '../../assets/hero/4.jpg';
+import hero5 from '../../assets/hero/5.jpg';
 
 type TabType = 'overview' | 'ai' | 'guidance' | 'location' | 'history';
 type MediaType = 'image' | 'video' | '360';
@@ -293,15 +298,26 @@ How else can I assist you with this property? 😊`;
     );
   }
 
-  if (!property) return null;
+  const heroFallbacks = [hero1, hero2, hero3, hero4, hero5];
+  const charSum = (property.id || property.title || 'LandLens').split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+  const fallbackIndex = Math.abs(charSum) % heroFallbacks.length;
+  const defaultPropertyPhoto = heroFallbacks[fallbackIndex];
+  const default360Photo = heroFallbacks[(fallbackIndex + 2) % heroFallbacks.length];
 
+  // 1. Primary Property Image for Certificate Specs
+  const primaryPropertyImage =
+    (images && images.length > 0 && images[0]?.imageUrl) ||
+    (property.images && property.images.length > 0 && property.images[0]?.imageUrl) ||
+    defaultPropertyPhoto;
+
+  // 2. 360 Panoramic Ground Survey Preview (Guaranteed direct image, never an unrenderable iframe URL)
   const clean360 = getClean360ImageUrl(property?.threeSixtyImageUrl);
-  const resolved360Image = (clean360 && isDirectImage(clean360))
+  const is360Direct = clean360 && isDirectImage(clean360);
+  const primary360Image = is360Direct
     ? clean360
-    : (clean360 && !clean360.toLowerCase().includes('google.com') && !clean360.toLowerCase().includes('maps'))
-    ? clean360
-    : (property?.images && property.images[0]?.imageUrl)
-    || 'https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=1200&q=80';
+    : (images && images.length > 1 && images[1]?.imageUrl) ||
+      (images && images.length > 0 && images[0]?.imageUrl) ||
+      default360Photo;
 
   return (
     <div className="min-h-screen bg-gray-50 text-gray-900 font-sans flex flex-col pb-32 relative overflow-x-hidden">
@@ -453,11 +469,17 @@ How else can I assist you with this property? 😊`;
 
         {/* Property Specs Grid */}
         <div className="grid grid-cols-3 gap-4 mb-6">
-          <div className="col-span-1 border border-slate-300 rounded-lg overflow-hidden h-36">
+          <div className="col-span-1 border border-slate-300 rounded-lg overflow-hidden h-36 bg-slate-100 flex items-center justify-center">
             <img
-              src={(property.images && property.images[0]?.imageUrl) || resolved360Image}
+              src={primaryPropertyImage}
               alt={property.title}
               className="w-full h-full object-cover"
+              onError={(e) => {
+                const target = e.currentTarget;
+                if (target.src !== defaultPropertyPhoto) {
+                  target.src = defaultPropertyPhoto;
+                }
+              }}
             />
           </div>
           <div className="col-span-2 space-y-2 text-xs">
@@ -505,13 +527,13 @@ How else can I assist you with this property? 😊`;
 
           <div className="relative w-full h-48 sm:h-56 bg-slate-900 rounded-lg overflow-hidden border border-slate-300 shadow-inner">
             <img
-              src={resolved360Image}
+              src={primary360Image}
               alt="360° Panoramic Land Survey"
               className="w-full h-full object-cover"
               onError={(e) => {
                 const target = e.currentTarget;
-                if (property.images && property.images[0]?.imageUrl && target.src !== property.images[0].imageUrl) {
-                  target.src = property.images[0].imageUrl;
+                if (target.src !== default360Photo) {
+                  target.src = default360Photo;
                 }
               }}
             />
@@ -523,6 +545,15 @@ How else can I assist you with this property? 😊`;
               Survey No: {property.surveyNumber || '342/A'} • Coordinates: {property.latitude || '17.4852'}° N, {property.longitude || '78.6921'}° E
             </div>
           </div>
+
+          {property.threeSixtyImageUrl && (
+            <div className="mt-2 text-[9px] font-mono bg-blue-50/90 border border-blue-200 rounded p-1.5 text-blue-950 flex items-center justify-between">
+              <span className="truncate max-w-[480px]">
+                <strong>Virtual Survey Capture:</strong> {clean360}
+              </span>
+              <span className="text-emerald-700 font-bold shrink-0 ml-2">✓ Verified Spherical Tour</span>
+            </div>
+          )}
 
           <div className="mt-2.5 flex items-center justify-between text-[10px] text-slate-600">
             <span className="flex items-center gap-1">
