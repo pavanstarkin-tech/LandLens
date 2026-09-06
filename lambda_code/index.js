@@ -11,26 +11,27 @@ const DB_CONFIG = {
 };
 
 const NVIDIA_API_KEY = "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";
-const MODEL_NAME = "meta/llama-3.1-8b-instruct";
-const FALLBACK_MODEL = "mistralai/mistral-7b-instruct-v0.3";
+const MODEL_NAME = "meta/llama-3.2-11b-vision-instruct";
+const FALLBACK_MODEL = "meta/llama-3.2-90b-vision-instruct";
 
 async function callNvidiaApi(prompt, systemContext, history = []) {
     const modelsToTry = [MODEL_NAME, FALLBACK_MODEL];
     
-    const formattedSystemPrompt = `${systemContext || "You are LandLens AI (IBM Bob AI Citizen Assistant) for government land verification."}
+    const formattedSystemPrompt = `${systemContext || "You are LandLens AI (IBM Bob Citizen Assistant) for government land verification."}
 
 CRITICAL RULES:
 1. DIRECT & CONCISE: Answer ONLY what the user specifically asked. Keep answers short, direct, and under 150 words. Do NOT include filler, conversational fluff, or textbook definitions (never say "This is the name given to your land...").
-2. USE STRUCTURED MARKDOWN TABLES: Whenever summarizing land details, documents, survey records, or verification status, ALWAYS format the data in a clean Markdown table:
+2. MULTILINGUAL ACCURACY: If the user writes in Marathi, Telugu, Hindi, Tamil, Kannada, Bengali, or English, answer fluently and naturally in that EXACT same language.
+3. USE STRUCTURED MARKDOWN TABLES: Whenever summarizing land details, documents, survey records, or verification status, ALWAYS format the data in a clean Markdown table:
 | Field | Details | Status |
 | :--- | :--- | :--- |
-3. BULLET POINTS: Use short bullet points for next steps or key insights.
-4. If a fact is unknown or not in the attached records, state "Not found in records" clearly instead of hallucinating explanations.`;
+4. BULLET POINTS: Use short bullet points for next steps or key insights.
+5. If a fact is unknown or not in the attached records, state "Not found in records" clearly instead of hallucinating explanations.`;
 
     for (const model of modelsToTry) {
         try {
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 12000);
+            const timeoutId = setTimeout(() => controller.abort(), 15000);
 
             const messagesPayload = [
                 {
@@ -40,7 +41,7 @@ CRITICAL RULES:
             ];
 
             if (Array.isArray(history)) {
-                for (const h of history.slice(-4)) {
+                for (const h of history.slice(-6)) {
                     if (h.role && h.content) {
                         messagesPayload.push({ role: h.role, content: h.content });
                     }
@@ -61,7 +62,7 @@ CRITICAL RULES:
                     model: model,
                     messages: messagesPayload,
                     temperature: 0.3,
-                    max_tokens: 450
+                    max_tokens: 500
                 })
             });
             clearTimeout(timeoutId);
@@ -71,7 +72,8 @@ CRITICAL RULES:
                 const text = data.choices?.[0]?.message?.content;
                 if (text && text.trim()) return text.trim();
             } else {
-                console.error(`NVIDIA API ${model} error:`, res.status, res.statusText);
+                const errText = await res.text().catch(() => '');
+                console.error(`NVIDIA API ${model} error:`, res.status, errText);
             }
         } catch (e) {
             console.error(`NVIDIA API ${model} fetch exception:`, e.message);

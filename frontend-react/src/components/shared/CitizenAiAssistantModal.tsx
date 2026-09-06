@@ -135,6 +135,7 @@ export const CitizenAiAssistantModal: React.FC<CitizenAiAssistantProps> = ({
   const [activeProperty, setActiveProperty] = useState<Property | null>(initialProperty || null);
   const [availableProperties, setAvailableProperties] = useState<Property[]>([]);
   const [isPropertyDropdownOpen, setIsPropertyDropdownOpen] = useState(false);
+  const [isLangDropdownOpen, setIsLangDropdownOpen] = useState(false);
   const [isPropertyCollapsed, setIsPropertyCollapsed] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -391,7 +392,11 @@ How can I help you inspect this parcel?`,
               {availableProperties.length > 0 && (
                 <div className="relative">
                   <button
-                    onClick={() => setIsPropertyDropdownOpen(!isPropertyDropdownOpen)}
+                    type="button"
+                    onClick={() => {
+                      setIsPropertyDropdownOpen(!isPropertyDropdownOpen);
+                      setIsLangDropdownOpen(false);
+                    }}
                     className="flex items-center gap-1 px-2 py-1 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-[11px] font-semibold rounded-lg border border-slate-200 dark:border-slate-700 transition-colors"
                     title="Switch Land Parcel"
                   >
@@ -412,6 +417,7 @@ How can I help you inspect this parcel?`,
                       {availableProperties.map(p => (
                         <button
                           key={p.id}
+                          type="button"
                           onClick={() => handleSelectProperty(p)}
                           className={`w-full text-left px-3 py-2 text-xs flex items-center justify-between hover:bg-blue-50 dark:hover:bg-slate-700 transition-colors ${
                             activeProperty?.id === p.id ? 'font-bold text-blue-600 bg-blue-50/50' : 'text-slate-700 dark:text-slate-300'
@@ -431,32 +437,47 @@ How can I help you inspect this parcel?`,
                 </div>
               )}
 
-              {/* Language Selector Dropdown */}
-              <div className="relative group">
-                <button className="flex items-center gap-1 px-2 py-1 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-[11px] font-semibold rounded-lg border border-slate-200 dark:border-slate-700 transition-colors">
+              {/* Language Selector Dropdown (Works on Mobile Tap & Desktop Click) */}
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsLangDropdownOpen(!isLangDropdownOpen);
+                    setIsPropertyDropdownOpen(false);
+                  }}
+                  className="flex items-center gap-1 px-2.5 py-1 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-[11px] font-semibold rounded-lg border border-slate-200 dark:border-slate-700 transition-colors"
+                  title="Change Language"
+                >
                   <span>{activeLangOption.flag}</span>
-                  <span className="hidden sm:inline">{activeLangOption.nativeName}</span>
+                  <span className="inline">{activeLangOption.nativeName}</span>
+                  <ChevronDown className="w-3 h-3 opacity-60 shrink-0" />
                 </button>
-                <div className="absolute right-0 mt-1 w-44 py-1.5 bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-700 hidden group-hover:block z-50">
-                  <div className="px-3 py-1 text-[10px] uppercase font-bold text-slate-400">
-                    Choose Language
+                {isLangDropdownOpen && (
+                  <div className="absolute right-0 mt-1 w-48 py-1.5 bg-white dark:bg-slate-800 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 z-50 animate-in fade-in zoom-in-95 duration-100">
+                    <div className="px-3 py-1 text-[10px] uppercase font-bold text-slate-400 border-b border-slate-100 dark:border-slate-700 pb-1 mb-1">
+                      Select Regional Language
+                    </div>
+                    {LANGUAGES.map(lang => (
+                      <button
+                        key={lang.code}
+                        type="button"
+                        onClick={() => {
+                          handleLanguageChange(lang.code);
+                          setIsLangDropdownOpen(false);
+                        }}
+                        className={`w-full text-left px-3 py-2 text-xs flex items-center justify-between hover:bg-blue-50 dark:hover:bg-slate-700 transition-colors ${
+                          selectedLanguage === lang.code ? 'font-bold text-blue-600 dark:text-blue-400 bg-blue-50/70 dark:bg-slate-700/60' : 'text-slate-700 dark:text-slate-300'
+                        }`}
+                      >
+                        <span className="flex items-center gap-2">
+                          <span>{lang.flag}</span>
+                          <span>{lang.name}</span>
+                        </span>
+                        <span className="text-[11px] font-semibold opacity-80">{lang.nativeName}</span>
+                      </button>
+                    ))}
                   </div>
-                  {LANGUAGES.map(lang => (
-                    <button
-                      key={lang.code}
-                      onClick={() => handleLanguageChange(lang.code)}
-                      className={`w-full text-left px-3 py-1.5 text-xs flex items-center justify-between hover:bg-blue-50 dark:hover:bg-slate-700 transition-colors ${
-                        selectedLanguage === lang.code ? 'font-bold text-blue-600 dark:text-blue-400 bg-blue-50/50 dark:bg-slate-700/50' : 'text-slate-700 dark:text-slate-300'
-                      }`}
-                    >
-                      <span className="flex items-center gap-2">
-                        <span>{lang.flag}</span>
-                        <span>{lang.name}</span>
-                      </span>
-                      <span className="text-[11px] text-slate-400">{lang.nativeName}</span>
-                    </button>
-                  ))}
-                </div>
+                )}
               </div>
 
               {/* Close Button */}
