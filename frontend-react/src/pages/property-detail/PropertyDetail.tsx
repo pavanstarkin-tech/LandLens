@@ -407,7 +407,7 @@ How else can I assist you with this property? 😊`;
           {[
             { id: 'overview', label: 'Overview' },
             { id: 'ai', label: 'AI Verification' },
-            { id: 'guidance', label: 'Citizen Guidance' },
+            { id: 'guidance', label: 'Guidance' },
             { id: 'location', label: 'GIS Map' }
           ].map((tab) => (
             <button
