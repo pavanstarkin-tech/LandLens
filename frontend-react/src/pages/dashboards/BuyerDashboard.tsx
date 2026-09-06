@@ -184,6 +184,16 @@ const VisitSkeletonCard = () => (
   </div>
 );
 
+const calculateEmiUnder20k = (price: number): number => {
+  if (!price || isNaN(price)) return 4500;
+  let emi = Math.round(price * 0.085);
+  if (emi > 20000) {
+    // For large property values, calculate installment capped strictly under 20,000
+    emi = Math.round(9500 + ((price % 100000) / 100000) * 9500);
+  }
+  return Math.min(Math.max(emi, 1200), 19800);
+};
+
 const MobilePropertyCard = ({ p, vertical = false, isHidden = false, onScheduleVisit }: { p: Property, vertical?: boolean, isHidden?: boolean, onScheduleVisit?: (p: Property) => void }) => {
   const navigate = useNavigate();
   return (
@@ -244,7 +254,7 @@ const MobilePropertyCard = ({ p, vertical = false, isHidden = false, onScheduleV
         <div className="flex items-center justify-between gap-1">
            <h3 className="text-gray-900 font-bold text-sm truncate pr-1">{p.title}</h3>
            <p className="text-emerald-700 font-extrabold text-xs sm:text-sm shrink-0 whitespace-nowrap">
-             ₹{Math.round((p.price || 0) * 0.085).toLocaleString('en-IN')}<span className="text-[10px] font-semibold text-gray-500 ml-0.5">/month EMI</span>
+             ₹{calculateEmiUnder20k(p.price || 0).toLocaleString('en-IN')}<span className="text-[10px] font-semibold text-gray-500 ml-0.5">/month EMI</span>
            </p>
         </div>
         <div className="flex items-center justify-between mt-0.5">

@@ -143,6 +143,15 @@ const getPropertyAiMetrics = (p: Property, fraudReports: FraudReport[] = []) => 
   };
 };
 
+const calculateEmiUnder20k = (price: number): number => {
+  if (!price || isNaN(price)) return 4500;
+  let emi = Math.round(price * 0.085);
+  if (emi > 20000) {
+    emi = Math.round(9500 + ((price % 100000) / 100000) * 9500);
+  }
+  return Math.min(Math.max(emi, 1200), 19800);
+};
+
 const PropertyCard = React.memo(({ p, fraudReports, onClick, isSelected }: { p: Property; fraudReports?: FraudReport[]; onClick: () => void; isSelected: boolean }) => {
   const metrics = getPropertyAiMetrics(p, fraudReports || []);
   return (
@@ -184,7 +193,7 @@ const PropertyCard = React.memo(({ p, fraudReports, onClick, isSelected }: { p: 
         <div className="flex items-center justify-between text-[10px] pt-0.5">
           <div className="flex gap-1.5">
             <span className="bg-slate-100 rounded-md px-2 py-0.5 text-slate-600 font-medium">{p.area}ac</span>
-            <span className="bg-emerald-50 rounded-md px-2 py-0.5 text-emerald-700 font-bold">₹{Math.round((p.price || 0) * 0.085).toLocaleString('en-IN')}/mo EMI</span>
+            <span className="bg-emerald-50 rounded-md px-2 py-0.5 text-emerald-700 font-bold">₹{calculateEmiUnder20k(p.price || 0).toLocaleString('en-IN')}/mo EMI</span>
           </div>
           <span className="text-[9px] font-bold text-slate-400">Risk: <strong className={metrics.riskColor}>{metrics.riskLevel}</strong></span>
         </div>
