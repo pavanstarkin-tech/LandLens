@@ -465,11 +465,11 @@ How else can I assist you with this property? 😊`;
 
         {/* Property Specs Grid */}
         <div className="grid grid-cols-3 gap-4 mb-6">
-          <div className="col-span-1 border border-slate-300 rounded-lg overflow-hidden h-36 bg-slate-100 flex items-center justify-center">
+          <div className="col-span-1 border border-slate-300 rounded-lg overflow-hidden h-36 bg-white p-1 flex items-center justify-center">
             <img
               src={panorama3dLayout}
               alt={property.title}
-              className="w-full h-full object-cover"
+              className="w-full h-full object-contain"
               onError={(e) => {
                 e.currentTarget.src = panorama3dLayout;
               }}
