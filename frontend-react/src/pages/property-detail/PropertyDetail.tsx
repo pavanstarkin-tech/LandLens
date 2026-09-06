@@ -467,14 +467,11 @@ How else can I assist you with this property? 😊`;
         <div className="grid grid-cols-3 gap-4 mb-6">
           <div className="col-span-1 border border-slate-300 rounded-lg overflow-hidden h-36 bg-slate-100 flex items-center justify-center">
             <img
-              src={primaryPropertyImage}
+              src={panorama3dLayout}
               alt={property.title}
               className="w-full h-full object-cover"
               onError={(e) => {
-                const target = e.currentTarget;
-                if (target.src !== defaultPropertyPhoto) {
-                  target.src = defaultPropertyPhoto;
-                }
+                e.currentTarget.src = panorama3dLayout;
               }}
             />
           </div>
