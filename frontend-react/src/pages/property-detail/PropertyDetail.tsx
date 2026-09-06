@@ -504,62 +504,7 @@ How else can I assist you with this property? 😊`;
           </div>
         </div>
 
-        {/* ── 360° PANORAMIC GROUND SURVEY EVIDENCE (PRINT/PDF) ── */}
-        <div className="mb-6 border-2 border-slate-300 rounded-xl p-3.5 bg-slate-50/80 break-inside-avoid shadow-2xs">
-          <div className="flex items-center justify-between pb-2 mb-2.5 border-b border-slate-200">
-            <div className="flex items-center gap-2">
-              <span className="px-2 py-0.5 text-[9px] font-black uppercase tracking-wider bg-blue-100 text-blue-900 rounded border border-blue-300 flex items-center gap-1">
-                <Compass className="w-3 h-3 text-blue-700" />
-                360° Panoramic Ground Survey & Visual Demarcation
-              </span>
-              <span className="text-[10px] font-semibold text-slate-600">
-                Official Georeferenced Spherical Site Capture
-              </span>
-            </div>
-            <div className="text-[9px] font-mono font-bold text-slate-500">
-              FOV: 360° Horizontal × 180° Vertical • Authenticated
-            </div>
-          </div>
 
-          <div className="relative w-full h-48 sm:h-56 bg-slate-900 rounded-lg overflow-hidden border border-slate-300 shadow-inner">
-            <img
-              src={primary360Image}
-              alt="360° Panoramic Land Survey"
-              className="w-full h-full object-cover"
-              onError={(e) => {
-                const target = e.currentTarget;
-                if (target.src !== default360Photo) {
-                  target.src = default360Photo;
-                }
-              }}
-            />
-            <div className="absolute top-2.5 left-2.5 bg-slate-900/85 backdrop-blur-xs text-white text-[9px] font-bold px-2.5 py-1 rounded-md border border-white/20 flex items-center gap-1.5 shadow-sm">
-              <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
-              <span>VERIFIED 360° GROUND PANORAMA</span>
-            </div>
-            <div className="absolute bottom-2.5 right-2.5 bg-slate-900/85 backdrop-blur-xs text-white text-[9px] font-mono px-3 py-1 rounded-md border border-white/20 shadow-sm">
-              Survey No: {property.surveyNumber || '342/A'} • Coordinates: {property.latitude || '17.4852'}° N, {property.longitude || '78.6921'}° E
-            </div>
-          </div>
-
-          {property.threeSixtyImageUrl && (
-            <div className="mt-2 text-[9px] font-mono bg-blue-50/90 border border-blue-200 rounded p-1.5 text-blue-950 flex items-center justify-between">
-              <span className="truncate max-w-[480px]">
-                <strong>Virtual Survey Capture:</strong> {clean360}
-              </span>
-              <span className="text-emerald-700 font-bold shrink-0 ml-2">✓ Verified Spherical Tour</span>
-            </div>
-          )}
-
-          <div className="mt-2.5 flex items-center justify-between text-[10px] text-slate-600">
-            <span className="flex items-center gap-1">
-              <span>Ground boundary checkpoints matched against satellite orthophoto & revenue patta records.</span>
-            </span>
-            <span className="font-bold text-emerald-700 flex items-center gap-1">
-              ✓ Ground Demarcation Integrity Confirmed (0.0% Spatial Anomaly)
-            </span>
-          </div>
-        </div>
 
         {/* Verification Audit Table */}
         <table className="w-full text-xs border-collapse border border-slate-300 mb-6">
