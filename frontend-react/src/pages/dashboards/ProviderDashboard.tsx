@@ -567,8 +567,8 @@ export const ProviderDashboard = () => {
                               <p className="text-gray-900 font-black mt-0.5">{p.area}ac</p>
                             </div>
                             <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-1.5 text-center">
-                              <p className="text-emerald-700 text-[9px] font-semibold">Price</p>
-                              <p className="text-emerald-800 font-black mt-0.5 truncate">₹{p.price.toLocaleString('en-IN')}</p>
+                              <p className="text-emerald-700 text-[9px] font-semibold">Monthly EMI</p>
+                              <p className="text-emerald-800 font-black mt-0.5 truncate">₹{Math.round((p.price || 0) * 0.085).toLocaleString('en-IN')}/mo</p>
                             </div>
                             <div className="bg-gray-50 border border-gray-200 rounded-lg p-1.5 text-center">
                               <p className="text-gray-500 text-[9px] font-semibold">Survey</p>

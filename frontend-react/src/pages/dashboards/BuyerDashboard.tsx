@@ -241,9 +241,11 @@ const MobilePropertyCard = ({ p, vertical = false, isHidden = false, onScheduleV
         </div>
       </div>
       <div className="h-[25%] px-3 flex flex-col justify-center bg-white z-20">
-        <div className="flex items-center justify-between">
-           <h3 className="text-gray-900 font-bold text-sm truncate pr-2">{p.title}</h3>
-           <p className="text-primary-600 font-bold text-sm shrink-0">₹{p.price?.toLocaleString('en-IN')}</p>
+        <div className="flex items-center justify-between gap-1">
+           <h3 className="text-gray-900 font-bold text-sm truncate pr-1">{p.title}</h3>
+           <p className="text-emerald-700 font-extrabold text-xs sm:text-sm shrink-0 whitespace-nowrap">
+             ₹{Math.round((p.price || 0) * 0.085).toLocaleString('en-IN')}<span className="text-[10px] font-semibold text-gray-500 ml-0.5">/month EMI</span>
+           </p>
         </div>
         <div className="flex items-center justify-between mt-0.5">
            <p className="text-gray-500 text-[10px] flex items-center gap-1 truncate"><MapPin className="w-2.5 h-2.5 shrink-0"/> {p.village}, {p.district}</p>
@@ -1165,8 +1167,8 @@ export const BuyerDashboard = () => {
                         )}
                         
                         {/* Price Badge */}
-                        <div className="absolute top-2.5 right-2.5 bg-emerald-600 text-gray-900 text-[10px] font-extrabold px-2.5 py-1 rounded-full z-10 shadow-md">
-                          ₹{(p.price / 100000).toFixed(1)}L
+                        <div className="absolute top-2.5 right-2.5 bg-emerald-600 text-white text-[10px] font-extrabold px-2.5 py-1 rounded-full z-10 shadow-md">
+                          ₹{Math.round((p.price || 0) * 0.085).toLocaleString('en-IN')}/mo EMI
                         </div>
 
                         {/* Bottom Gradient Card Info Overlay */}

@@ -184,7 +184,7 @@ const PropertyCard = React.memo(({ p, fraudReports, onClick, isSelected }: { p: 
         <div className="flex items-center justify-between text-[10px] pt-0.5">
           <div className="flex gap-1.5">
             <span className="bg-slate-100 rounded-md px-2 py-0.5 text-slate-600 font-medium">{p.area}ac</span>
-            <span className="bg-emerald-50 rounded-md px-2 py-0.5 text-emerald-700 font-bold">₹{p.price?.toLocaleString('en-IN')}</span>
+            <span className="bg-emerald-50 rounded-md px-2 py-0.5 text-emerald-700 font-bold">₹{Math.round((p.price || 0) * 0.085).toLocaleString('en-IN')}/mo EMI</span>
           </div>
           <span className="text-[9px] font-bold text-slate-400">Risk: <strong className={metrics.riskColor}>{metrics.riskLevel}</strong></span>
         </div>
