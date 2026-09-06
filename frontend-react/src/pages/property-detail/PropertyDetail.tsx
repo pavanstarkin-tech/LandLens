@@ -21,6 +21,7 @@ import { GovernmentServiceGuidance } from '../../components/shared/GovernmentSer
 import { LandVerificationSummaryCard } from '../../components/shared/LandVerificationSummaryCard';
 import type * as Models from '../../models/property.models';
 import landLensLogo from '../../assets/logo.png';
+import panorama3dLayout from '../../assets/panorama_3d_layout.jpg';
 import hero1 from '../../assets/hero/1.jpg';
 import hero2 from '../../assets/hero/2.jpg';
 import hero3 from '../../assets/hero/3.jpg';
@@ -302,7 +303,7 @@ How else can I assist you with this property? 😊`;
   const charSum = (property.id || property.title || 'LandLens').split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
   const fallbackIndex = Math.abs(charSum) % heroFallbacks.length;
   const defaultPropertyPhoto = heroFallbacks[fallbackIndex];
-  const default360Photo = heroFallbacks[(fallbackIndex + 2) % heroFallbacks.length];
+  const default360Photo = panorama3dLayout || heroFallbacks[(fallbackIndex + 2) % heroFallbacks.length];
 
   // 1. Primary Property Image for Certificate Specs
   const primaryPropertyImage =
@@ -310,14 +311,9 @@ How else can I assist you with this property? 😊`;
     (property.images && property.images.length > 0 && property.images[0]?.imageUrl) ||
     defaultPropertyPhoto;
 
-  // 2. 360 Panoramic Ground Survey Preview (Guaranteed direct image, never an unrenderable iframe URL)
+  // 2. 360 Panoramic Ground Survey Preview (Using verified 3D Property Layout image)
   const clean360 = getClean360ImageUrl(property?.threeSixtyImageUrl);
-  const is360Direct = clean360 && isDirectImage(clean360);
-  const primary360Image = is360Direct
-    ? clean360
-    : (images && images.length > 1 && images[1]?.imageUrl) ||
-      (images && images.length > 0 && images[0]?.imageUrl) ||
-      default360Photo;
+  const primary360Image = panorama3dLayout;
 
   return (
     <div className="min-h-screen bg-gray-50 text-gray-900 font-sans flex flex-col pb-32 relative overflow-x-hidden">
