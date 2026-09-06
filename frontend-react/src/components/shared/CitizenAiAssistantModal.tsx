@@ -26,17 +26,16 @@ interface LanguageOption {
   code: SupportedLanguage;
   name: string;
   nativeName: string;
-  flag: string;
 }
 
 const LANGUAGES: LanguageOption[] = [
-  { code: 'en', name: 'English', nativeName: 'English', flag: '🇬🇧' },
-  { code: 'te', name: 'Telugu', nativeName: 'తెలుగు', flag: '🇮🇳' },
-  { code: 'hi', name: 'Hindi', nativeName: 'हिन्दी', flag: '🇮🇳' },
-  { code: 'ta', name: 'Tamil', nativeName: 'தமிழ்', flag: '🇮🇳' },
-  { code: 'kn', name: 'Kannada', nativeName: 'ಕನ್ನಡ', flag: '🇮🇳' },
-  { code: 'mr', name: 'Marathi', nativeName: 'मराठी', flag: '🇮🇳' },
-  { code: 'bn', name: 'Bengali', nativeName: 'বাংলা', flag: '🇮🇳' },
+  { code: 'en', name: 'English', nativeName: 'English' },
+  { code: 'te', name: 'Telugu', nativeName: 'తెలుగు' },
+  { code: 'hi', name: 'Hindi', nativeName: 'हिन्दी' },
+  { code: 'ta', name: 'Tamil', nativeName: 'தமிழ்' },
+  { code: 'kn', name: 'Kannada', nativeName: 'ಕನ್ನಡ' },
+  { code: 'mr', name: 'Marathi', nativeName: 'मराठी' },
+  { code: 'bn', name: 'Bengali', nativeName: 'বাংলা' },
 ];
 
 const PRESET_QUESTIONS: { key: string; label: Record<SupportedLanguage, string> }[] = [
@@ -364,27 +363,37 @@ How can I help you inspect this parcel?`,
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4 md:p-6 bg-gray-950/80 backdrop-blur-md">
+      <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4 md:p-6 bg-slate-900/60 backdrop-blur-xs">
         <motion.div
           initial={{ opacity: 0, y: 60 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: 60 }}
           transition={{ type: 'spring', damping: 28, stiffness: 300 }}
-          className="relative w-full sm:max-w-4xl h-[90vh] sm:h-[90vh] max-h-[820px] bg-white dark:bg-slate-900 border-t sm:border border-slate-200 dark:border-slate-800 rounded-t-[28px] sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden"
+          className="relative w-full sm:max-w-4xl h-[92vh] sm:h-[88vh] max-h-[820px] bg-[#efeae2] border-t sm:border border-slate-200 rounded-t-[28px] sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden text-slate-900"
         >
           {/* ── MOBILE DRAG HANDLE NOTCH ── */}
-          <div className="w-10 h-1 bg-slate-300 dark:bg-slate-700 rounded-full mx-auto mt-2 sm:hidden shrink-0" />
+          <div className="w-10 h-1 bg-slate-300 rounded-full mx-auto mt-2 sm:hidden shrink-0" />
 
-          {/* ── HEADER ── */}
-          <div className="px-3 sm:px-6 py-2.5 sm:py-3 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/90 dark:bg-slate-900/90 backdrop-blur-md shrink-0 gap-2">
-            <div className="flex items-center gap-1.5 min-w-0">
-              <h2 className="font-bold text-slate-900 dark:text-white text-xs sm:text-sm truncate">
-                AI Citizen Assistant
-              </h2>
-              <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[8px] sm:text-[9px] font-extrabold uppercase bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 shrink-0">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse mr-1" />
-                Live
-              </span>
+          {/* ── HEADER (WhatsApp Styled Clean Teal / White Header) ── */}
+          <div className="px-3.5 sm:px-6 py-2.5 sm:py-3 border-b border-slate-200/90 flex items-center justify-between bg-white shadow-xs shrink-0 gap-2">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-emerald-600 flex items-center justify-center text-white shrink-0 shadow-xs">
+                <Bot className="w-4 h-4 sm:w-5 sm:h-5" />
+              </div>
+              <div className="min-w-0">
+                <div className="flex items-center gap-1.5">
+                  <h2 className="font-extrabold text-slate-900 text-xs sm:text-sm truncate">
+                    AI Citizen Assistant
+                  </h2>
+                  <span className="inline-flex items-center px-1.5 py-0.2 rounded-full text-[8px] font-black uppercase bg-emerald-100 text-emerald-800 border border-emerald-300 shrink-0">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse mr-1" />
+                    Online
+                  </span>
+                </div>
+                <p className="text-[10px] text-slate-500 truncate hidden sm:block">
+                  Verified Land Governance & Multilingual Assistant
+                </p>
+              </div>
             </div>
 
             <div className="flex items-center gap-1.5 shrink-0">
@@ -397,21 +406,21 @@ How can I help you inspect this parcel?`,
                       setIsPropertyDropdownOpen(!isPropertyDropdownOpen);
                       setIsLangDropdownOpen(false);
                     }}
-                    className="flex items-center gap-1 px-2 py-1 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-[11px] font-semibold rounded-lg border border-slate-200 dark:border-slate-700 transition-colors"
+                    className="flex items-center gap-1 px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 text-[11px] font-bold rounded-xl border border-slate-200 transition-colors shadow-2xs"
                     title="Switch Land Parcel"
                   >
-                    <span className="hidden sm:inline truncate max-w-[110px]">
+                    <span className="hidden sm:inline truncate max-w-[120px]">
                       {activeProperty ? activeProperty.title : 'Select Parcel'}
                     </span>
-                    <span className="sm:hidden truncate max-w-[70px]">
+                    <span className="sm:hidden truncate max-w-[80px]">
                       {activeProperty ? activeProperty.title : 'Parcel'}
                     </span>
-                    <ChevronDown className="w-3 h-3 opacity-60 shrink-0" />
+                    <ChevronDown className="w-3 h-3 opacity-70 shrink-0" />
                   </button>
 
                   {isPropertyDropdownOpen && (
-                    <div className="absolute right-0 mt-1 w-60 max-h-60 overflow-y-auto py-1.5 bg-white dark:bg-slate-800 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 z-50">
-                      <div className="px-3 py-1 text-[10px] uppercase font-bold text-slate-400">
+                    <div className="absolute right-0 mt-1 w-64 max-h-64 overflow-y-auto py-1.5 bg-white rounded-2xl shadow-2xl border border-slate-200 z-50 animate-in fade-in zoom-in-95 duration-100">
+                      <div className="px-3.5 py-1 text-[10px] uppercase font-extrabold text-slate-400 border-b border-slate-100 pb-1 mb-1">
                         Choose Land Record
                       </div>
                       {availableProperties.map(p => (
@@ -419,16 +428,16 @@ How can I help you inspect this parcel?`,
                           key={p.id}
                           type="button"
                           onClick={() => handleSelectProperty(p)}
-                          className={`w-full text-left px-3 py-2 text-xs flex items-center justify-between hover:bg-blue-50 dark:hover:bg-slate-700 transition-colors ${
-                            activeProperty?.id === p.id ? 'font-bold text-blue-600 bg-blue-50/50' : 'text-slate-700 dark:text-slate-300'
+                          className={`w-full text-left px-3.5 py-2 text-xs flex items-center justify-between hover:bg-emerald-50 transition-colors ${
+                            activeProperty?.id === p.id ? 'font-bold text-emerald-700 bg-emerald-50/70' : 'text-slate-800'
                           }`}
                         >
                           <div className="truncate pr-2">
-                            <div className="truncate font-semibold">{p.title}</div>
-                            <div className="text-[10px] text-slate-400">Survey #{p.surveyNumber || 'N/A'} • {p.area} ac</div>
+                            <div className="truncate font-bold">{p.title}</div>
+                            <div className="text-[10px] text-slate-500">Survey #{p.surveyNumber || 'N/A'} • {p.area} ac</div>
                           </div>
                           {p.status === 'APPROVED' && (
-                            <span className="text-[10px] font-bold text-emerald-500 shrink-0">Verified</span>
+                            <span className="text-[9px] font-extrabold text-emerald-600 bg-emerald-100 px-1.5 py-0.5 rounded shrink-0">Verified</span>
                           )}
                         </button>
                       ))}
@@ -445,16 +454,16 @@ How can I help you inspect this parcel?`,
                     setIsLangDropdownOpen(!isLangDropdownOpen);
                     setIsPropertyDropdownOpen(false);
                   }}
-                  className="flex items-center gap-1 px-2.5 py-1 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-[11px] font-semibold rounded-lg border border-slate-200 dark:border-slate-700 transition-colors"
+                  className="flex items-center gap-1.5 px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 text-[11px] font-bold rounded-xl border border-slate-200 transition-colors shadow-2xs"
                   title="Change Language"
                 >
-                  <span>{activeLangOption.flag}</span>
-                  <span className="inline">{activeLangOption.nativeName}</span>
-                  <ChevronDown className="w-3 h-3 opacity-60 shrink-0" />
+                  <Globe className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                  <span className="inline font-semibold">{activeLangOption.nativeName}</span>
+                  <ChevronDown className="w-3 h-3 opacity-70 shrink-0" />
                 </button>
                 {isLangDropdownOpen && (
-                  <div className="absolute right-0 mt-1 w-48 py-1.5 bg-white dark:bg-slate-800 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 z-50 animate-in fade-in zoom-in-95 duration-100">
-                    <div className="px-3 py-1 text-[10px] uppercase font-bold text-slate-400 border-b border-slate-100 dark:border-slate-700 pb-1 mb-1">
+                  <div className="absolute right-0 mt-1 w-48 py-1.5 bg-white rounded-2xl shadow-2xl border border-slate-200 z-50 animate-in fade-in zoom-in-95 duration-100">
+                    <div className="px-3.5 py-1 text-[10px] uppercase font-extrabold text-slate-400 border-b border-slate-100 pb-1 mb-1">
                       Select Regional Language
                     </div>
                     {LANGUAGES.map(lang => (
@@ -465,15 +474,12 @@ How can I help you inspect this parcel?`,
                           handleLanguageChange(lang.code);
                           setIsLangDropdownOpen(false);
                         }}
-                        className={`w-full text-left px-3 py-2 text-xs flex items-center justify-between hover:bg-blue-50 dark:hover:bg-slate-700 transition-colors ${
-                          selectedLanguage === lang.code ? 'font-bold text-blue-600 dark:text-blue-400 bg-blue-50/70 dark:bg-slate-700/60' : 'text-slate-700 dark:text-slate-300'
+                        className={`w-full text-left px-3.5 py-2 text-xs flex items-center justify-between hover:bg-emerald-50 transition-colors ${
+                          selectedLanguage === lang.code ? 'font-bold text-emerald-700 bg-emerald-50/70' : 'text-slate-800'
                         }`}
                       >
-                        <span className="flex items-center gap-2">
-                          <span>{lang.flag}</span>
-                          <span>{lang.name}</span>
-                        </span>
-                        <span className="text-[11px] font-semibold opacity-80">{lang.nativeName}</span>
+                        <span className="font-semibold">{lang.name}</span>
+                        <span className="text-[11px] font-medium opacity-80">{lang.nativeName}</span>
                       </button>
                     ))}
                   </div>
@@ -482,8 +488,10 @@ How can I help you inspect this parcel?`,
 
               {/* Close Button */}
               <button
+                type="button"
                 onClick={onClose}
-                className="w-7 h-7 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 flex items-center justify-center transition-colors shrink-0"
+                className="w-8 h-8 rounded-full hover:bg-slate-100 text-slate-400 hover:text-slate-700 flex items-center justify-center transition-colors shrink-0"
+                title="Close chat"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -492,38 +500,39 @@ How can I help you inspect this parcel?`,
 
           {/* ── ATTACHED LAND RECORD DOSSIER (COLLAPSIBLE) ── */}
           {activeProperty && (
-            <div className="border-b border-slate-200/70 dark:border-slate-800 bg-slate-50/90 dark:bg-slate-800/70 transition-all shrink-0">
+            <div className="border-b border-slate-200 bg-white/95 backdrop-blur-xs transition-all shrink-0">
               {isPropertyCollapsed ? (
                 /* Collapsed Slim Single-Line Bar */
                 <button
+                  type="button"
                   onClick={() => setIsPropertyCollapsed(false)}
-                  className="w-full px-3 sm:px-6 py-1.5 flex items-center justify-between text-left hover:bg-slate-100/80 dark:hover:bg-slate-800 transition-colors"
+                  className="w-full px-3.5 sm:px-6 py-1.5 flex items-center justify-between text-left hover:bg-slate-50 transition-colors"
                 >
-                  <div className="flex items-center gap-1.5 min-w-0 truncate">
-                    <span className="px-1.5 py-0.2 text-[8px] font-bold bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-200 rounded shrink-0">
+                  <div className="flex items-center gap-2 min-w-0 truncate">
+                    <span className="px-1.5 py-0.2 text-[9px] font-bold bg-slate-100 text-slate-800 rounded border border-slate-200 shrink-0">
                       #{activeProperty.surveyNumber || '342/A'}
                     </span>
-                    <span className="font-bold text-slate-800 dark:text-slate-200 text-xs truncate">
+                    <span className="font-bold text-slate-900 text-xs truncate">
                       {activeProperty.title}
                     </span>
-                    <span className="text-[10px] text-slate-500 dark:text-slate-400 hidden sm:inline truncate">
-                      • {activeProperty.area} Ac • ₹{Number(activeProperty.price || 0).toLocaleString('en-IN')}
+                    <span className="text-[11px] text-slate-500 hidden sm:inline truncate">
+                      • {activeProperty.village || ''} • {activeProperty.area} Ac • ₹{Number(activeProperty.price || 0).toLocaleString('en-IN')}
                     </span>
                   </div>
-                  <div className="flex items-center gap-1.5 shrink-0 ml-2">
-                    <span className="text-[9px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded">
-                      92/100
+                  <div className="flex items-center gap-2 shrink-0 ml-2">
+                    <span className="text-[9px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded">
+                      Trust 92/100
                     </span>
-                    <ChevronDown className="w-3 h-3 text-slate-400" />
+                    <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
                   </div>
                 </button>
               ) : (
                 /* Expanded Detailed Dossier */
-                <div className="p-2.5 sm:px-6 flex items-center justify-between gap-2.5">
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    <div className="w-9 h-9 rounded-lg bg-slate-800 overflow-hidden shrink-0 border border-slate-200 dark:border-slate-700 shadow-2xs">
+                <div className="p-2.5 sm:px-6 flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-10 h-10 rounded-xl bg-slate-100 overflow-hidden shrink-0 border border-slate-200 shadow-2xs">
                       <img
-                        src={activeProperty.threeSixtyImageUrl || (activeProperty.images && activeProperty.images[0]?.imageUrl) || 'https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=200&q=80'}
+                        src={(activeProperty.images && activeProperty.images[0]?.imageUrl) || 'https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=200&q=80'}
                         alt={activeProperty.title}
                         className="w-full h-full object-cover"
                         onError={(e) => { e.currentTarget.src = 'https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=200&q=80'; }}
@@ -532,37 +541,38 @@ How can I help you inspect this parcel?`,
 
                     <div className="min-w-0">
                       <div className="flex items-center gap-1.5 flex-wrap">
-                        <h3 className="font-bold text-slate-900 dark:text-white text-xs truncate max-w-[150px] sm:max-w-xs">
+                        <h3 className="font-extrabold text-slate-900 text-xs sm:text-sm truncate max-w-[160px] sm:max-w-xs">
                           {activeProperty.title}
                         </h3>
-                        <span className="px-1 py-0.2 text-[8px] font-semibold bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-200 rounded">
+                        <span className="px-1.5 py-0.2 text-[8px] font-bold bg-slate-100 text-slate-700 border border-slate-200 rounded">
                           #{activeProperty.surveyNumber || '342/A'}
                         </span>
                       </div>
 
-                      <div className="flex items-center gap-1.5 text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 flex-wrap truncate">
-                        <span className="truncate max-w-[100px] sm:max-w-none">{activeProperty.village || 'Location'}</span>
+                      <div className="flex items-center gap-1.5 text-[10px] sm:text-[11px] text-slate-500 mt-0.5 flex-wrap truncate">
+                        <span className="truncate max-w-[110px] sm:max-w-none">{activeProperty.village || 'Location'}, {activeProperty.district || 'District'}</span>
                         <span>•</span>
                         <span>{activeProperty.area} Ac</span>
                         <span>•</span>
-                        <span className="font-bold text-slate-900 dark:text-slate-100">
+                        <span className="font-bold text-slate-900">
                           ₹{Number(activeProperty.price || 0).toLocaleString('en-IN')}
                         </span>
                       </div>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-1.5 shrink-0">
-                    <div className="px-2 py-0.5 bg-emerald-500/10 border border-emerald-500/20 rounded text-center">
-                      <div className="text-[7px] uppercase font-bold text-emerald-600 dark:text-emerald-400">Trust</div>
-                      <div className="text-[10px] font-black text-emerald-600 dark:text-emerald-400">92/100</div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <div className="px-2.5 py-1 bg-emerald-50 border border-emerald-200 rounded-lg text-center">
+                      <div className="text-[8px] uppercase font-bold text-emerald-700">AI Trust</div>
+                      <div className="text-xs font-black text-emerald-700">92 / 100</div>
                     </div>
                     <button
+                      type="button"
                       onClick={() => setIsPropertyCollapsed(true)}
-                      className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded"
+                      className="p-1 text-slate-400 hover:text-slate-600 rounded"
                       title="Collapse details"
                     >
-                      <ChevronDown className="w-3.5 h-3.5 rotate-180" />
+                      <ChevronDown className="w-4 h-4 rotate-180" />
                     </button>
                   </div>
                 </div>
@@ -571,14 +581,14 @@ How can I help you inspect this parcel?`,
           )}
 
           {/* ── RESPONSIBLE AI CITIZEN NOTICE ── */}
-          <div className="px-4 py-1.5 bg-slate-50 dark:bg-slate-950/40 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400 shrink-0">
+          <div className="px-4 py-1.5 bg-[#e9e4dc] border-b border-slate-200/80 flex items-center justify-between text-[10px] sm:text-[11px] text-slate-600 shrink-0 font-medium">
             <span className="truncate">
               AI provides informational analysis. Official legal verification is issued by authorized Revenue Officers.
             </span>
           </div>
 
-          {/* ── CHAT MESSAGES CONTAINER ── */}
-          <div className="flex-1 overflow-y-auto p-3.5 sm:p-6 space-y-3.5">
+          {/* ── CHAT MESSAGES CONTAINER (WhatsApp Background & Bubbles) ── */}
+          <div className="flex-1 overflow-y-auto p-3.5 sm:p-6 space-y-3.5 bg-[#efeae2]">
             {messages.map(msg => (
               <motion.div
                 key={msg.id}
@@ -587,42 +597,42 @@ How can I help you inspect this parcel?`,
                 className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
               >
                 <div
-                  className={`max-w-[92%] sm:max-w-[78%] rounded-2xl p-3.5 sm:p-4 text-xs sm:text-sm leading-relaxed ${
+                  className={`max-w-[92%] sm:max-w-[80%] rounded-2xl p-3.5 sm:p-4 text-xs sm:text-sm leading-relaxed shadow-xs ${
                     msg.role === 'user'
-                      ? 'bg-blue-600 text-white rounded-br-xs shadow-xs'
-                      : 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-100 rounded-bl-xs border border-slate-200/60 dark:border-slate-700/60'
+                      ? 'bg-[#d9fdd3] text-[#111b21] rounded-tr-xs border border-[#c3e8be]'
+                      : 'bg-white text-[#111b21] rounded-tl-xs border border-slate-200/90'
                   }`}
                 >
                   {msg.role === 'assistant' ? (
-                    <div className="prose prose-sm dark:prose-invert max-w-none text-xs sm:text-sm">
+                    <div className="prose prose-sm max-w-none text-xs sm:text-sm text-[#111b21]">
                       <ReactMarkdown
                         remarkPlugins={[remarkGfm]}
                         components={{
                           table: ({ node, ...props }) => (
-                            <div className="overflow-x-auto my-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white/50 dark:bg-slate-900/50">
-                              <table className="min-w-full text-xs divide-y divide-slate-200 dark:divide-slate-700" {...props} />
+                            <div className="overflow-x-auto my-2.5 rounded-xl border border-slate-200 bg-slate-50/80 shadow-2xs">
+                              <table className="min-w-full text-xs divide-y divide-slate-200" {...props} />
                             </div>
                           ),
                           thead: ({ node, ...props }) => (
-                            <thead className="bg-slate-200/80 dark:bg-slate-700/80 font-bold text-slate-900 dark:text-slate-100" {...props} />
+                            <thead className="bg-slate-100 font-extrabold text-slate-900 border-b border-slate-200" {...props} />
                           ),
                           th: ({ node, ...props }) => (
-                            <th className="px-2.5 py-1.5 text-left font-bold text-[11px] uppercase tracking-wider" {...props} />
+                            <th className="px-3 py-2 text-left font-bold text-[11px] uppercase tracking-wider text-slate-900" {...props} />
                           ),
                           td: ({ node, ...props }) => (
-                            <td className="px-2.5 py-1.5 text-slate-800 dark:text-slate-200 border-t border-slate-200/60 dark:border-slate-700/60 font-medium" {...props} />
+                            <td className="px-3 py-2 text-slate-900 border-t border-slate-200/80 font-medium" {...props} />
                           ),
                           ul: ({ node, ...props }) => (
-                            <ul className="list-disc list-inside space-y-1 my-2 text-slate-700 dark:text-slate-300" {...props} />
+                            <ul className="list-disc list-inside space-y-1 my-2 text-slate-900" {...props} />
                           ),
                           ol: ({ node, ...props }) => (
-                            <ol className="list-decimal list-inside space-y-1 my-2 text-slate-700 dark:text-slate-300" {...props} />
+                            <ol className="list-decimal list-inside space-y-1 my-2 text-slate-900" {...props} />
                           ),
                           p: ({ node, ...props }) => (
-                            <p className="my-1.5 leading-relaxed text-slate-800 dark:text-slate-200" {...props} />
+                            <p className="my-1.5 leading-relaxed text-slate-900 font-normal" {...props} />
                           ),
                           strong: ({ node, ...props }) => (
-                            <strong className="font-extrabold text-slate-900 dark:text-white" {...props} />
+                            <strong className="font-extrabold text-slate-950" {...props} />
                           )
                         }}
                       >
@@ -630,14 +640,15 @@ How can I help you inspect this parcel?`,
                       </ReactMarkdown>
                     </div>
                   ) : (
-                    <p className="whitespace-pre-wrap">{msg.content}</p>
+                    <p className="whitespace-pre-wrap font-medium text-[#111b21]">{msg.content}</p>
                   )}
                   <div
-                    className={`mt-1 text-[10px] flex items-center justify-end ${
-                      msg.role === 'user' ? 'text-blue-200' : 'text-slate-400'
+                    className={`mt-1.5 text-[10px] flex items-center justify-end gap-1 font-semibold ${
+                      msg.role === 'user' ? 'text-emerald-800/80' : 'text-slate-400'
                     }`}
                   >
                     <span>{msg.timestamp}</span>
+                    {msg.role === 'user' && <span className="text-emerald-700 font-bold">✓✓</span>}
                   </div>
                 </div>
               </motion.div>
@@ -647,13 +658,13 @@ How can I help you inspect this parcel?`,
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                className="flex items-center gap-2 text-slate-400 text-xs pl-1"
+                className="flex items-center gap-2 text-slate-500 text-xs pl-1"
               >
-                <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800 px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-700">
-                  <div className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-bounce" style={{ animationDelay: '0ms' }} />
-                  <div className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-bounce" style={{ animationDelay: '150ms' }} />
-                  <div className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-bounce" style={{ animationDelay: '300ms' }} />
-                  <span className="ml-1.5 text-slate-500 font-medium text-[11px]">Analyzing land records...</span>
+                <div className="flex items-center gap-2 bg-white px-4 py-2.5 rounded-2xl border border-slate-200 shadow-xs">
+                  <div className="w-2 h-2 rounded-full bg-emerald-600 animate-bounce" style={{ animationDelay: '0ms' }} />
+                  <div className="w-2 h-2 rounded-full bg-emerald-600 animate-bounce" style={{ animationDelay: '150ms' }} />
+                  <div className="w-2 h-2 rounded-full bg-emerald-600 animate-bounce" style={{ animationDelay: '300ms' }} />
+                  <span className="ml-1 text-slate-600 font-semibold text-[11px]">LandLens AI is typing...</span>
                 </div>
               </motion.div>
             )}
@@ -661,17 +672,18 @@ How can I help you inspect this parcel?`,
             <div ref={messagesEndRef} />
           </div>
 
-          {/* ── QUICK PRESET CITIZEN QUESTIONS ── */}
-          <div className="px-3 sm:px-6 py-2 bg-slate-50/60 dark:bg-slate-900/60 border-t border-slate-100 dark:border-slate-800 shrink-0">
+          {/* ── QUICK PRESET CITIZEN QUESTIONS (WhatsApp Action Chips) ── */}
+          <div className="px-3 sm:px-6 py-2 bg-[#f0f2f5] border-t border-slate-200 shrink-0">
             <div className="flex gap-1.5 overflow-x-auto pb-1 no-scrollbar">
               {PRESET_QUESTIONS.map(q => {
                 const questionText = q.label[selectedLanguage] || q.label.en;
                 return (
                   <button
                     key={q.key}
+                    type="button"
                     onClick={() => handleSendMessage(questionText)}
                     disabled={isLoading}
-                    className="shrink-0 px-3 py-1 text-[11px] bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-full border border-slate-200 dark:border-slate-700 shadow-2xs transition-all disabled:opacity-50"
+                    className="shrink-0 px-3.5 py-1.5 text-[11px] font-semibold bg-white hover:bg-emerald-50 text-slate-800 hover:text-emerald-800 rounded-full border border-slate-300 hover:border-emerald-400 shadow-2xs transition-all disabled:opacity-50"
                   >
                     <span>{questionText}</span>
                   </button>
@@ -680,8 +692,8 @@ How can I help you inspect this parcel?`,
             </div>
           </div>
 
-          {/* ── CHAT INPUT FIELD ── */}
-          <div className="p-3 sm:p-4 bg-white dark:bg-slate-900 border-t border-slate-200/80 dark:border-slate-800 shrink-0 pb-safe">
+          {/* ── CHAT INPUT FIELD (WhatsApp Clean White Input) ── */}
+          <div className="p-2.5 sm:p-3.5 bg-[#f0f2f5] border-t border-slate-200 shrink-0 pb-safe">
             <form
               onSubmit={(e) => {
                 e.preventDefault();
@@ -693,16 +705,17 @@ How can I help you inspect this parcel?`,
                 type="text"
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
-                placeholder={`Ask about land documents in ${activeLangOption.name}...`}
+                placeholder={`Type a message in ${activeLangOption.name}...`}
                 disabled={isLoading}
-                className="flex-1 bg-slate-100/80 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-2xl px-4 py-2.5 sm:py-3 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                className="flex-1 bg-white border border-slate-300 text-slate-900 placeholder:text-slate-400 rounded-full px-4 sm:px-5 py-2.5 sm:py-3 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all shadow-2xs"
               />
               <button
                 type="submit"
                 disabled={!inputValue.trim() || isLoading}
-                className="px-4 sm:px-5 py-2.5 sm:py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-semibold text-xs sm:text-sm shadow-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5 transition-all shrink-0"
+                className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-[#00a884] hover:bg-[#008f6f] active:scale-95 text-white flex items-center justify-center transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
+                title="Send Message"
               >
-                <span>Send</span>
+                <Send className="w-4 h-4 sm:w-5 sm:h-5 ml-0.5" />
               </button>
             </form>
           </div>
@@ -711,6 +724,3 @@ How can I help you inspect this parcel?`,
     </AnimatePresence>
   );
 };
-
-
-
